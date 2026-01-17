@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../../core/theme/app_theme.dart';
+import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/responsive.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -7,69 +8,76 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
+      padding: EdgeInsets.all(context.isMobile ? 16 : 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Welcome section
-          const Text(
+          Text(
             'Welcome back!',
             style: TextStyle(
-              fontSize: 32,
+              fontSize: context.isMobile ? 24 : 32,
               fontWeight: FontWeight.bold,
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Create amazing AI-powered content',
             style: TextStyle(
-              fontSize: 16,
+              fontSize: context.isMobile ? 14 : 16,
               color: AppTheme.textSecondary,
             ),
           ),
           
-          const SizedBox(height: 32),
+          SizedBox(height: context.isMobile ? 24 : 32),
           
-          // Quick actions
-          GridView.count(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            crossAxisCount: 3,
-            mainAxisSpacing: 16,
-            crossAxisSpacing: 16,
-            childAspectRatio: 1.5,
-            children: const [
-              _QuickActionCard(
-                title: 'Text to Image',
-                subtitle: 'Generate from prompt',
-                icon: Icons.image_outlined,
-                gradient: [AppTheme.primaryColor, AppTheme.accentPurple],
-              ),
-              _QuickActionCard(
-                title: 'Image to Image',
-                subtitle: 'Transform images',
-                icon: Icons.transform_outlined,
-                gradient: [AppTheme.accentPurple, AppTheme.accentPink],
-              ),
-              _QuickActionCard(
-                title: 'Image to Video',
-                subtitle: 'Animate your images',
-                icon: Icons.videocam_outlined,
-                gradient: [AppTheme.accentPink, AppTheme.primaryColor],
-              ),
-            ],
+          // Quick actions - Responsive grid
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final crossAxisCount = context.isMobile ? 1 : (context.isTablet ? 2 : 3);
+              final childAspectRatio = context.isMobile ? 1.8 : 1.5;
+              
+              return GridView.count(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                crossAxisCount: crossAxisCount,
+                mainAxisSpacing: 16,
+                crossAxisSpacing: 16,
+                childAspectRatio: childAspectRatio,
+                children: const [
+                  _QuickActionCard(
+                    title: 'Text to Image',
+                    subtitle: 'Generate from prompt',
+                    icon: Icons.image_outlined,
+                    gradient: [AppTheme.primaryColor, AppTheme.accentPurple],
+                  ),
+                  _QuickActionCard(
+                    title: 'Image to Image',
+                    subtitle: 'Transform images',
+                    icon: Icons.transform_outlined,
+                    gradient: [AppTheme.accentPurple, AppTheme.accentPink],
+                  ),
+                  _QuickActionCard(
+                    title: 'Image to Video',
+                    subtitle: 'Animate your images',
+                    icon: Icons.videocam_outlined,
+                    gradient: [AppTheme.accentPink, AppTheme.primaryColor],
+                  ),
+                ],
+              );
+            },
           ),
           
-          const SizedBox(height: 40),
+          SizedBox(height: context.isMobile ? 32 : 40),
           
-          // Recent generations
+          // Recent generations header
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
+              Text(
                 'Recent Generations',
                 style: TextStyle(
-                  fontSize: 20,
+                  fontSize: context.isMobile ? 18 : 20,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -82,18 +90,27 @@ class HomeScreen extends StatelessWidget {
           
           const SizedBox(height: 16),
           
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 4,
-              mainAxisSpacing: 16,
-              crossAxisSpacing: 16,
-              childAspectRatio: 0.75,
-            ),
-            itemCount: 8,
-            itemBuilder: (context, index) {
-              return const _GenerationCard();
+          // Recent generations grid - Responsive
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final crossAxisCount = context.isMobile 
+                ? 2 
+                : (context.isTablet ? 3 : 4);
+              
+              return GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: crossAxisCount,
+                  mainAxisSpacing: context.isMobile ? 12 : 16,
+                  crossAxisSpacing: context.isMobile ? 12 : 16,
+                  childAspectRatio: 0.75,
+                ),
+                itemCount: 8,
+                itemBuilder: (context, index) {
+                  return const _GenerationCard();
+                },
+              );
             },
           ),
         ],
@@ -122,7 +139,7 @@ class _QuickActionCard extends StatelessWidget {
         onTap: () {},
         borderRadius: BorderRadius.circular(12),
         child: Container(
-          padding: const EdgeInsets.all(20),
+          padding: EdgeInsets.all(context.isMobile ? 16 : 20),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
             gradient: LinearGradient(
@@ -136,26 +153,30 @@ class _QuickActionCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
-                padding: const EdgeInsets.all(12),
+                padding: EdgeInsets.all(context.isMobile ? 10 : 12),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(colors: gradient),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(icon, color: Colors.white, size: 24),
+                child: Icon(
+                  icon, 
+                  color: Colors.white, 
+                  size: context.isMobile ? 20 : 24,
+                ),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: context.isMobile ? 12 : 16),
               Text(
                 title,
-                style: const TextStyle(
-                  fontSize: 16,
+                style: TextStyle(
+                  fontSize: context.isMobile ? 14 : 16,
                   fontWeight: FontWeight.bold,
                 ),
               ),
               const SizedBox(height: 4),
               Text(
                 subtitle,
-                style: const TextStyle(
-                  fontSize: 13,
+                style: TextStyle(
+                  fontSize: context.isMobile ? 12 : 13,
                   color: AppTheme.textSecondary,
                 ),
               ),
@@ -187,50 +208,50 @@ class _GenerationCard extends StatelessWidget {
               child: Center(
                 child: Icon(
                   Icons.image_outlined,
-                  size: 48,
+                  size: context.isMobile ? 36 : 48,
                   color: AppTheme.textSecondary.withOpacity(0.3),
                 ),
               ),
             ),
           ),
           Padding(
-            padding: const EdgeInsets.all(12),
+            padding: EdgeInsets.all(context.isMobile ? 8 : 12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'A beautiful landscape...',
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontSize: 13,
+                    fontSize: context.isMobile ? 12 : 13,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: context.isMobile ? 6 : 8),
                 Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: context.isMobile ? 6 : 8,
+                        vertical: context.isMobile ? 3 : 4,
                       ),
                       decoration: BoxDecoration(
                         color: AppTheme.primaryColor.withOpacity(0.2),
                         borderRadius: BorderRadius.circular(4),
                       ),
-                      child: const Text(
+                      child: Text(
                         'Image',
                         style: TextStyle(
-                          fontSize: 11,
+                          fontSize: context.isMobile ? 10 : 11,
                           color: AppTheme.primaryColor,
                         ),
                       ),
                     ),
                     const Spacer(),
-                    const Icon(
+                    Icon(
                       Icons.more_vert,
-                      size: 16,
+                      size: context.isMobile ? 14 : 16,
                       color: AppTheme.textSecondary,
                     ),
                   ],

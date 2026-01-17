@@ -1,7 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:gen_motion_ai/features/presentation/create_screen.dart';
-import 'package:gen_motion_ai/features/presentation/explore_screen.dart';
+import 'package:gen_motion_ai/features/presentation/generate/generate_screen.dart';
+import 'package:gen_motion_ai/features/presentation/explore/explore_screen.dart';
+import 'package:gen_motion_ai/features/presentation/gallery/gallery_screen.dart';
 import 'package:gen_motion_ai/features/presentation/home/home_screen.dart';
+import 'package:gen_motion_ai/features/presentation/queue/queue_screen.dart';
 import 'package:gen_motion_ai/shared/widgets/main_layout.dart';
 import 'package:go_router/go_router.dart';
 
@@ -25,7 +27,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/create',
             name: 'create',
             pageBuilder: (context, state) => NoTransitionPage(
-              child: const CreateScreen(),
+              child: const GenerateScreen(),
             ),
           ),
           GoRoute(
@@ -35,20 +37,20 @@ final routerProvider = Provider<GoRouter>((ref) {
               child: const ExploreScreen(),
             ),
           ),
-          // GoRoute(
-          //   path: '/gallery',
-          //   name: 'gallery',
-          //   pageBuilder: (context, state) => NoTransitionPage(
-          //     child: const GalleryScreen(),
-          //   ),
-          // ),
-          // GoRoute(
-          //   path: '/queue',
-          //   name: 'queue',
-          //   pageBuilder: (context, state) => NoTransitionPage(
-          //     child: const QueueScreen(),
-          //   ),
-          // ),
+          GoRoute(
+            path: '/gallery',
+            name: 'gallery',
+            pageBuilder: (context, state) => NoTransitionPage(
+              child: const GalleryScreen(),
+            ),
+          ),
+          GoRoute(
+            path: '/queue',
+            name: 'queue',
+            pageBuilder: (context, state) => NoTransitionPage(
+              child: const QueueScreen(),
+            ),
+          ),
         ],
       ),
     ],
