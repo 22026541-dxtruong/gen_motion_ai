@@ -1,10 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:gen_motion_ai/features/presentation/canvas/canvas_screen.dart';
 import 'package:gen_motion_ai/features/presentation/generate/generate_screen.dart';
 import 'package:gen_motion_ai/features/presentation/explore/explore_screen.dart';
 import 'package:gen_motion_ai/features/presentation/gallery/gallery_screen.dart';
 import 'package:gen_motion_ai/features/presentation/home/home_screen.dart';
 import 'package:gen_motion_ai/features/presentation/queue/queue_screen.dart';
-import 'package:gen_motion_ai/shared/widgets/main_layout.dart';
+import 'package:gen_motion_ai/features/presentation/widgets/main_layout.dart';
 import 'package:go_router/go_router.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -28,6 +29,13 @@ final routerProvider = Provider<GoRouter>((ref) {
             name: 'create',
             pageBuilder: (context, state) => NoTransitionPage(
               child: const GenerateScreen(),
+            ),
+          ),
+          GoRoute(
+            path: '/canvas',
+            name: 'canvas',
+            pageBuilder: (context, state) => NoTransitionPage(
+              child: const CanvasScreen(),
             ),
           ),
           GoRoute(

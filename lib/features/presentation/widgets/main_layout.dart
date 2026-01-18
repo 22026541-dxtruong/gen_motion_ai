@@ -1,8 +1,8 @@
 import 'package:animations/animations.dart';
 import 'package:flutter/material.dart';
+import 'package:gen_motion_ai/core/theme/app_theme.dart';
 import 'package:gen_motion_ai/core/utils/responsive.dart';
 import 'package:go_router/go_router.dart';
-import '../../core/theme/app_theme.dart';
 
 class MainLayout extends StatefulWidget {
   final Widget child; // Thay đổi từ StatefulNavigationShell sang Widget
@@ -221,6 +221,13 @@ class __DesktopSidebarState extends State<_DesktopSidebar> {
                   label: 'Create',
                   route: '/create',
                   isActive: currentRoute == '/create',
+                  collapsed: !_expandedDone,
+                ),
+                _DesktopNavItem(
+                  icon: Icons.draw_outlined,
+                  label: 'Canvas',
+                  route: '/canvas',
+                  isActive: currentRoute == '/canvas',
                   collapsed: !_expandedDone,
                 ),
                 _DesktopNavItem(
@@ -653,8 +660,8 @@ class _MobileBottomNav extends StatelessWidget {
           _BottomNavItem(
             icon: Icons.add_circle,
             label: 'Create',
-            route: '/create',
-            isActive: currentRoute == '/create',
+            route: '/canvas',
+            isActive: currentRoute == '/canvas',
             isCenter: true,
           ),
           _BottomNavItem(
