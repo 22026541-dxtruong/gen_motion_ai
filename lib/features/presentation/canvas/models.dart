@@ -10,6 +10,19 @@ enum GenerationMode {
   const GenerationMode(this.label, this.icon);
 }
 
+// Canvas aspect ratios
+enum AspectRatio {
+  square('1:1', 1.0),
+  landscape16_9('16:9', 16 / 9),
+  portrait9_16('9:16', 9 / 16),
+  landscape4_3('4:3', 4 / 3),
+  portrait3_4('3:4', 3 / 4);
+
+  final String label;
+  final double ratio;
+  const AspectRatio(this.label, this.ratio);
+}
+
 // Smart Icon categories
 enum IconCategory {
   nature('Nature', Icons.nature),
@@ -52,13 +65,7 @@ class SmartIconLibrary {
       name: 'Tree',
       category: IconCategory.nature,
       icon: Icons.park,
-      variations: [
-        'Oak Tree',
-        'Pine Tree',
-        'Autumn Tree',
-        'Dead Tree',
-        'Palm Tree',
-      ],
+      variations: ['Oak Tree', 'Pine Tree', 'Autumn Tree', 'Dead Tree', 'Palm Tree'],
       color: Colors.green,
     ),
     SmartIconType(
@@ -93,7 +100,7 @@ class SmartIconLibrary {
       variations: ['White Cloud', 'Storm Cloud', 'Wispy Cloud', 'Fog'],
       color: Colors.blueGrey,
     ),
-
+    
     // Buildings
     SmartIconType(
       id: 'house',
@@ -119,7 +126,7 @@ class SmartIconLibrary {
       variations: ['Suspension Bridge', 'Arch Bridge', 'Wooden Bridge'],
       color: Colors.brown,
     ),
-
+    
     // Characters
     SmartIconType(
       id: 'person',
@@ -137,7 +144,7 @@ class SmartIconLibrary {
       variations: ['Couple', 'Family', 'Friends', 'Crowd'],
       color: Colors.deepPurple,
     ),
-
+    
     // Celestial
     SmartIconType(
       id: 'sun',
@@ -155,7 +162,7 @@ class SmartIconLibrary {
       variations: ['Full Moon', 'Crescent Moon', 'Half Moon'],
       color: Colors.grey.shade400,
     ),
-
+    
     // Animals
     SmartIconType(
       id: 'bird',
@@ -181,7 +188,7 @@ class SmartIconLibrary {
       variations: ['Kitten', 'Adult Cat', 'Tiger', 'Lion'],
       color: Colors.orange.shade800,
     ),
-
+    
     // Objects
     SmartIconType(
       id: 'car',
@@ -208,7 +215,7 @@ class SmartIconLibrary {
 
 // Keyframe for animation
 class Keyframe {
-  final double time; // seconds
+  final double time;
   final Offset position;
   final double size;
   final double rotation;
@@ -248,14 +255,12 @@ class CanvasIcon {
   final double rotation;
   final String? selectedVariation;
   final double opacity;
-
-  // Video timeline properties
+  
   final double startTime;
   final double endTime;
   final String animation;
   final double animationDuration;
-
-  // Keyframe animation
+  
   final List<Keyframe> keyframes;
 
   CanvasIcon({
@@ -300,19 +305,17 @@ class CanvasIcon {
       keyframes: keyframes ?? this.keyframes,
     );
   }
-
+  
   bool isVisibleAt(double time) {
     return time >= startTime && time <= endTime;
   }
-
-  // Interpolate properties at specific time using keyframes
+  
   CanvasIcon interpolateAt(double time) {
     if (keyframes.isEmpty) return this;
-
-    // Find surrounding keyframes
+    
     Keyframe? before;
     Keyframe? after;
-
+    
     for (final kf in keyframes) {
       if (kf.time <= time) {
         if (before == null || kf.time > before.time) {
@@ -325,46 +328,39 @@ class CanvasIcon {
         }
       }
     }
-
+    
     if (before == null && after == null) return this;
-    if (before == null) {
-      return copyWith(
-        position: after!.position,
-        size: after.size,
-        rotation: after.rotation,
-        opacity: after.opacity,
-      );
-    }
-    if (after == null) {
-      return copyWith(
-        position: before.position,
-        size: before.size,
-        rotation: before.rotation,
-        opacity: before.opacity,
-      );
-    }
-    if (before.time == after.time) {
-      return copyWith(
-        position: before.position,
-        size: before.size,
-        rotation: before.rotation,
-        opacity: before.opacity,
-      );
-    }
-
-    // Linear interpolation
+    if (before == null) return copyWith(
+      position: after!.position,
+      size: after.size,
+      rotation: after.rotation,
+      opacity: after.opacity,
+    );
+    if (after == null) return copyWith(
+      position: before.position,
+      size: before.size,
+      rotation: before.rotation,
+      opacity: before.opacity,
+    );
+    if (before.time == after.time) return copyWith(
+      position: before.position,
+      size: before.size,
+      rotation: before.rotation,
+      opacity: before.opacity,
+    );
+    
     final t = (time - before.time) / (after.time - before.time);
-
+    
     return copyWith(
       position: Offset.lerp(before.position, after.position, t),
       size: before.size + (after.size - before.size) * t,
       rotation: before.rotation + (after.rotation - before.rotation) * t,
-      opacity: before.opacity + (after.opacity - before.opacity) * t,
+      opacity: before.opacity + (after.opacity - after.opacity) * t,
     );
   }
 }
 
-// Sketch stroke (persistent drawing)
+// Sketch stroke with enhanced properties
 class SketchStroke {
   final String id;
   final List<DrawingPoint> points;
@@ -372,6 +368,10 @@ class SketchStroke {
   final double endTime;
   final Color color;
   final double strokeWidth;
+  final Offset position;
+  final double rotation;
+  final double scale;
+  final Size size;
 
   SketchStroke({
     required this.id,
@@ -380,6 +380,10 @@ class SketchStroke {
     this.endTime = double.infinity,
     this.color = Colors.black,
     this.strokeWidth = 3,
+    this.position = Offset.zero,
+    this.rotation = 0.0,
+    this.scale = 1.0,
+    this.size = Size.zero,
   });
 
   SketchStroke copyWith({
@@ -388,6 +392,10 @@ class SketchStroke {
     double? endTime,
     Color? color,
     double? strokeWidth,
+    Offset? position,
+    double? rotation,
+    double? scale,
+    Size? size,
   }) {
     return SketchStroke(
       id: id,
@@ -396,9 +404,13 @@ class SketchStroke {
       endTime: endTime ?? this.endTime,
       color: color ?? this.color,
       strokeWidth: strokeWidth ?? this.strokeWidth,
+      position: position ?? this.position,
+      rotation: rotation ?? this.rotation,
+      scale: scale ?? this.scale,
+      size: size ?? this.size,
     );
   }
-
+  
   bool isVisibleAt(double time) {
     return time >= startTime && time <= endTime;
   }
@@ -407,23 +419,20 @@ class SketchStroke {
 // Canvas State
 class CanvasState {
   final List<CanvasIcon> icons;
-  final List<SketchStroke> sketches; // Persistent sketch strokes
+  final List<SketchStroke> sketches;
   final Color backgroundColor;
   final String? selectedIconId;
   final String? selectedSketchId;
-  final List<DrawingPoint> currentSketchPoints; // Current drawing
+  final List<DrawingPoint> currentSketchPoints;
   final bool isDrawingMode;
   final GenerationMode mode;
-
-  // Video timeline properties
+  
   final double videoDuration;
   final double currentTime;
   final bool isPlaying;
   final bool showTimeline;
-
-  // Canvas view properties
-  final double zoom;
-  final Offset pan;
+  
+  final AspectRatio aspectRatio;
 
   CanvasState({
     this.icons = const [],
@@ -438,8 +447,7 @@ class CanvasState {
     this.currentTime = 0.0,
     this.isPlaying = false,
     this.showTimeline = true,
-    this.zoom = 1.0,
-    this.pan = Offset.zero,
+    this.aspectRatio = AspectRatio.landscape16_9,
   });
 
   CanvasState copyWith({
@@ -455,8 +463,7 @@ class CanvasState {
     double? currentTime,
     bool? isPlaying,
     bool? showTimeline,
-    double? zoom,
-    Offset? pan,
+    AspectRatio? aspectRatio,
   }) {
     return CanvasState(
       icons: icons ?? this.icons,
@@ -471,18 +478,17 @@ class CanvasState {
       currentTime: currentTime ?? this.currentTime,
       isPlaying: isPlaying ?? this.isPlaying,
       showTimeline: showTimeline ?? this.showTimeline,
-      zoom: zoom ?? this.zoom,
-      pan: pan ?? this.pan,
+      aspectRatio: aspectRatio ?? this.aspectRatio,
     );
   }
-
+  
   List<CanvasIcon> getVisibleIconsAt(double time) {
     if (mode == GenerationMode.image) {
       return icons;
     }
     return icons.where((icon) => icon.isVisibleAt(time)).toList();
   }
-
+  
   List<SketchStroke> getVisibleSketchesAt(double time) {
     if (mode == GenerationMode.image) {
       return sketches;
@@ -516,17 +522,10 @@ class AnimationType {
   static const String zoomIn = 'zoom-in';
   static const String zoomOut = 'zoom-out';
   static const String rotate = 'rotate';
-
+  
   static List<String> get all => [
-    none,
-    fadeIn,
-    fadeOut,
-    slideLeft,
-    slideRight,
-    slideUp,
-    slideDown,
-    zoomIn,
-    zoomOut,
-    rotate,
+    none, fadeIn, fadeOut, 
+    slideLeft, slideRight, slideUp, slideDown,
+    zoomIn, zoomOut, rotate,
   ];
 }

@@ -22,11 +22,20 @@ class CanvasScreen extends ConsumerWidget {
 }
 
 // ==================== DESKTOP LAYOUT ====================
-class _DesktopCanvasLayout extends ConsumerWidget {
+class _DesktopCanvasLayout extends ConsumerStatefulWidget {
   const _DesktopCanvasLayout();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_DesktopCanvasLayout> createState() => _DesktopCanvasLayoutState();
+}
+
+class _DesktopCanvasLayoutState extends ConsumerState<_DesktopCanvasLayout> {
+  double _leftPanelWidth = 280.0;
+  double _rightPanelWidth = 280.0;
+  double _timelineHeight = 250.0;
+
+  @override
+  Widget build(BuildContext context) {
     final canvasState = ref.watch(canvasProvider);
     
     return Column(
@@ -35,9 +44,22 @@ class _DesktopCanvasLayout extends ConsumerWidget {
           child: Row(
             children: [
               // Left: Icon Library
-              const SizedBox(
-                width: 280,
-                child: IconLibraryPanel(),
+              SizedBox(
+                width: _leftPanelWidth,
+                child: const IconLibraryPanel(),
+              ),
+
+              // Resizer Left
+              MouseRegion(
+                cursor: SystemMouseCursors.resizeColumn,
+                child: GestureDetector(
+                  onPanUpdate: (details) {
+                    setState(() {
+                      _leftPanelWidth = (_leftPanelWidth + details.delta.dx).clamp(200.0, 500.0);
+                    });
+                  },
+                  child: Container(width: 4, color: AppTheme.borderColor),
+                ),
               ),
               
               // Center: Canvas Area
@@ -45,18 +67,47 @@ class _DesktopCanvasLayout extends ConsumerWidget {
                 child: _CanvasContainer(),
               ),
               
+              // Resizer Right
+              MouseRegion(
+                cursor: SystemMouseCursors.resizeColumn,
+                child: GestureDetector(
+                  onPanUpdate: (details) {
+                    setState(() {
+                      _rightPanelWidth = (_rightPanelWidth - details.delta.dx).clamp(200.0, 500.0);
+                    });
+                  },
+                  child: Container(width: 4, color: AppTheme.borderColor),
+                ),
+              ),
+
               // Right: Properties Panel
               SizedBox(
-                width: 280,
-                child: PropertiesPanel(),
+                width: _rightPanelWidth,
+                child: const PropertiesPanel(),
               ),
             ],
           ),
         ),
         
         // Bottom: Video Timeline (collapsible)
-        if (canvasState.mode == GenerationMode.video && canvasState.showTimeline)
-          const VideoTimeline(),
+        if (canvasState.mode == GenerationMode.video && canvasState.showTimeline) ...[
+          // Resizer Bottom
+          MouseRegion(
+            cursor: SystemMouseCursors.resizeRow,
+            child: GestureDetector(
+              onPanUpdate: (details) {
+                setState(() {
+                  _timelineHeight = (_timelineHeight - details.delta.dy).clamp(150.0, 600.0);
+                });
+              },
+              child: Container(height: 4, color: AppTheme.borderColor),
+            ),
+          ),
+          SizedBox(
+            height: _timelineHeight,
+            child: const VideoTimeline(),
+          ),
+        ],
       ],
     );
   }
@@ -73,38 +124,139 @@ class _MobileCanvasLayout extends ConsumerStatefulWidget {
 class _MobileCanvasLayoutState extends ConsumerState<_MobileCanvasLayout> {
   bool _showIconLibrary = false;
   bool _showProperties = false;
+  double _timelineHeight = 200.0;
 
   @override
   Widget build(BuildContext context) {
     final canvasState = ref.watch(canvasProvider);
+    final hasSelection = canvasState.selectedIconId != null || canvasState.selectedSketchId != null;
+
+    // Tự động mở Properties khi chọn đối tượng mới
+    ref.listen(canvasProvider, (previous, next) {
+      final prevSelection = previous?.selectedIconId ?? previous?.selectedSketchId;
+      final nextSelection = next.selectedIconId ?? next.selectedSketchId;
+      
+      if (nextSelection != null && nextSelection != prevSelection) {
+        setState(() {
+          _showProperties = true;
+          _showIconLibrary = false;
+        });
+      } else if (nextSelection == null && prevSelection != null) {
+        setState(() {
+          _showProperties = false;
+        });
+      }
+    });
     
     return Stack(
       children: [
         Column(
           children: [
-            _buildMobileToolbar(canvasState),
+            _buildMobileToolbar(canvasState, hasSelection),
             
             Expanded(
               child: const _CanvasContainer(),
             ),
             
-            if (canvasState.mode == GenerationMode.video && canvasState.showTimeline)
-              const VideoTimeline(),
+            if (canvasState.mode == GenerationMode.video && canvasState.showTimeline && !_showIconLibrary && !_showProperties)
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  GestureDetector(
+                    onPanUpdate: (details) {
+                      setState(() {
+                        _timelineHeight = (_timelineHeight - details.delta.dy).clamp(100.0, MediaQuery.of(context).size.height * 0.6);
+                      });
+                    },
+                    child: Container(
+                      height: 24,
+                      width: double.infinity,
+                      decoration: const BoxDecoration(
+                        color: AppTheme.surfaceColor,
+                        border: Border(top: BorderSide(color: AppTheme.borderColor)),
+                      ),
+                      child: Center(
+                        child: Container(
+                          width: 36,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: Colors.grey[300],
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(
+                    height: _timelineHeight,
+                    child: const VideoTimeline(),
+                  ),
+                ],
+              ),
             
-            if (canvasState.mode == GenerationMode.image)
+            if (canvasState.mode == GenerationMode.image && !_showIconLibrary && !_showProperties)
               _buildBottomToolbar(),
+              
+            if (_showIconLibrary)
+              _buildBottomPanel(
+                title: 'Library',
+                onClose: () => setState(() => _showIconLibrary = false),
+                child: const IconLibraryPanel(),
+              ),
+
+            if (_showProperties && hasSelection)
+              _buildBottomPanel(
+                title: 'Properties',
+                onClose: () => setState(() => _showProperties = false),
+                child: const PropertiesPanel(),
+              ),
           ],
         ),
-        
-        // Drawers
-        if (_showIconLibrary) _buildIconLibraryDrawer(),
-        if (_showProperties && (canvasState.selectedIconId != null || canvasState.selectedSketchId != null))
-          _buildPropertiesDrawer(),
       ],
     );
   }
 
-  Widget _buildMobileToolbar(CanvasState canvasState) {
+  Widget _buildBottomPanel({required String title, required VoidCallback onClose, required Widget child}) {
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.4,
+      decoration: const BoxDecoration(
+        color: AppTheme.surfaceColor,
+        border: Border(top: BorderSide(color: AppTheme.borderColor)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black12,
+            blurRadius: 4,
+            offset: Offset(0, -2),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: const BoxDecoration(
+              border: Border(bottom: BorderSide(color: AppTheme.borderColor)),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
+                IconButton(
+                  icon: const Icon(Icons.close, size: 20),
+                  onPressed: onClose,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                ),
+              ],
+            ),
+          ),
+          Expanded(child: child),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMobileToolbar(CanvasState canvasState, bool hasSelection) {
     return Container(
       height: 56,
       decoration: const BoxDecoration(
@@ -114,14 +266,18 @@ class _MobileCanvasLayoutState extends ConsumerState<_MobileCanvasLayout> {
       child: Row(
         children: [
           IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: () => Navigator.pop(context),
+            icon: Icon(
+              _showIconLibrary ? Icons.add_circle : Icons.add_circle_outline,
+              color: _showIconLibrary ? AppTheme.primaryColor : null,
+            ),
+            onPressed: () => setState(() {
+              _showIconLibrary = !_showIconLibrary;
+              if (_showIconLibrary) _showProperties = false;
+              ref.read(canvasProvider.notifier).toggleDrawingMode();
+            }),
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
           ),
-          const Text(
-            'Canvas Studio',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-          ),
-          const Spacer(),
           
           // Mode toggle
           SegmentedButton<GenerationMode>(
@@ -140,7 +296,7 @@ class _MobileCanvasLayoutState extends ConsumerState<_MobileCanvasLayout> {
             ),
           ),
           
-          const SizedBox(width: 8),
+          const SizedBox(width: 4),
           
           // Toggle timeline (video mode only)
           if (canvasState.mode == GenerationMode.video)
@@ -152,6 +308,8 @@ class _MobileCanvasLayoutState extends ConsumerState<_MobileCanvasLayout> {
                 ref.read(canvasProvider.notifier).toggleTimeline();
               },
               tooltip: canvasState.showTimeline ? 'Hide timeline' : 'Show timeline',
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
             ),
           
           IconButton(
@@ -162,12 +320,28 @@ class _MobileCanvasLayoutState extends ConsumerState<_MobileCanvasLayout> {
             onPressed: () {
               ref.read(canvasProvider.notifier).toggleDrawingMode();
             },
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
           ),
+          
+          if (hasSelection)
+            IconButton(
+              icon: Icon(Icons.tune, color: _showProperties ? AppTheme.primaryColor : null),
+              onPressed: () => setState(() {
+                _showProperties = !_showProperties;
+                if (_showProperties) _showIconLibrary = false;
+              }),
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+            ),
+            
           IconButton(
             icon: const Icon(Icons.delete_outline),
             onPressed: () {
               ref.read(canvasProvider.notifier).clearCanvas();
             },
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
           ),
         ],
       ),
@@ -205,82 +379,6 @@ class _MobileCanvasLayoutState extends ConsumerState<_MobileCanvasLayout> {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildIconLibraryDrawer() {
-    return Positioned.fill(
-      child: GestureDetector(
-        onTap: () => setState(() => _showIconLibrary = false),
-        child: Container(
-          color: Colors.black54,
-          child: Align(
-            alignment: Alignment.bottomCenter,
-            child: GestureDetector(
-              onTap: () {},
-              child: Container(
-                height: MediaQuery.of(context).size.height * 0.6,
-                decoration: const BoxDecoration(
-                  color: AppTheme.surfaceColor,
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-                ),
-                child: Column(
-                  children: [
-                    Container(
-                      margin: const EdgeInsets.only(top: 12, bottom: 8),
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: AppTheme.borderColor,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                    const Expanded(child: IconLibraryPanel()),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPropertiesDrawer() {
-    return Positioned.fill(
-      child: GestureDetector(
-        onTap: () => setState(() => _showProperties = false),
-        child: Container(
-          color: Colors.black54,
-          child: Align(
-            alignment: Alignment.bottomCenter,
-            child: GestureDetector(
-              onTap: () {},
-              child: Container(
-                height: MediaQuery.of(context).size.height * 0.7,
-                decoration: const BoxDecoration(
-                  color: AppTheme.surfaceColor,
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-                ),
-                child: Column(
-                  children: [
-                    Container(
-                      margin: const EdgeInsets.only(top: 12, bottom: 8),
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: AppTheme.borderColor,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                    Expanded(child: PropertiesPanel()),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
       ),
     );
   }
@@ -355,8 +453,8 @@ class _CanvasContainer extends ConsumerWidget {
                 Center(
                   child: Container(
                     constraints: BoxConstraints(
-                      maxWidth: context.isMobile ? double.infinity : 900,
-                      maxHeight: context.isMobile ? double.infinity : 700,
+                      maxWidth: double.infinity,
+                      maxHeight: double.infinity,
                     ),
                     margin: EdgeInsets.all(context.isMobile ? 0 : 24),
                     child: const CanvasArea(),

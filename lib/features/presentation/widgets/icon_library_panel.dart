@@ -20,9 +20,7 @@ class _IconLibraryPanelState extends ConsumerState<IconLibraryPanel> {
     return Container(
       decoration: const BoxDecoration(
         color: AppTheme.surfaceColor,
-        border: Border(
-          right: BorderSide(color: AppTheme.borderColor),
-        ),
+        border: Border(right: BorderSide(color: AppTheme.borderColor)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -34,7 +32,11 @@ class _IconLibraryPanelState extends ConsumerState<IconLibraryPanel> {
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.widgets, size: 20, color: AppTheme.primaryColor),
+                    const Icon(
+                      Icons.widgets,
+                      size: 20,
+                      color: AppTheme.primaryColor,
+                    ),
                     const SizedBox(width: 8),
                     Text(
                       'Smart Icons',
@@ -43,31 +45,55 @@ class _IconLibraryPanelState extends ConsumerState<IconLibraryPanel> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
+                    if (context.isMobile) ...[
+                      SizedBox(width: 8),
+
+                      Expanded(
+                        child: TextField(
+                          onChanged: (value) =>
+                              setState(() => _searchQuery = value),
+                          decoration: InputDecoration(
+                            hintText: 'Search icons...',
+                            hintStyle: const TextStyle(fontSize: 13),
+                            prefixIcon: const Icon(Icons.search, size: 20),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ],
                 ),
-                SizedBox(height: context.isMobile ? 12 : 16),
-                
-                TextField(
-                  onChanged: (value) => setState(() => _searchQuery = value),
-                  decoration: InputDecoration(
-                    hintText: 'Search icons...',
-                    hintStyle: const TextStyle(fontSize: 13),
-                    prefixIcon: const Icon(Icons.search, size: 20),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 8,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
+                if (!context.isMobile) ...[
+                  SizedBox(height: 16),
+
+                  TextField(
+                    onChanged: (value) => setState(() => _searchQuery = value),
+                    decoration: InputDecoration(
+                      hintText: 'Search icons...',
+                      hintStyle: const TextStyle(fontSize: 13),
+                      prefixIcon: const Icon(Icons.search, size: 20),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
                     ),
                   ),
-                ),
+                ],
               ],
             ),
           ),
-          
+
           const Divider(height: 1, color: AppTheme.borderColor),
-          
+
           SizedBox(
             height: 56,
             child: ListView.builder(
@@ -77,7 +103,7 @@ class _IconLibraryPanelState extends ConsumerState<IconLibraryPanel> {
               itemBuilder: (context, index) {
                 final category = IconCategory.values[index];
                 final isSelected = _selectedCategory == category;
-                
+
                 return Padding(
                   padding: const EdgeInsets.only(right: 8),
                   child: FilterChip(
@@ -104,13 +130,11 @@ class _IconLibraryPanelState extends ConsumerState<IconLibraryPanel> {
               },
             ),
           ),
-          
+
           const Divider(height: 1, color: AppTheme.borderColor),
-          
-          Expanded(
-            child: _buildIconGrid(),
-          ),
-          
+
+          Expanded(child: _buildIconGrid()),
+
           Container(
             padding: EdgeInsets.all(context.isMobile ? 12 : 16),
             decoration: BoxDecoration(
@@ -146,7 +170,9 @@ class _IconLibraryPanelState extends ConsumerState<IconLibraryPanel> {
   }
 
   Widget _buildIconGrid() {
-    final icons = SmartIconLibrary.getByCategory(_selectedCategory).where((icon) {
+    final icons = SmartIconLibrary.getByCategory(_selectedCategory).where((
+      icon,
+    ) {
       if (_searchQuery.isEmpty) return true;
       return icon.name.toLowerCase().contains(_searchQuery.toLowerCase());
     }).toList();
@@ -164,9 +190,7 @@ class _IconLibraryPanelState extends ConsumerState<IconLibraryPanel> {
             const SizedBox(height: 12),
             Text(
               'No icons found',
-              style: TextStyle(
-                color: AppTheme.textSecondary.withOpacity(0.5),
-              ),
+              style: TextStyle(color: AppTheme.textSecondary.withOpacity(0.5)),
             ),
           ],
         ),
@@ -226,17 +250,10 @@ class _IconLibraryItemState extends State<_IconLibraryItem> {
                 ),
               ],
             ),
-            child: Icon(
-              widget.icon.icon,
-              size: 40,
-              color: widget.icon.color,
-            ),
+            child: Icon(widget.icon.icon, size: 40, color: widget.icon.color),
           ),
         ),
-        childWhenDragging: Opacity(
-          opacity: 0.3,
-          child: _buildCard(),
-        ),
+        childWhenDragging: Opacity(opacity: 0.3, child: _buildCard()),
         child: _buildCard(),
       ),
     );

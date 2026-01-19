@@ -11,6 +11,7 @@ class PropertiesPanel extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final selectedIcon = ref.watch(selectedIconProvider);
+    final selectedSketch = ref.watch(selectedSketchProvider);
     final canvasState = ref.watch(canvasProvider);
     
     return Container(
@@ -23,7 +24,9 @@ class PropertiesPanel extends ConsumerWidget {
         ),
       ),
       child: selectedIcon != null
-        ? _buildProperties(context, ref, selectedIcon, canvasState)
+        ? _buildIconProperties(context, ref, selectedIcon, canvasState)
+        : selectedSketch != null
+        ? _buildSketchProperties(context, ref, selectedSketch, canvasState)
         : _buildEmptyState(context),
     );
   }
@@ -31,30 +34,30 @@ class PropertiesPanel extends ConsumerWidget {
   Widget _buildEmptyState(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: EdgeInsets.all(context.isMobile ? 16 : 24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
               Icons.tune,
-              size: context.isMobile ? 48 : 64,
+              size: context.isMobile ? 40 : 64,
               color: AppTheme.textSecondary.withOpacity(0.3),
             ),
-            SizedBox(height: context.isMobile ? 12 : 16),
+            SizedBox(height: context.isMobile ? 8 : 16),
             Text(
-              'No icon selected',
+              'No selection',
               style: TextStyle(
-                fontSize: context.isMobile ? 14 : 16,
+                fontSize: context.isMobile ? 13 : 16,
                 fontWeight: FontWeight.w600,
                 color: AppTheme.textSecondary,
               ),
             ),
-            SizedBox(height: context.isMobile ? 6 : 8),
+            SizedBox(height: context.isMobile ? 4 : 8),
             Text(
-              'Select an icon to edit properties',
+              'Select an icon or sketch',
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: context.isMobile ? 12 : 13,
+                fontSize: context.isMobile ? 11 : 13,
                 color: AppTheme.textSecondary.withOpacity(0.7),
               ),
             ),
@@ -64,9 +67,9 @@ class PropertiesPanel extends ConsumerWidget {
     );
   }
 
-  Widget _buildProperties(BuildContext context, WidgetRef ref, CanvasIcon icon, CanvasState canvasState) {
+  Widget _buildIconProperties(BuildContext context, WidgetRef ref, CanvasIcon icon, CanvasState canvasState) {
     return SingleChildScrollView(
-      padding: EdgeInsets.all(context.isMobile ? 16 : 20),
+      padding: EdgeInsets.all(context.isMobile ? 12 : 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -74,14 +77,18 @@ class PropertiesPanel extends ConsumerWidget {
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(8),
+                padding: EdgeInsets.all(context.isMobile ? 6 : 8),
                 decoration: BoxDecoration(
                   color: icon.type.color.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Icon(icon.type.icon, color: icon.type.color, size: 24),
+                child: Icon(
+                  icon.type.icon,
+                  color: icon.type.color,
+                  size: context.isMobile ? 20 : 24,
+                ),
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: context.isMobile ? 8 : 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -89,14 +96,14 @@ class PropertiesPanel extends ConsumerWidget {
                     Text(
                       icon.type.name,
                       style: TextStyle(
-                        fontSize: context.isMobile ? 16 : 18,
+                        fontSize: context.isMobile ? 14 : 18,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     Text(
                       icon.type.category.label,
                       style: TextStyle(
-                        fontSize: context.isMobile ? 12 : 13,
+                        fontSize: context.isMobile ? 11 : 13,
                         color: AppTheme.textSecondary,
                       ),
                     ),
@@ -106,52 +113,45 @@ class PropertiesPanel extends ConsumerWidget {
             ],
           ),
           
-          SizedBox(height: context.isMobile ? 20 : 24),
+          SizedBox(height: context.isMobile ? 16 : 24),
           
           // Variations
           Text(
             'Style Variation',
             style: TextStyle(
-              fontSize: context.isMobile ? 13 : 14,
+              fontSize: context.isMobile ? 12 : 14,
               fontWeight: FontWeight.w600,
             ),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: context.isMobile ? 8 : 12),
           
           Wrap(
-            spacing: 8,
-            runSpacing: 8,
+            spacing: context.isMobile ? 6 : 8,
+            runSpacing: context.isMobile ? 6 : 8,
             children: icon.type.variations.map<Widget>((variation) {
               final isSelected = icon.selectedVariation == variation;
               
               return InkWell(
                 onTap: () {
-                  ref.read(canvasProvider.notifier).selectVariation(
-                    icon.id,
-                    variation,
-                  );
+                  ref.read(canvasProvider.notifier).selectVariation(icon.id, variation);
                 },
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(6),
                 child: Container(
                   padding: EdgeInsets.symmetric(
-                    horizontal: context.isMobile ? 10 : 12,
-                    vertical: context.isMobile ? 8 : 10,
+                    horizontal: context.isMobile ? 8 : 12,
+                    vertical: context.isMobile ? 6 : 10,
                   ),
                   decoration: BoxDecoration(
-                    color: isSelected 
-                      ? AppTheme.primaryColor 
-                      : AppTheme.cardColor,
-                    borderRadius: BorderRadius.circular(8),
+                    color: isSelected ? AppTheme.primaryColor : AppTheme.cardColor,
+                    borderRadius: BorderRadius.circular(6),
                     border: Border.all(
-                      color: isSelected 
-                        ? AppTheme.primaryColor 
-                        : AppTheme.borderColor,
+                      color: isSelected ? AppTheme.primaryColor : AppTheme.borderColor,
                     ),
                   ),
                   child: Text(
                     variation,
                     style: TextStyle(
-                      fontSize: context.isMobile ? 12 : 13,
+                      fontSize: context.isMobile ? 11 : 13,
                       fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                       color: isSelected ? Colors.white : AppTheme.textPrimary,
                     ),
@@ -161,9 +161,8 @@ class PropertiesPanel extends ConsumerWidget {
             }).toList(),
           ),
           
-          SizedBox(height: context.isMobile ? 20 : 24),
+          SizedBox(height: context.isMobile ? 16 : 24),
           
-          // Size
           _buildSliderControl(
             context,
             ref,
@@ -175,9 +174,8 @@ class PropertiesPanel extends ConsumerWidget {
             (value) => ref.read(canvasProvider.notifier).updateIconSize(icon.id, value),
           ),
           
-          SizedBox(height: context.isMobile ? 20 : 24),
+          SizedBox(height: context.isMobile ? 16 : 24),
           
-          // Rotation
           _buildSliderControl(
             context,
             ref,
@@ -190,22 +188,20 @@ class PropertiesPanel extends ConsumerWidget {
             suffix: '°',
           ),
           
-          // Video Timeline Properties
           if (canvasState.mode == GenerationMode.video) ...[
-            SizedBox(height: context.isMobile ? 20 : 24),
-            const Divider(color: AppTheme.borderColor),
-            SizedBox(height: context.isMobile ? 20 : 24),
+            SizedBox(height: context.isMobile ? 16 : 24),
+            Divider(color: AppTheme.borderColor),
+            SizedBox(height: context.isMobile ? 16 : 24),
             
             Text(
               'Video Timeline',
               style: TextStyle(
-                fontSize: context.isMobile ? 15 : 16,
+                fontSize: context.isMobile ? 13 : 16,
                 fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: context.isMobile ? 12 : 16),
             
-            // Start Time
             _buildTimeControl(
               context,
               ref,
@@ -219,9 +215,8 @@ class PropertiesPanel extends ConsumerWidget {
               ),
             ),
             
-            const SizedBox(height: 16),
+            SizedBox(height: context.isMobile ? 12 : 16),
             
-            // End Time
             _buildTimeControl(
               context,
               ref,
@@ -235,9 +230,8 @@ class PropertiesPanel extends ConsumerWidget {
               ),
             ),
             
-            const SizedBox(height: 16),
+            SizedBox(height: context.isMobile ? 12 : 16),
             
-            // Duration display
             _buildInfoCard(
               'Duration',
               '${(icon.endTime - icon.startTime).toStringAsFixed(1)}s',
@@ -245,24 +239,23 @@ class PropertiesPanel extends ConsumerWidget {
               context,
             ),
             
-            const SizedBox(height: 16),
+            SizedBox(height: context.isMobile ? 12 : 16),
             
-            // Animation
             Text(
               'Animation',
               style: TextStyle(
-                fontSize: context.isMobile ? 13 : 14,
+                fontSize: context.isMobile ? 12 : 14,
                 fontWeight: FontWeight.w600,
               ),
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: context.isMobile ? 8 : 12),
             
             DropdownButtonFormField<String>(
               value: icon.animation,
               decoration: InputDecoration(
                 contentPadding: EdgeInsets.symmetric(
-                  horizontal: context.isMobile ? 12 : 14,
-                  vertical: context.isMobile ? 10 : 12,
+                  horizontal: context.isMobile ? 10 : 14,
+                  vertical: context.isMobile ? 8 : 12,
                 ),
               ),
               items: AnimationType.all.map((anim) {
@@ -270,7 +263,7 @@ class PropertiesPanel extends ConsumerWidget {
                   value: anim,
                   child: Text(
                     _formatAnimationName(anim),
-                    style: TextStyle(fontSize: context.isMobile ? 13 : 14),
+                    style: TextStyle(fontSize: context.isMobile ? 12 : 14),
                   ),
                 );
               }).toList(),
@@ -282,9 +275,8 @@ class PropertiesPanel extends ConsumerWidget {
             ),
           ],
           
-          SizedBox(height: context.isMobile ? 20 : 24),
+          SizedBox(height: context.isMobile ? 16 : 24),
           
-          // Position info
           _buildInfoCard(
             'Position',
             'X: ${icon.position.dx.round()}, Y: ${icon.position.dy.round()}',
@@ -292,20 +284,267 @@ class PropertiesPanel extends ConsumerWidget {
             context,
           ),
           
-          SizedBox(height: context.isMobile ? 20 : 24),
+          SizedBox(height: context.isMobile ? 16 : 24),
           
-          // Actions
           OutlinedButton.icon(
             onPressed: () {
               ref.read(canvasProvider.notifier).deleteIcon(icon.id);
             },
-            icon: const Icon(Icons.delete_outline, size: 18),
-            label: const Text('Remove from Canvas'),
+            icon: Icon(Icons.delete_outline, size: context.isMobile ? 16 : 18),
+            label: Text(
+              'Remove',
+              style: TextStyle(fontSize: context.isMobile ? 12 : 14),
+            ),
             style: OutlinedButton.styleFrom(
               foregroundColor: Colors.red,
               side: const BorderSide(color: Colors.red),
               padding: EdgeInsets.symmetric(
-                vertical: context.isMobile ? 10 : 12,
+                vertical: context.isMobile ? 8 : 12,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSketchProperties(BuildContext context, WidgetRef ref, SketchStroke sketch, CanvasState canvasState) {
+    return SingleChildScrollView(
+      padding: EdgeInsets.all(context.isMobile ? 12 : 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Header
+          Row(
+            children: [
+              Container(
+                padding: EdgeInsets.all(context.isMobile ? 6 : 8),
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryColor.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  Icons.draw,
+                  color: AppTheme.primaryColor,
+                  size: context.isMobile ? 20 : 24,
+                ),
+              ),
+              SizedBox(width: context.isMobile ? 8 : 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Sketch Stroke',
+                      style: TextStyle(
+                        fontSize: context.isMobile ? 14 : 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      '${sketch.points.length} points',
+                      style: TextStyle(
+                        fontSize: context.isMobile ? 11 : 13,
+                        color: AppTheme.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          
+          SizedBox(height: context.isMobile ? 16 : 24),
+          
+          // Color Picker
+          Text(
+            'Color',
+            style: TextStyle(
+              fontSize: context.isMobile ? 12 : 14,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          SizedBox(height: context.isMobile ? 8 : 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              Colors.black, Colors.white, Colors.grey, Colors.red, Colors.pink,
+              Colors.purple, Colors.deepPurple, Colors.indigo, Colors.blue, Colors.lightBlue,
+              Colors.cyan, Colors.teal, Colors.green, Colors.lightGreen, Colors.lime,
+              Colors.yellow, Colors.amber, Colors.orange, Colors.deepOrange, Colors.brown,
+            ].map((color) {
+              final isSelected = sketch.color.value == color.value;
+              return GestureDetector(
+                onTap: () => ref.read(canvasProvider.notifier).updateSketchColor(sketch.id, color),
+                child: Container(
+                  width: 24,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    color: color,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: isSelected ? AppTheme.primaryColor : Colors.grey.shade300,
+                      width: isSelected ? 2 : 1,
+                    ),
+                    boxShadow: isSelected ? [
+                      BoxShadow(
+                        color: AppTheme.primaryColor.withOpacity(0.3),
+                        blurRadius: 4,
+                        spreadRadius: 1,
+                      ),
+                    ] : null,
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+
+          SizedBox(height: context.isMobile ? 16 : 24),
+
+          // Stroke Width
+          _buildSliderControl(
+            context,
+            ref,
+            'Stroke Width',
+            sketch.strokeWidth,
+            1,
+            50,
+            49,
+            (value) => ref.read(canvasProvider.notifier).updateSketchStrokeWidth(sketch.id, value),
+            suffix: 'px',
+          ),
+          
+          SizedBox(height: context.isMobile ? 12 : 16),
+          
+          _buildSliderControl(
+            context,
+            ref,
+            'Scale',
+            sketch.scale,
+            0.1,
+            3.0,
+            29,
+            (value) => ref.read(canvasProvider.notifier).updateSketchScale(sketch.id, value),
+            suffix: 'x',
+          ),
+          
+          SizedBox(height: context.isMobile ? 12 : 16),
+          
+          _buildSliderControl(
+            context,
+            ref,
+            'Rotation',
+            sketch.rotation,
+            0,
+            360,
+            36,
+            (value) => ref.read(canvasProvider.notifier).updateSketchRotation(sketch.id, value),
+            suffix: '°',
+          ),
+          
+          SizedBox(height: context.isMobile ? 12 : 16),
+          
+          _buildSliderControl(
+            context,
+            ref,
+            'Position X',
+            sketch.position.dx,
+            -500,
+            1500,
+            2000,
+            (value) => ref.read(canvasProvider.notifier).updateSketchPosition(
+              sketch.id, 
+              Offset(value, sketch.position.dy)
+            ),
+          ),
+          
+          SizedBox(height: context.isMobile ? 12 : 16),
+          
+          _buildSliderControl(
+            context,
+            ref,
+            'Position Y',
+            sketch.position.dy,
+            -500,
+            1500,
+            2000,
+            (value) => ref.read(canvasProvider.notifier).updateSketchPosition(
+              sketch.id, 
+              Offset(sketch.position.dx, value)
+            ),
+          ),
+          
+          if (canvasState.mode == GenerationMode.video) ...[
+            SizedBox(height: context.isMobile ? 16 : 24),
+            Divider(color: AppTheme.borderColor),
+            SizedBox(height: context.isMobile ? 16 : 24),
+            
+            Text(
+              'Video Timeline',
+              style: TextStyle(
+                fontSize: context.isMobile ? 13 : 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: context.isMobile ? 12 : 16),
+            
+            _buildTimeControl(
+              context,
+              ref,
+              'Start Time',
+              sketch.startTime,
+              0,
+              canvasState.videoDuration,
+              (value) => ref.read(canvasProvider.notifier).updateSketchTimeline(
+                sketch.id,
+                startTime: value,
+              ),
+            ),
+            
+            SizedBox(height: context.isMobile ? 12 : 16),
+            
+            _buildTimeControl(
+              context,
+              ref,
+              'End Time',
+              sketch.endTime == double.infinity ? canvasState.videoDuration : sketch.endTime,
+              sketch.startTime + 0.5,
+              canvasState.videoDuration,
+              (value) => ref.read(canvasProvider.notifier).updateSketchTimeline(
+                sketch.id,
+                endTime: value,
+              ),
+            ),
+            
+            SizedBox(height: context.isMobile ? 12 : 16),
+            
+            _buildInfoCard(
+              'Duration',
+              sketch.endTime == double.infinity
+                ? '${(canvasState.videoDuration - sketch.startTime).toStringAsFixed(1)}s (End)'
+                : '${(sketch.endTime - sketch.startTime).toStringAsFixed(1)}s',
+              Icons.timer_outlined,
+              context,
+            ),
+          ],
+          
+          SizedBox(height: context.isMobile ? 16 : 24),
+          
+          OutlinedButton.icon(
+            onPressed: () {
+              ref.read(canvasProvider.notifier).deleteSketch(sketch.id);
+            },
+            icon: Icon(Icons.delete_outline, size: context.isMobile ? 16 : 18),
+            label: Text(
+              'Remove Sketch',
+              style: TextStyle(fontSize: context.isMobile ? 12 : 14),
+            ),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: Colors.red,
+              side: const BorderSide(color: Colors.red),
+              padding: EdgeInsets.symmetric(
+                vertical: context.isMobile ? 8 : 12,
               ),
             ),
           ),
@@ -331,11 +570,11 @@ class PropertiesPanel extends ConsumerWidget {
         Text(
           label,
           style: TextStyle(
-            fontSize: context.isMobile ? 13 : 14,
+            fontSize: context.isMobile ? 12 : 14,
             fontWeight: FontWeight.w600,
           ),
         ),
-        const SizedBox(height: 12),
+        SizedBox(height: context.isMobile ? 8 : 12),
         Row(
           children: [
             Expanded(
@@ -349,10 +588,13 @@ class PropertiesPanel extends ConsumerWidget {
                 onChanged: onChanged,
               ),
             ),
-            const SizedBox(width: 12),
+            SizedBox(width: context.isMobile ? 8 : 12),
             Container(
-              width: context.isMobile ? 50 : 60,
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+              width: context.isMobile ? 45 : 60,
+              padding: EdgeInsets.symmetric(
+                horizontal: context.isMobile ? 6 : 8,
+                vertical: context.isMobile ? 4 : 6,
+              ),
               decoration: BoxDecoration(
                 color: AppTheme.cardColor,
                 borderRadius: BorderRadius.circular(6),
@@ -362,7 +604,7 @@ class PropertiesPanel extends ConsumerWidget {
                 '${value.round()}$suffix',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: context.isMobile ? 12 : 13,
+                  fontSize: context.isMobile ? 11 : 13,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -391,23 +633,23 @@ class PropertiesPanel extends ConsumerWidget {
             Text(
               label,
               style: TextStyle(
-                fontSize: context.isMobile ? 13 : 14,
+                fontSize: context.isMobile ? 12 : 14,
                 fontWeight: FontWeight.w600,
               ),
             ),
             Text(
               '${value.toStringAsFixed(1)}s',
               style: TextStyle(
-                fontSize: context.isMobile ? 12 : 13,
+                fontSize: context.isMobile ? 11 : 13,
                 fontWeight: FontWeight.w600,
                 color: AppTheme.primaryColor,
               ),
             ),
           ],
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: context.isMobile ? 6 : 8),
         Slider(
-          value: value,
+          value: value.clamp(min, max),
           min: min,
           max: max,
           divisions: ((max - min) * 10).toInt(),
@@ -420,7 +662,7 @@ class PropertiesPanel extends ConsumerWidget {
 
   Widget _buildInfoCard(String label, String value, IconData icon, BuildContext context) {
     return Container(
-      padding: EdgeInsets.all(context.isMobile ? 10 : 12),
+      padding: EdgeInsets.all(context.isMobile ? 8 : 12),
       decoration: BoxDecoration(
         color: AppTheme.cardColor,
         borderRadius: BorderRadius.circular(8),
@@ -428,8 +670,8 @@ class PropertiesPanel extends ConsumerWidget {
       ),
       child: Row(
         children: [
-          Icon(icon, size: 18, color: AppTheme.textSecondary),
-          const SizedBox(width: 12),
+          Icon(icon, size: context.isMobile ? 14 : 18, color: AppTheme.textSecondary),
+          SizedBox(width: context.isMobile ? 8 : 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -437,15 +679,15 @@ class PropertiesPanel extends ConsumerWidget {
                 Text(
                   label,
                   style: TextStyle(
-                    fontSize: context.isMobile ? 11 : 12,
+                    fontSize: context.isMobile ? 10 : 12,
                     color: AppTheme.textSecondary,
                   ),
                 ),
-                const SizedBox(height: 2),
+                SizedBox(height: context.isMobile ? 1 : 2),
                 Text(
                   value,
                   style: TextStyle(
-                    fontSize: context.isMobile ? 12 : 13,
+                    fontSize: context.isMobile ? 11 : 13,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
