@@ -16,6 +16,7 @@ class _VideoTimelineState extends ConsumerState<VideoTimeline> {
   double? _dragStartDx;
   double? _initialStartTime;
   double? _initialEndTime;
+  double? _initialTrimStart;
 
   String? _draggingId;
   String? _resizingId;
@@ -70,7 +71,7 @@ class _VideoTimelineState extends ConsumerState<VideoTimeline> {
             },
             iconSize: context.isMobile ? 20 : 28,
             color: AppTheme.primaryColor,
-            padding: EdgeInsets.all(context.isMobile ? 2 : 8),
+            padding: EdgeInsets.all(context.isMobile ? 8 : 8),
             constraints: context.isMobile ? const BoxConstraints() : null,
           ),
 
@@ -80,7 +81,7 @@ class _VideoTimelineState extends ConsumerState<VideoTimeline> {
               ref.read(canvasProvider.notifier).stopVideo();
             },
             iconSize: context.isMobile ? 20 : 28,
-            padding: EdgeInsets.all(context.isMobile ? 2 : 8),
+            padding: EdgeInsets.all(context.isMobile ? 8 : 8),
             constraints: context.isMobile ? const BoxConstraints() : null,
           ),
 
@@ -150,6 +151,150 @@ class _VideoTimelineState extends ConsumerState<VideoTimeline> {
     return SingleChildScrollView(
       child: Column(
         children: [
+          // Video tracks
+          ...state.userVideos.asMap().entries.map((entry) {
+            final video = entry.value;
+            return _TimelineTrack(
+              key: ValueKey('video_${video.id}'),
+              id: video.id,
+              label: 'Video ${entry.key + 1}',
+              icon: Icons.videocam,
+              color: Colors.red,
+              startTime: video.startTime,
+              endTime: video.startTime + video.duration,
+              variation: '${video.duration.toStringAsFixed(1)}s',
+              trackIndex: entry.key,
+              videoDuration: state.videoDuration,
+              currentTime: state.currentTime,
+              isSelected: state.selectedUserVideoId == video.id,
+              isIcon: false,
+              onTap: () => ref.read(canvasProvider.notifier).selectUserVideo(video.id),
+              onDragStart: (details) {
+                setState(() {
+                  _draggingId = video.id;
+                  _dragStartDx = details.localPosition.dx;
+                  _initialStartTime = video.startTime;
+                  _initialEndTime = video.startTime + video.duration;
+                });
+              },
+              onDragUpdate: (details) {
+                if (_draggingId != video.id) return;
+                final pixelsPerSecond = MediaQuery.of(context).size.width / state.videoDuration;
+                final dx = details.localPosition.dx - _dragStartDx!;
+                final deltaTime = dx / pixelsPerSecond;
+                final duration = _initialEndTime! - _initialStartTime!;
+                final newStart = (_initialStartTime! + deltaTime).clamp(0.0, state.videoDuration - duration);
+                ref.read(canvasProvider.notifier).updateUserVideoTimeline(video.id, startTime: newStart);
+              },
+              onDragEnd: () => setState(() => _draggingId = null),
+              onResizeStart: (isStart, details) {
+                setState(() {
+                  _resizingId = video.id;
+                  _resizingStart = isStart;
+                  _dragStartDx = details.localPosition.dx;
+                  _initialStartTime = video.startTime;
+                  _initialEndTime = video.startTime + video.duration;
+                  _initialTrimStart = video.trimStart;
+                });
+              },
+              onResizeUpdate: (details) {
+                if (_resizingId != video.id) return;
+                final pixelsPerSecond = MediaQuery.of(context).size.width / state.videoDuration;
+                final dx = details.localPosition.dx - _dragStartDx!;
+                final deltaTime = dx / pixelsPerSecond;
+                
+                if (_resizingStart) {
+                  // Left resize: change start time and trim start
+                  final newStart = (_initialStartTime! + deltaTime).clamp(0.0, _initialEndTime! - 0.5);
+                  final timeShift = newStart - _initialStartTime!;
+                  final newTrimStart = _initialTrimStart! + timeShift * video.playbackSpeed;
+                  
+                  if (newTrimStart >= 0 && newTrimStart < video.originalDuration) {
+                     ref.read(canvasProvider.notifier).updateUserVideoTimeline(video.id, startTime: newStart);
+                     final trimEnd = _initialTrimStart! + (_initialEndTime! - _initialStartTime!) * video.playbackSpeed;
+                     ref.read(canvasProvider.notifier).updateUserVideoTrim(video.id, newTrimStart, trimEnd);
+                  }
+                } else {
+                  // Right resize: change duration (trim end)
+                  final newEnd = (_initialEndTime! + deltaTime).clamp(_initialStartTime! + 0.5, state.videoDuration);
+                  final newDuration = newEnd - _initialStartTime!;
+                  final maxDuration = (video.originalDuration - video.trimStart) / video.playbackSpeed;
+                  final clampedDuration = newDuration.clamp(0.5, maxDuration);
+                  final trimEnd = video.trimStart + clampedDuration * video.playbackSpeed;
+                  ref.read(canvasProvider.notifier).updateUserVideoTrim(video.id, video.trimStart, trimEnd);
+                }
+              },
+              onResizeEnd: () => setState(() => _resizingId = null),
+            );
+          }),
+
+          // User Image tracks
+          ...state.userImages.asMap().entries.map((entry) {
+            return _TimelineTrack(
+              key: ValueKey('img_${entry.value.id}'),
+              id: entry.value.id,
+              label: 'Image ${entry.key + 1}',
+              icon: Icons.image,
+              color: Colors.blueGrey,
+              startTime: entry.value.startTime,
+              endTime: entry.value.endTime,
+              variation: 'Custom Image',
+              trackIndex: entry.key,
+              videoDuration: state.videoDuration,
+              currentTime: state.currentTime,
+              isSelected: state.selectedUserImageId == entry.value.id,
+              isIcon: false,
+              onTap: () {
+                ref.read(canvasProvider.notifier).selectUserImage(entry.value.id);
+              },
+              onDragStart: (details) {
+                setState(() {
+                  _draggingId = entry.value.id;
+                  _dragStartDx = details.localPosition.dx;
+                  _initialStartTime = entry.value.startTime;
+                  _initialEndTime = entry.value.endTime;
+                  _isIcon = false;
+                });
+              },
+              onDragUpdate: (details) {
+                if (_draggingId != entry.value.id) return;
+                final pixelsPerSecond = MediaQuery.of(context).size.width / state.videoDuration;
+                final dx = details.localPosition.dx - _dragStartDx!;
+                final deltaTime = dx / pixelsPerSecond;
+                final duration = _initialEndTime! - _initialStartTime!;
+                final newStart = (_initialStartTime! + deltaTime).clamp(0.0, state.videoDuration - duration);
+                ref.read(canvasProvider.notifier).updateUserImageTimeline(entry.value.id, startTime: newStart, endTime: newStart + duration);
+              },
+              onDragEnd: () {
+                setState(() { _draggingId = null; });
+              },
+              onResizeStart: (isStart, details) {
+                setState(() {
+                  _resizingId = entry.value.id;
+                  _resizingStart = isStart;
+                  _dragStartDx = details.localPosition.dx;
+                  _initialStartTime = entry.value.startTime;
+                  _initialEndTime = entry.value.endTime;
+                  _isIcon = false;
+                });
+              },
+              onResizeUpdate: (details) {
+                if (_resizingId != entry.value.id) return;
+                final pixelsPerSecond = MediaQuery.of(context).size.width / state.videoDuration;
+                final dx = details.localPosition.dx - _dragStartDx!;
+                final deltaTime = dx / pixelsPerSecond;
+                if (_resizingStart) {
+                  final newStart = (_initialStartTime! + deltaTime).clamp(0.0, _initialEndTime! - 0.5);
+                  ref.read(canvasProvider.notifier).updateUserImageTimeline(entry.value.id, startTime: newStart);
+                } else {
+                  final newEnd = (_initialEndTime! + deltaTime).clamp(_initialStartTime! + 0.5, state.videoDuration);
+                  ref.read(canvasProvider.notifier).updateUserImageTimeline(entry.value.id, endTime: newEnd);
+                }
+              },
+              onResizeEnd: () { setState(() { _resizingId = null; }); },
+            );
+          }),
+
           // Icon tracks
           ...state.icons.asMap().entries.map((entry) {
             return _TimelineTrack(

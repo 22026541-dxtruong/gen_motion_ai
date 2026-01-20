@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import 'dart:io';
 import 'dart:math' as math;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:video_player/video_player.dart';
 import 'package:gen_motion_ai/features/presentation/canvas/canvas_provider.dart';
 import 'package:gen_motion_ai/features/presentation/canvas/models.dart'
     as models;
@@ -24,6 +27,8 @@ class _CanvasAreaState extends ConsumerState<CanvasArea> {
     final canvasState = ref.watch(canvasProvider);
     final visibleIcons = ref.watch(visibleIconsProvider);
     final visibleSketches = ref.watch(visibleSketchesProvider);
+    final visibleUserImages = ref.watch(visibleUserImagesProvider);
+    final visibleUserVideos = ref.watch(visibleUserVideosProvider);
     final logicalHeight = kLogicalWidth / canvasState.aspectRatio.ratio;
 
     return Column(
@@ -88,6 +93,36 @@ class _CanvasAreaState extends ConsumerState<CanvasArea> {
                                   if (!canvasState.isDrawingMode) {
                                     bool tappedOnElement = false;
 
+                                    // Check user videos
+                                    for (final video in visibleUserVideos.reversed) {
+                                      if (_isPointOnUserVideo(
+                                        video,
+                                        details.localPosition,
+                                      )) {
+                                        ref
+                                            .read(canvasProvider.notifier)
+                                            .selectUserVideo(video.id);
+                                        tappedOnElement = true;
+                                        break;
+                                      }
+                                    }
+                                    if (tappedOnElement) return;
+
+                                    // Check user images (reversed for z-order)
+                                    for (final img in visibleUserImages.reversed) {
+                                      if (_isPointOnUserImage(
+                                        img,
+                                        details.localPosition,
+                                      )) {
+                                        ref
+                                            .read(canvasProvider.notifier)
+                                            .selectUserImage(img.id);
+                                        tappedOnElement = true;
+                                        break;
+                                      }
+                                    }
+                                    if (tappedOnElement) return;
+
                                     // Check icons (reversed for z-order)
                                     for (final icon in visibleIcons.reversed) {
                                       if (_isPointOnIcon(
@@ -126,6 +161,12 @@ class _CanvasAreaState extends ConsumerState<CanvasArea> {
                                       ref
                                           .read(canvasProvider.notifier)
                                           .selectSketch(null);
+                                      ref
+                                          .read(canvasProvider.notifier)
+                                          .selectUserImage(null);
+                                      ref
+                                          .read(canvasProvider.notifier)
+                                          .selectUserVideo(null);
                                     }
                                   }
                                 },
@@ -135,6 +176,24 @@ class _CanvasAreaState extends ConsumerState<CanvasArea> {
                                     Positioned.fill(
                                       child: CustomPaint(
                                         painter: GridPainter(),
+                                      ),
+                                    ),
+
+                                    // User Videos
+                                    ...visibleUserVideos.map(
+                                      (video) => _CanvasUserVideoWidget(
+                                        key: ValueKey(video.id),
+                                        video: video,
+                                        canvasKey: _canvasKey,
+                                      ),
+                                    ),
+
+                                    // User Images (Background layer)
+                                    ...visibleUserImages.map(
+                                      (img) => _CanvasUserImageWidget(
+                                        key: ValueKey(img.id),
+                                        image: img,
+                                        canvasKey: _canvasKey,
                                       ),
                                     ),
 
@@ -208,6 +267,8 @@ class _CanvasAreaState extends ConsumerState<CanvasArea> {
                                     // Empty state
                                     if (canvasState.icons.isEmpty &&
                                         canvasState.sketches.isEmpty &&
+                                        canvasState.userImages.isEmpty &&
+                                        canvasState.userVideos.isEmpty &&
                                         !canvasState.isDrawingMode)
                                       Center(
                                         child: Column(
@@ -283,8 +344,8 @@ class _CanvasAreaState extends ConsumerState<CanvasArea> {
                       borderRadius: BorderRadius.circular(4),
                       child: Container(
                         padding: EdgeInsets.symmetric(
-                          horizontal: context.isMobile ? 8 : 10,
-                          vertical: context.isMobile ? 4 : 6,
+                          horizontal: context.isMobile ? 12 : 10,
+                          vertical: context.isMobile ? 8 : 6,
                         ),
                         decoration: BoxDecoration(
                           color: isSelected
@@ -300,7 +361,7 @@ class _CanvasAreaState extends ConsumerState<CanvasArea> {
                         child: Text(
                           ratio.label,
                           style: TextStyle(
-                            fontSize: context.isMobile ? 10 : 11,
+                            fontSize: context.isMobile ? 12 : 11,
                             fontWeight: isSelected
                                 ? FontWeight.w600
                                 : FontWeight.w500,
@@ -402,6 +463,50 @@ class _CanvasAreaState extends ConsumerState<CanvasArea> {
     final double t = h.clamp(0.0, 1.0);
     return (pa - ba * t).distance;
   }
+
+  bool _isPointOnUserImage(models.UserImage img, Offset touchPoint) {
+    // 1. Translate
+    Offset local = touchPoint - img.position;
+
+    // 2. Rotate
+    final double rad = -img.rotation * math.pi / 180.0;
+    final double cosT = math.cos(rad);
+    final double sinT = math.sin(rad);
+    local = Offset(
+      local.dx * cosT - local.dy * sinT,
+      local.dx * sinT + local.dy * cosT,
+    );
+
+    // 3. Check bounds
+    final double halfWidth = img.size.width / 2;
+    final double halfHeight = img.size.height / 2;
+    return local.dx >= -halfWidth &&
+        local.dx <= halfWidth &&
+        local.dy >= -halfHeight &&
+        local.dy <= halfHeight;
+  }
+
+  bool _isPointOnUserVideo(models.UserVideo video, Offset touchPoint) {
+    // 1. Translate
+    Offset local = touchPoint - video.position;
+
+    // 2. Rotate
+    final double rad = -video.rotation * math.pi / 180.0;
+    final double cosT = math.cos(rad);
+    final double sinT = math.sin(rad);
+    local = Offset(
+      local.dx * cosT - local.dy * sinT,
+      local.dx * sinT + local.dy * cosT,
+    );
+
+    // 3. Check bounds
+    final double halfWidth = video.size.width / 2;
+    final double halfHeight = video.size.height / 2;
+    return local.dx >= -halfWidth &&
+        local.dx <= halfWidth &&
+        local.dy >= -halfHeight &&
+        local.dy <= halfHeight;
+  }
 }
 
 // Draggable Sketch Widget
@@ -450,6 +555,179 @@ class _DraggableSketchState extends ConsumerState<_DraggableSketch> {
               );
             }).toList(),
             isSelected: widget.isSelected,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _CanvasUserVideoWidget extends ConsumerStatefulWidget {
+  final models.UserVideo video;
+  final GlobalKey canvasKey;
+
+  const _CanvasUserVideoWidget({
+    required Key key,
+    required this.video,
+    required this.canvasKey,
+  }) : super(key: key);
+
+  @override
+  ConsumerState<_CanvasUserVideoWidget> createState() => _CanvasUserVideoWidgetState();
+}
+
+class _CanvasUserVideoWidgetState extends ConsumerState<_CanvasUserVideoWidget> {
+  Offset? _startPos;
+  Offset _accumulatedDelta = Offset.zero;
+  VideoPlayerController? _controller;
+  bool _isInitialized = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeController();
+  }
+
+  @override
+  void didUpdateWidget(_CanvasUserVideoWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.video.path != oldWidget.video.path) {
+      _controller?.dispose();
+      _isInitialized = false;
+      _initializeController();
+    }
+  }
+
+  Future<void> _initializeController() async {
+    try {
+      if (kIsWeb) {
+        _controller = VideoPlayerController.networkUrl(Uri.parse(widget.video.path));
+      } else {
+        _controller = VideoPlayerController.file(File(widget.video.path));
+      }
+      
+      await _controller!.initialize();
+      await _controller!.setVolume(widget.video.volume);
+      setState(() {
+        _isInitialized = true;
+      });
+    } catch (e) {
+      debugPrint('Error initializing video: $e');
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final canvasState = ref.watch(canvasProvider);
+    final isSelected = ref.watch(canvasProvider).selectedUserVideoId == widget.video.id;
+
+    // Sync video player with canvas timeline
+    if (_isInitialized && _controller != null) {
+      _controller!.setVolume(widget.video.volume);
+      // Note: setPlaybackSpeed might not be supported on all platforms/formats perfectly
+      // but we attempt it.
+      if (_controller!.value.playbackSpeed != widget.video.playbackSpeed) {
+        _controller!.setPlaybackSpeed(widget.video.playbackSpeed);
+      }
+
+      // Calculate target video time based on canvas time
+      // Video Time = (CanvasTime - StartTime) * Speed + TrimStart
+      final double relativeTime = canvasState.currentTime - widget.video.startTime;
+      final double targetVideoTime = (relativeTime * widget.video.playbackSpeed) + widget.video.trimStart;
+
+      if (canvasState.isPlaying) {
+        if (!_controller!.value.isPlaying) {
+          _controller!.play();
+        }
+        // Optional: Sync if drift is too large, but usually let it play
+        final currentVideoPos = _controller!.value.position.inMilliseconds / 1000.0;
+        if ((currentVideoPos - targetVideoTime).abs() > 0.5) {
+           _controller!.seekTo(Duration(milliseconds: (targetVideoTime * 1000).toInt()));
+        }
+      } else {
+        if (_controller!.value.isPlaying) {
+          _controller!.pause();
+        }
+        // Seek to exact frame when paused
+        _controller!.seekTo(Duration(milliseconds: (targetVideoTime * 1000).toInt()));
+      }
+    }
+
+    return Positioned(
+      left: widget.video.position.dx - widget.video.size.width / 2,
+      top: widget.video.position.dy - widget.video.size.height / 2,
+      child: GestureDetector(
+        onPanStart: (details) {
+          _startPos = widget.video.position;
+          _accumulatedDelta = Offset.zero;
+          ref.read(canvasProvider.notifier).selectUserVideo(widget.video.id);
+        },
+        onPanUpdate: (details) {
+          if (_startPos == null) return;
+          _accumulatedDelta += details.delta;
+          ref.read(canvasProvider.notifier).updateUserVideoPosition(
+            widget.video.id,
+            _startPos! + _accumulatedDelta,
+          );
+        },
+        onPanEnd: (_) {
+          _startPos = null;
+          _accumulatedDelta = Offset.zero;
+        },
+        child: Transform.rotate(
+          angle: widget.video.rotation * 3.14159 / 180,
+          child: Container(
+            width: widget.video.size.width,
+            height: widget.video.size.height,
+            decoration: BoxDecoration(
+              color: Colors.black87,
+              border: isSelected
+                  ? Border.all(color: Colors.red, width: 2)
+                  : null,
+            ),
+            child: Stack(
+              children: [
+                if (_isInitialized && _controller != null)
+                  Center(
+                    child: AspectRatio(
+                      aspectRatio: _controller!.value.aspectRatio,
+                      child: VideoPlayer(_controller!),
+                    ),
+                  )
+                else
+                  Center(
+                    child: Icon(
+                      Icons.videocam,
+                      size: 48,
+                      color: Colors.white.withOpacity(0.5),
+                    ),
+                  ),
+                if (isSelected)
+                  Positioned(
+                    top: -8,
+                    right: -8,
+                    child: GestureDetector(
+                      onTap: () {
+                        ref.read(canvasProvider.notifier).deleteUserVideo(widget.video.id);
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: const BoxDecoration(
+                          color: Colors.red,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.close, size: 14, color: Colors.white),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
           ),
         ),
       ),
@@ -689,4 +967,99 @@ class SketchStrokePainter extends CustomPainter {
       points != oldDelegate.points ||
       isSelected != oldDelegate.isSelected ||
       isAbsolute != oldDelegate.isAbsolute;
+}
+
+class _CanvasUserImageWidget extends ConsumerStatefulWidget {
+  final models.UserImage image;
+  final GlobalKey canvasKey;
+
+  const _CanvasUserImageWidget({
+    required Key key,
+    required this.image,
+    required this.canvasKey,
+  }) : super(key: key);
+
+  @override
+  ConsumerState<_CanvasUserImageWidget> createState() => _CanvasUserImageWidgetState();
+}
+
+class _CanvasUserImageWidgetState extends ConsumerState<_CanvasUserImageWidget> {
+  Offset? _startPos;
+  Offset _accumulatedDelta = Offset.zero;
+
+  @override
+  Widget build(BuildContext context) {
+    final isSelected = ref.watch(canvasProvider).selectedUserImageId == widget.image.id;
+
+    return Positioned(
+      left: widget.image.position.dx - widget.image.size.width / 2,
+      top: widget.image.position.dy - widget.image.size.height / 2,
+      child: GestureDetector(
+        onPanStart: (details) {
+          _startPos = widget.image.position;
+          _accumulatedDelta = Offset.zero;
+          ref.read(canvasProvider.notifier).selectUserImage(widget.image.id);
+        },
+        onPanUpdate: (details) {
+          if (_startPos == null) return;
+          _accumulatedDelta += details.delta;
+          ref.read(canvasProvider.notifier).updateUserImagePosition(
+            widget.image.id,
+            _startPos! + _accumulatedDelta,
+          );
+        },
+        onPanEnd: (_) {
+          _startPos = null;
+          _accumulatedDelta = Offset.zero;
+        },
+        child: Transform.rotate(
+          angle: widget.image.rotation * 3.14159 / 180,
+          child: Container(
+            width: widget.image.size.width,
+            height: widget.image.size.height,
+            decoration: BoxDecoration(
+              border: isSelected
+                  ? Border.all(color: AppTheme.primaryColor, width: 2)
+                  : null,
+            ),
+            child: Stack(
+              children: [
+                Positioned.fill(
+                  child: kIsWeb
+                      ? Image.network(
+                          widget.image.path,
+                          fit: BoxFit.cover,
+                          opacity: AlwaysStoppedAnimation(widget.image.opacity),
+                        )
+                      : Image.file(
+                          File(widget.image.path),
+                          fit: BoxFit.cover,
+                          opacity: AlwaysStoppedAnimation(widget.image.opacity),
+                        ),
+                ),
+                if (isSelected)
+                  Positioned(
+                    top: -8,
+                    right: -8,
+                    child: GestureDetector(
+                      onTap: () {
+                        ref.read(canvasProvider.notifier).deleteUserImage(widget.image.id);
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: const BoxDecoration(
+                          color: Colors.red,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.close, size: 14, color: Colors.white),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }

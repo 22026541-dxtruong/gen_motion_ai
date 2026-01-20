@@ -14,6 +14,20 @@ class PropertiesPanel extends ConsumerWidget {
     final selectedSketch = ref.watch(selectedSketchProvider);
     final canvasState = ref.watch(canvasProvider);
     
+    UserImage? selectedImage;
+    if (canvasState.selectedUserImageId != null) {
+      try {
+        selectedImage = canvasState.userImages.firstWhere((img) => img.id == canvasState.selectedUserImageId);
+      } catch (_) {}
+    }
+
+    UserVideo? selectedVideo;
+    if (canvasState.selectedUserVideoId != null) {
+      try {
+        selectedVideo = canvasState.userVideos.firstWhere((v) => v.id == canvasState.selectedUserVideoId);
+      } catch (_) {}
+    }
+    
     return Container(
       decoration: BoxDecoration(
         color: AppTheme.surfaceColor,
@@ -27,6 +41,10 @@ class PropertiesPanel extends ConsumerWidget {
         ? _buildIconProperties(context, ref, selectedIcon, canvasState)
         : selectedSketch != null
         ? _buildSketchProperties(context, ref, selectedSketch, canvasState)
+        : selectedImage != null
+        ? _buildImageProperties(context, ref, selectedImage, canvasState)
+        : selectedVideo != null
+        ? _buildVideoProperties(context, ref, selectedVideo, canvasState)
         : _buildEmptyState(context),
     );
   }
@@ -63,6 +81,364 @@ class PropertiesPanel extends ConsumerWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildImageProperties(BuildContext context, WidgetRef ref, UserImage image, CanvasState canvasState) {
+    return SingleChildScrollView(
+      padding: EdgeInsets.all(context.isMobile ? 12 : 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Header
+          Row(
+            children: [
+              Container(
+                padding: EdgeInsets.all(context.isMobile ? 6 : 8),
+                decoration: BoxDecoration(
+                  color: Colors.blue.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  Icons.image,
+                  color: Colors.blue,
+                  size: context.isMobile ? 20 : 24,
+                ),
+              ),
+              SizedBox(width: context.isMobile ? 8 : 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'User Image',
+                      style: TextStyle(
+                        fontSize: context.isMobile ? 14 : 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      'Custom Upload',
+                      style: TextStyle(
+                        fontSize: context.isMobile ? 11 : 13,
+                        color: AppTheme.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+
+          SizedBox(height: context.isMobile ? 16 : 24),
+
+          // Opacity
+          _buildSliderControl(
+            context,
+            ref,
+            'Opacity',
+            image.opacity,
+            0.0,
+            1.0,
+            100,
+            (value) => ref.read(canvasProvider.notifier).updateUserImageOpacity(image.id, value),
+            suffix: '',
+          ),
+
+          SizedBox(height: context.isMobile ? 12 : 16),
+
+          // Size Width
+          _buildSliderControl(
+            context,
+            ref,
+            'Width',
+            image.size.width,
+            50,
+            1000,
+            190,
+            (value) => ref.read(canvasProvider.notifier).updateUserImageSize(image.id, Size(value, image.size.height)),
+            suffix: 'px',
+          ),
+
+          SizedBox(height: context.isMobile ? 12 : 16),
+
+          // Size Height
+          _buildSliderControl(
+            context,
+            ref,
+            'Height',
+            image.size.height,
+            50,
+            1000,
+            190,
+            (value) => ref.read(canvasProvider.notifier).updateUserImageSize(image.id, Size(image.size.width, value)),
+            suffix: 'px',
+          ),
+
+          SizedBox(height: context.isMobile ? 12 : 16),
+
+          // Rotation
+          _buildSliderControl(
+            context,
+            ref,
+            'Rotation',
+            image.rotation,
+            0,
+            360,
+            36,
+            (value) => ref.read(canvasProvider.notifier).updateUserImageRotation(image.id, value),
+            suffix: '°',
+          ),
+
+          SizedBox(height: context.isMobile ? 12 : 16),
+
+          // Position X
+          _buildSliderControl(
+            context,
+            ref,
+            'Position X',
+            image.position.dx,
+            -500,
+            1500,
+            2000,
+            (value) => ref.read(canvasProvider.notifier).updateUserImagePosition(
+              image.id,
+              Offset(value, image.position.dy),
+            ),
+          ),
+
+          SizedBox(height: context.isMobile ? 12 : 16),
+
+          // Position Y
+          _buildSliderControl(
+            context,
+            ref,
+            'Position Y',
+            image.position.dy,
+            -500,
+            1500,
+            2000,
+            (value) => ref.read(canvasProvider.notifier).updateUserImagePosition(
+              image.id,
+              Offset(image.position.dx, value),
+            ),
+          ),
+
+          if (canvasState.mode == GenerationMode.video) ...[
+            SizedBox(height: context.isMobile ? 16 : 24),
+            const Divider(color: AppTheme.borderColor),
+            SizedBox(height: context.isMobile ? 16 : 24),
+
+            Text(
+              'Video Timeline',
+              style: TextStyle(
+                fontSize: context.isMobile ? 13 : 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: context.isMobile ? 12 : 16),
+
+            _buildTimeControl(
+              context,
+              ref,
+              'Start Time',
+              image.startTime,
+              0,
+              canvasState.videoDuration,
+              (value) => ref.read(canvasProvider.notifier).updateUserImageTimeline(
+                image.id,
+                startTime: value,
+              ),
+            ),
+
+            SizedBox(height: context.isMobile ? 12 : 16),
+
+            _buildTimeControl(
+              context,
+              ref,
+              'End Time',
+              image.endTime,
+              image.startTime + 0.5,
+              canvasState.videoDuration,
+              (value) => ref.read(canvasProvider.notifier).updateUserImageTimeline(
+                image.id,
+                endTime: value,
+              ),
+            ),
+
+            SizedBox(height: context.isMobile ? 12 : 16),
+
+            _buildInfoCard(
+              'Duration',
+              '${(image.endTime - image.startTime).toStringAsFixed(1)}s',
+              Icons.timer_outlined,
+              context,
+            ),
+          ],
+
+          SizedBox(height: context.isMobile ? 16 : 24),
+
+          OutlinedButton.icon(
+            onPressed: () {
+              ref.read(canvasProvider.notifier).deleteUserImage(image.id);
+            },
+            icon: Icon(Icons.delete_outline, size: context.isMobile ? 16 : 18),
+            label: Text(
+              'Remove Image',
+              style: TextStyle(fontSize: context.isMobile ? 12 : 14),
+            ),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: Colors.red,
+              side: const BorderSide(color: Colors.red),
+              padding: EdgeInsets.symmetric(
+                vertical: context.isMobile ? 8 : 12,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildVideoProperties(BuildContext context, WidgetRef ref, UserVideo video, CanvasState canvasState) {
+    return SingleChildScrollView(
+      padding: EdgeInsets.all(context.isMobile ? 12 : 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Header
+          Row(
+            children: [
+              Container(
+                padding: EdgeInsets.all(context.isMobile ? 6 : 8),
+                decoration: BoxDecoration(
+                  color: Colors.red.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  Icons.videocam,
+                  color: Colors.red,
+                  size: context.isMobile ? 20 : 24,
+                ),
+              ),
+              SizedBox(width: context.isMobile ? 8 : 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'User Video',
+                      style: TextStyle(
+                        fontSize: context.isMobile ? 14 : 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      '${video.duration.toStringAsFixed(1)}s',
+                      style: TextStyle(
+                        fontSize: context.isMobile ? 11 : 13,
+                        color: AppTheme.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+
+          SizedBox(height: context.isMobile ? 16 : 24),
+
+          // Volume
+          _buildSliderControl(
+            context,
+            ref,
+            'Volume',
+            video.volume * 100,
+            0,
+            100,
+            100,
+            (value) => ref.read(canvasProvider.notifier).updateUserVideoVolume(video.id, value / 100),
+            suffix: '%',
+          ),
+
+          SizedBox(height: context.isMobile ? 12 : 16),
+
+          // Playback Speed
+          _buildSliderControl(
+            context,
+            ref,
+            'Speed',
+            video.playbackSpeed,
+            0.25,
+            2.0,
+            7,
+            (value) => ref.read(canvasProvider.notifier).updateUserVideoSpeed(video.id, value),
+            suffix: 'x',
+          ),
+
+          SizedBox(height: context.isMobile ? 12 : 16),
+
+          // Trim Controls
+          Text(
+            'Trim Video',
+            style: TextStyle(
+              fontSize: context.isMobile ? 12 : 14,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          SizedBox(height: context.isMobile ? 8 : 12),
+          RangeSlider(
+            values: RangeValues(video.trimStart, video.trimStart + (video.duration * video.playbackSpeed)),
+            min: 0,
+            max: video.originalDuration,
+            activeColor: Colors.red,
+            onChanged: (values) {
+              if (values.end - values.start >= 1.0) { // Min 1 sec
+                ref.read(canvasProvider.notifier).updateUserVideoTrim(video.id, values.start, values.end);
+              }
+            },
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('${video.trimStart.toStringAsFixed(1)}s'),
+              Text('${(video.trimStart + (video.duration * video.playbackSpeed)).toStringAsFixed(1)}s'),
+            ],
+          ),
+
+          SizedBox(height: context.isMobile ? 16 : 24),
+          const Divider(color: AppTheme.borderColor),
+          SizedBox(height: context.isMobile ? 16 : 24),
+
+          // Size & Position Controls (Reuse existing logic)
+          _buildSliderControl(context, ref, 'Width', video.size.width, 50, 1000, 190, (v) => ref.read(canvasProvider.notifier).updateUserVideoSize(video.id, Size(v, video.size.height)), suffix: 'px'),
+          SizedBox(height: 8),
+          _buildSliderControl(context, ref, 'Height', video.size.height, 50, 1000, 190, (v) => ref.read(canvasProvider.notifier).updateUserVideoSize(video.id, Size(video.size.width, v)), suffix: 'px'),
+          SizedBox(height: 8),
+          _buildSliderControl(context, ref, 'Rotation', video.rotation, 0, 360, 36, (v) => ref.read(canvasProvider.notifier).updateUserVideoRotation(video.id, v), suffix: '°'),
+          SizedBox(height: 8),
+          _buildSliderControl(context, ref, 'Position X', video.position.dx, -500, 1500, 2000, (v) => ref.read(canvasProvider.notifier).updateUserVideoPosition(video.id, Offset(v, video.position.dy))),
+          SizedBox(height: 8),
+          _buildSliderControl(context, ref, 'Position Y', video.position.dy, -500, 1500, 2000, (v) => ref.read(canvasProvider.notifier).updateUserVideoPosition(video.id, Offset(video.position.dx, v))),
+
+          SizedBox(height: context.isMobile ? 16 : 24),
+
+          OutlinedButton.icon(
+            onPressed: () {
+              ref.read(canvasProvider.notifier).deleteUserVideo(video.id);
+            },
+            icon: Icon(Icons.delete_outline, size: context.isMobile ? 16 : 18),
+            label: Text(
+              'Remove Video',
+              style: TextStyle(fontSize: context.isMobile ? 12 : 14),
+            ),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: Colors.red,
+              side: const BorderSide(color: Colors.red),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -139,7 +515,7 @@ class PropertiesPanel extends ConsumerWidget {
                 child: Container(
                   padding: EdgeInsets.symmetric(
                     horizontal: context.isMobile ? 8 : 12,
-                    vertical: context.isMobile ? 6 : 10,
+                    vertical: context.isMobile ? 8 : 10,
                   ),
                   decoration: BoxDecoration(
                     color: isSelected ? AppTheme.primaryColor : AppTheme.cardColor,
@@ -378,8 +754,8 @@ class PropertiesPanel extends ConsumerWidget {
               return GestureDetector(
                 onTap: () => ref.read(canvasProvider.notifier).updateSketchColor(sketch.id, color),
                 child: Container(
-                  width: 24,
-                  height: 24,
+                  width: context.isMobile ? 32 : 24,
+                  height: context.isMobile ? 32 : 24,
                   decoration: BoxDecoration(
                     color: color,
                     shape: BoxShape.circle,
@@ -590,7 +966,7 @@ class PropertiesPanel extends ConsumerWidget {
             ),
             SizedBox(width: context.isMobile ? 8 : 12),
             Container(
-              width: context.isMobile ? 45 : 60,
+              width: context.isMobile ? 55 : 60,
               padding: EdgeInsets.symmetric(
                 horizontal: context.isMobile ? 6 : 8,
                 vertical: context.isMobile ? 4 : 6,
@@ -604,7 +980,7 @@ class PropertiesPanel extends ConsumerWidget {
                 '${value.round()}$suffix',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: context.isMobile ? 11 : 13,
+                  fontSize: context.isMobile ? 12 : 13,
                   fontWeight: FontWeight.w600,
                 ),
               ),

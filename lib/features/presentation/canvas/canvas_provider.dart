@@ -83,6 +83,49 @@ class CanvasNotifier extends StateNotifier<models.CanvasState> {
     );
   }
 
+  void addUserImages(List<String> paths) {
+    final newImages = paths.map((path) {
+      return models.UserImage(
+        id: _uuid.v4(),
+        path: path,
+        position: const Offset(0, 0), // Center or cascade
+        size: const Size(200, 200), // Default size
+        rotation: 0,
+        opacity: 1.0,
+        startTime: state.mode == models.GenerationMode.video ? state.currentTime : 0,
+        endTime: state.mode == models.GenerationMode.video 
+          ? state.currentTime + 3.0 
+          : state.videoDuration,
+      );
+    }).toList();
+
+    state = state.copyWith(
+      userImages: [...state.userImages, ...newImages],
+      selectedUserImageId: newImages.isNotEmpty ? newImages.last.id : null,
+      selectedIconId: null,
+      selectedSketchId: null,
+    );
+  }
+
+  void addUserVideo(String path) {
+    final newVideo = models.UserVideo(
+      id: _uuid.v4(),
+      path: path,
+      position: const Offset(0, 0),
+      size: const Size(320, 180),
+      startTime: state.currentTime,
+      duration: 5.0,
+      originalDuration: 20.0, // Giả lập
+    );
+    state = state.copyWith(
+      userVideos: [...state.userVideos, newVideo],
+      selectedUserVideoId: newVideo.id,
+      selectedIconId: null,
+      selectedSketchId: null,
+      selectedUserImageId: null,
+    );
+  }
+
   void updateIconPosition(String id, Offset position) {
     final updatedIcons = state.icons.map((icon) {
       return icon.id == id ? icon.copyWith(position: position) : icon;
@@ -157,11 +200,39 @@ class CanvasNotifier extends StateNotifier<models.CanvasState> {
   }
 
   void selectIcon(String? id) {
-    state = state.copyWith(selectedIconId: id, selectedSketchId: id == null ? state.selectedSketchId : null);
+    state = state.copyWith(
+      selectedIconId: id, 
+      selectedSketchId: null,
+      selectedUserImageId: null,
+      selectedUserVideoId: null,
+    );
   }
 
   void selectSketch(String? id) {
-    state = state.copyWith(selectedSketchId: id, selectedIconId: id == null ? state.selectedIconId : null);
+    state = state.copyWith(
+      selectedSketchId: id, 
+      selectedIconId: null,
+      selectedUserImageId: null,
+      selectedUserVideoId: null,
+    );
+  }
+
+  void selectUserImage(String? id) {
+    state = state.copyWith(
+      selectedUserImageId: id,
+      selectedIconId: null,
+      selectedSketchId: null,
+      selectedUserVideoId: null,
+    );
+  }
+
+  void selectUserVideo(String? id) {
+    state = state.copyWith(
+      selectedUserVideoId: id,
+      selectedIconId: null,
+      selectedSketchId: null,
+      selectedUserImageId: null,
+    );
   }
 
   void deleteIcon(String id) {
@@ -174,13 +245,23 @@ class CanvasNotifier extends StateNotifier<models.CanvasState> {
     state = state.copyWith(sketches: updatedSketches, selectedSketchId: state.selectedSketchId == id ? null : state.selectedSketchId);
   }
 
+  void deleteUserImage(String id) {
+    final updatedImages = state.userImages.where((img) => img.id != id).toList();
+    state = state.copyWith(userImages: updatedImages, selectedUserImageId: state.selectedUserImageId == id ? null : state.selectedUserImageId);
+  }
+
+  void deleteUserVideo(String id) {
+    final updatedVideos = state.userVideos.where((v) => v.id != id).toList();
+    state = state.copyWith(userVideos: updatedVideos, selectedUserVideoId: state.selectedUserVideoId == id ? null : state.selectedUserVideoId);
+  }
+
   void clearCanvas() {
     _playbackTimer?.cancel();
     state = models.CanvasState(mode: state.mode, showTimeline: state.showTimeline, aspectRatio: state.aspectRatio);
   }
 
   void toggleDrawingMode() {
-    state = state.copyWith(isDrawingMode: !state.isDrawingMode, selectedIconId: null, selectedSketchId: null);
+    state = state.copyWith(isDrawingMode: !state.isDrawingMode, selectedIconId: null, selectedSketchId: null, selectedUserImageId: null, selectedUserVideoId: null);
   }
 
   void addDrawingPoint(Offset point, Paint paint) {
@@ -277,6 +358,102 @@ class CanvasNotifier extends StateNotifier<models.CanvasState> {
     state = state.copyWith(sketches: updatedSketches, selectedSketchId: id);
   }
 
+  void updateUserImagePosition(String id, Offset position) {
+    final updatedImages = state.userImages.map((img) {
+      return img.id == id ? img.copyWith(position: position) : img;
+    }).toList();
+    state = state.copyWith(userImages: updatedImages, selectedUserImageId: id);
+  }
+
+  void updateUserImageSize(String id, Size size) {
+    final updatedImages = state.userImages.map((img) {
+      return img.id == id ? img.copyWith(size: size) : img;
+    }).toList();
+    state = state.copyWith(userImages: updatedImages, selectedUserImageId: id);
+  }
+
+  void updateUserImageRotation(String id, double rotation) {
+    final updatedImages = state.userImages.map((img) {
+      return img.id == id ? img.copyWith(rotation: rotation) : img;
+    }).toList();
+    state = state.copyWith(userImages: updatedImages, selectedUserImageId: id);
+  }
+
+  void updateUserImageOpacity(String id, double opacity) {
+    final updatedImages = state.userImages.map((img) {
+      return img.id == id ? img.copyWith(opacity: opacity) : img;
+    }).toList();
+    state = state.copyWith(userImages: updatedImages, selectedUserImageId: id);
+  }
+
+  void updateUserImageTimeline(String id, {double? startTime, double? endTime}) {
+    final updatedImages = state.userImages.map((img) {
+      if (img.id == id) {
+        return img.copyWith(startTime: startTime ?? img.startTime, endTime: endTime ?? img.endTime);
+      }
+      return img;
+    }).toList();
+    state = state.copyWith(userImages: updatedImages, selectedUserImageId: id);
+  }
+
+  void updateUserVideoTimeline(String id, {double? startTime}) {
+    final updatedVideos = state.userVideos.map((v) {
+      if (v.id == id) {
+        return v.copyWith(startTime: startTime ?? v.startTime);
+      }
+      return v;
+    }).toList();
+    state = state.copyWith(userVideos: updatedVideos, selectedUserVideoId: id);
+  }
+
+  // --- Video Updates ---
+  void updateUserVideoPosition(String id, Offset position) {
+    final updatedVideos = state.userVideos.map((v) => v.id == id ? v.copyWith(position: position) : v).toList();
+    state = state.copyWith(userVideos: updatedVideos, selectedUserVideoId: id);
+  }
+
+  void updateUserVideoSize(String id, Size size) {
+    final updatedVideos = state.userVideos.map((v) => v.id == id ? v.copyWith(size: size) : v).toList();
+    state = state.copyWith(userVideos: updatedVideos, selectedUserVideoId: id);
+  }
+
+  void updateUserVideoRotation(String id, double rotation) {
+    final updatedVideos = state.userVideos.map((v) => v.id == id ? v.copyWith(rotation: rotation) : v).toList();
+    state = state.copyWith(userVideos: updatedVideos, selectedUserVideoId: id);
+  }
+
+  void updateUserVideoVolume(String id, double volume) {
+    final updatedVideos = state.userVideos.map((v) => v.id == id ? v.copyWith(volume: volume) : v).toList();
+    state = state.copyWith(userVideos: updatedVideos, selectedUserVideoId: id);
+  }
+
+  void updateUserVideoSpeed(String id, double speed) {
+    final updatedVideos = state.userVideos.map((v) {
+      if (v.id == id) {
+        // Calculate source duration (length of the clip in original video time)
+        final sourceDuration = v.duration * v.playbackSpeed;
+        // Calculate new timeline duration based on new speed
+        final newDuration = sourceDuration / speed;
+        
+        return v.copyWith(playbackSpeed: speed, duration: newDuration);
+      }
+      return v;
+    }).toList();
+    state = state.copyWith(userVideos: updatedVideos, selectedUserVideoId: id);
+  }
+
+  void updateUserVideoTrim(String id, double start, double end) {
+    final updatedVideos = state.userVideos.map((v) {
+      if (v.id == id) {
+        // Cập nhật trim và tính lại duration hiển thị
+        final newDuration = (end - start) / v.playbackSpeed;
+        return v.copyWith(trimStart: start, duration: newDuration);
+      }
+      return v;
+    }).toList();
+    state = state.copyWith(userVideos: updatedVideos, selectedUserVideoId: id);
+  }
+
   void playVideo() {
     if (state.mode != models.GenerationMode.video) return;
     state = state.copyWith(isPlaying: true);
@@ -322,6 +499,9 @@ class CanvasNotifier extends StateNotifier<models.CanvasState> {
         buffer.write('$variation at ${icon.startTime.toStringAsFixed(1)}s');
         if (icon.keyframes.isNotEmpty) buffer.write(' with animated movement');
       }
+      if (state.userImages.isNotEmpty) {
+        buffer.write(', with ${state.userImages.length} custom background images');
+      }
       if (state.sketches.isNotEmpty) buffer.write(', with hand-drawn elements');
     } else {
       buffer.write('A composition with ');
@@ -329,6 +509,9 @@ class CanvasNotifier extends StateNotifier<models.CanvasState> {
       for (final icon in state.icons) {
         final variation = icon.selectedVariation ?? icon.type.variations.first;
         parts.add(variation);
+      }
+      if (state.userImages.isNotEmpty) {
+        parts.add('${state.userImages.length} custom images');
       }
       if (state.sketches.isNotEmpty) parts.add('hand-drawn sketch elements');
       buffer.write(parts.join(', '));
@@ -369,4 +552,16 @@ final visibleIconsProvider = Provider<List<models.CanvasIcon>>((ref) {
 final visibleSketchesProvider = Provider<List<models.SketchStroke>>((ref) {
   final state = ref.watch(canvasProvider);
   return state.getVisibleSketchesAt(state.currentTime);
+});
+
+final visibleUserImagesProvider = Provider<List<models.UserImage>>((ref) {
+  final state = ref.watch(canvasProvider);
+  if (state.mode == models.GenerationMode.image) return state.userImages;
+  return state.userImages.where((img) => state.currentTime >= img.startTime && state.currentTime <= img.endTime).toList();
+});
+
+final visibleUserVideosProvider = Provider<List<models.UserVideo>>((ref) {
+  final state = ref.watch(canvasProvider);
+  if (state.mode == models.GenerationMode.image) return [];
+  return state.userVideos.where((v) => v.isVisibleAt(state.currentTime)).toList();
 });

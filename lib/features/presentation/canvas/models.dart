@@ -416,13 +416,129 @@ class SketchStroke {
   }
 }
 
+// User Image imported from device
+class UserImage {
+  final String id;
+  final String path;
+  final Offset position;
+  final Size size;
+  final double rotation;
+  final double opacity;
+  final double startTime;
+  final double endTime;
+
+  UserImage({
+    required this.id,
+    required this.path,
+    required this.position,
+    required this.size,
+    this.rotation = 0.0,
+    this.opacity = 1.0,
+    this.startTime = 0.0,
+    this.endTime = 5.0,
+  });
+
+  UserImage copyWith({
+    Offset? position,
+    Size? size,
+    double? rotation,
+    double? opacity,
+    double? startTime,
+    double? endTime,
+  }) {
+    return UserImage(
+      id: id,
+      path: path,
+      position: position ?? this.position,
+      size: size ?? this.size,
+      rotation: rotation ?? this.rotation,
+      opacity: opacity ?? this.opacity,
+      startTime: startTime ?? this.startTime,
+      endTime: endTime ?? this.endTime,
+    );
+  }
+
+  bool isVisibleAt(double time) {
+    return time >= startTime && time <= endTime;
+  }
+}
+
+// User Video imported from device
+class UserVideo {
+  final String id;
+  final String path;
+  final Offset position;
+  final Size size;
+  final double rotation;
+  final double opacity;
+  final double startTime;
+  final double duration; // Thời lượng hiển thị trên timeline (đã tính speed)
+  final double volume;
+  final double playbackSpeed;
+  final double trimStart; // Thời điểm bắt đầu cắt từ video gốc
+  final double originalDuration; // Thời lượng gốc của video
+
+  UserVideo({
+    required this.id,
+    required this.path,
+    required this.position,
+    required this.size,
+    this.rotation = 0.0,
+    this.opacity = 1.0,
+    this.startTime = 0.0,
+    this.duration = 10.0,
+    this.volume = 1.0,
+    this.playbackSpeed = 1.0,
+    this.trimStart = 0.0,
+    this.originalDuration = 20.0, // Giả lập thời lượng gốc
+  });
+
+  UserVideo copyWith({
+    Offset? position,
+    Size? size,
+    double? rotation,
+    double? opacity,
+    double? startTime,
+    double? duration,
+    double? volume,
+    double? playbackSpeed,
+    double? trimStart,
+    double? originalDuration,
+  }) {
+    return UserVideo(
+      id: id,
+      path: path,
+      position: position ?? this.position,
+      size: size ?? this.size,
+      rotation: rotation ?? this.rotation,
+      opacity: opacity ?? this.opacity,
+      startTime: startTime ?? this.startTime,
+      duration: duration ?? this.duration,
+      volume: volume ?? this.volume,
+      playbackSpeed: playbackSpeed ?? this.playbackSpeed,
+      trimStart: trimStart ?? this.trimStart,
+      originalDuration: originalDuration ?? this.originalDuration,
+    );
+  }
+
+  bool isVisibleAt(double time) {
+    return time >= startTime && time <= startTime + duration;
+  }
+}
+
+const _undefined = Object();
+
 // Canvas State
 class CanvasState {
   final List<CanvasIcon> icons;
   final List<SketchStroke> sketches;
+  final List<UserImage> userImages;
+  final List<UserVideo> userVideos;
   final Color backgroundColor;
   final String? selectedIconId;
   final String? selectedSketchId;
+  final String? selectedUserImageId;
+  final String? selectedUserVideoId;
   final List<DrawingPoint> currentSketchPoints;
   final bool isDrawingMode;
   final GenerationMode mode;
@@ -437,9 +553,13 @@ class CanvasState {
   CanvasState({
     this.icons = const [],
     this.sketches = const [],
+    this.userImages = const [],
+    this.userVideos = const [],
     this.backgroundColor = Colors.white,
     this.selectedIconId,
     this.selectedSketchId,
+    this.selectedUserImageId,
+    this.selectedUserVideoId,
     this.currentSketchPoints = const [],
     this.isDrawingMode = false,
     this.mode = GenerationMode.image,
@@ -453,9 +573,13 @@ class CanvasState {
   CanvasState copyWith({
     List<CanvasIcon>? icons,
     List<SketchStroke>? sketches,
+    List<UserImage>? userImages,
+    List<UserVideo>? userVideos,
     Color? backgroundColor,
-    String? selectedIconId,
-    String? selectedSketchId,
+    Object? selectedIconId = _undefined,
+    Object? selectedSketchId = _undefined,
+    Object? selectedUserImageId = _undefined,
+    Object? selectedUserVideoId = _undefined,
     List<DrawingPoint>? currentSketchPoints,
     bool? isDrawingMode,
     GenerationMode? mode,
@@ -468,9 +592,13 @@ class CanvasState {
     return CanvasState(
       icons: icons ?? this.icons,
       sketches: sketches ?? this.sketches,
+      userImages: userImages ?? this.userImages,
+      userVideos: userVideos ?? this.userVideos,
       backgroundColor: backgroundColor ?? this.backgroundColor,
-      selectedIconId: selectedIconId,
-      selectedSketchId: selectedSketchId,
+      selectedIconId: selectedIconId == _undefined ? this.selectedIconId : selectedIconId as String?,
+      selectedSketchId: selectedSketchId == _undefined ? this.selectedSketchId : selectedSketchId as String?,
+      selectedUserImageId: selectedUserImageId == _undefined ? this.selectedUserImageId : selectedUserImageId as String?,
+      selectedUserVideoId: selectedUserVideoId == _undefined ? this.selectedUserVideoId : selectedUserVideoId as String?,
       currentSketchPoints: currentSketchPoints ?? this.currentSketchPoints,
       isDrawingMode: isDrawingMode ?? this.isDrawingMode,
       mode: mode ?? this.mode,
