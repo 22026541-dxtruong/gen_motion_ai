@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gen_motion_ai/features/presentation/canvas/canvas_screen.dart';
+import 'package:gen_motion_ai/features/presentation/detail/detail_screen.dart';
 import 'package:gen_motion_ai/features/presentation/generate/generate_screen.dart';
 import 'package:gen_motion_ai/features/presentation/explore/explore_screen.dart';
 import 'package:gen_motion_ai/features/presentation/gallery/gallery_screen.dart';
@@ -58,6 +59,14 @@ final routerProvider = Provider<GoRouter>((ref) {
             pageBuilder: (context, state) => NoTransitionPage(
               child: const QueueScreen(),
             ),
+          ),
+          GoRoute(
+            path: '/detail/:id',
+            name: 'detail',
+            pageBuilder: (context, state) {
+              final id = state.pathParameters['id'] ?? '';
+              return NoTransitionPage(child: DetailScreen(id: id));
+            },
           ),
         ],
       ),

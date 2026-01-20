@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/responsive.dart';
 
@@ -178,7 +179,7 @@ class _ExploreCardState extends State<_ExploreCard> {
       onExit: (_) => setState(() => _isHovered = false),
       child: Card(
         child: InkWell(
-          onTap: () => _showDetailDialog(context),
+          onTap: () => context.push('/detail/${widget.index}'),
           borderRadius: BorderRadius.circular(12),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -201,32 +202,6 @@ class _ExploreCardState extends State<_ExploreCard> {
                         ),
                       ),
                     ),
-                    
-                    // Hover overlay (desktop only)
-                    if (_isHovered && !widget.isMobile)
-                      Positioned.fill(
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Colors.black.withOpacity(0.6),
-                            borderRadius: const BorderRadius.vertical(
-                              top: Radius.circular(12),
-                            ),
-                          ),
-                          child: Center(
-                            child: ElevatedButton.icon(
-                              onPressed: () {},
-                              icon: const Icon(Icons.add, size: 20),
-                              label: const Text('Use Prompt'),
-                              style: ElevatedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 8,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
                     
                     // Like button
                     Positioned(
@@ -303,132 +278,6 @@ class _ExploreCardState extends State<_ExploreCard> {
                 ),
               ),
             ],
-          ),
-        ),
-      ),
-    );
-  }
-  
-  void _showDetailDialog(BuildContext context) {
-    final isMobile = context.isMobile;
-    
-    showDialog(
-      context: context,
-      builder: (context) => Dialog(
-        backgroundColor: AppTheme.surfaceColor,
-        insetPadding: isMobile 
-          ? const EdgeInsets.all(16)
-          : const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
-        child: Container(
-          width: isMobile ? double.infinity : 800,
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(context).size.height * 0.9,
-          ),
-          padding: EdgeInsets.all(isMobile ? 16 : 24),
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Row(
-                  children: [
-                    Text(
-                      'Generation Details',
-                      style: TextStyle(
-                        fontSize: isMobile ? 18 : 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const Spacer(),
-                    IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: () => Navigator.pop(context),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                Container(
-                  height: isMobile ? 250 : 400,
-                  decoration: BoxDecoration(
-                    color: AppTheme.backgroundColor,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Center(
-                    child: Icon(
-                      Icons.image_outlined,
-                      size: isMobile ? 48 : 64,
-                      color: AppTheme.textSecondary.withOpacity(0.3),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Prompt',
-                  style: TextStyle(
-                    fontSize: isMobile ? 13 : 14,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Container(
-                  padding: EdgeInsets.all(isMobile ? 10 : 12),
-                  decoration: BoxDecoration(
-                    color: AppTheme.cardColor,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: AppTheme.borderColor),
-                  ),
-                  child: Text(
-                    'A beautiful landscape with mountains, rivers, and sunset...',
-                    style: TextStyle(fontSize: isMobile ? 12 : 13),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                
-                // Buttons - stack on mobile, row on desktop
-                if (isMobile)
-                  Column(
-                    children: [
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton.icon(
-                          onPressed: () {},
-                          icon: const Icon(Icons.copy),
-                          label: const Text('Copy Prompt'),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton.icon(
-                          onPressed: () {},
-                          icon: const Icon(Icons.auto_awesome),
-                          label: const Text('Use This Prompt'),
-                        ),
-                      ),
-                    ],
-                  )
-                else
-                  Row(
-                    children: [
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: () {},
-                          icon: const Icon(Icons.copy),
-                          label: const Text('Copy Prompt'),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: () {},
-                          icon: const Icon(Icons.auto_awesome),
-                          label: const Text('Use This Prompt'),
-                        ),
-                      ),
-                    ],
-                  ),
-              ],
-            ),
           ),
         ),
       ),
