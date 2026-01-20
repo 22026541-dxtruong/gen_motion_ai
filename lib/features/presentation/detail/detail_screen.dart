@@ -82,7 +82,7 @@ class _DetailScreenState extends State<DetailScreen> {
             ),
           // Fixed Back Button for both Mobile and Desktop
           Positioned(
-            top: 16,
+            top: 32,
             left: 16,
             child: CircleAvatar(
               backgroundColor: Colors.black45,
@@ -165,18 +165,15 @@ class _DetailItemState extends State<_DetailItem> {
   @override
   Widget build(BuildContext context) {
     return Responsive(
-        mobile: _buildMobileLayout(),
-        desktop: _buildDesktopLayout(),
-      );
+      mobile: _buildMobileLayout(),
+      desktop: _buildDesktopLayout(),
+    );
   }
 
   Widget _buildMobileLayout() {
     return Stack(
       fit: StackFit.expand,
       children: [
-        // 1. Full Screen Media
-        _MediaPlaceholder(isVideo: _isVideo, isMobileFull: true),
-
         // 2. Gradient Overlay for text readability
         const Positioned.fill(
           child: IgnorePointer(
@@ -192,6 +189,8 @@ class _DetailItemState extends State<_DetailItem> {
             ),
           ),
         ),
+
+        _MediaPlaceholder(isVideo: _isVideo, isMobileFull: true),
 
         // 3. Right Side Actions (Reels style)
         Positioned(
@@ -231,35 +230,95 @@ class _DetailItemState extends State<_DetailItem> {
         Positioned(
           left: 16,
           right: 80, // Space for right actions
-          bottom: 16,
+          bottom: _isVideo ? 30 : 16,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
               Row(
                 children: [
-                  const CircleAvatar(
-                    radius: 16,
-                    backgroundColor: AppTheme.primaryColor,
-                    child: Text('U',
-                        style: TextStyle(color: Colors.white, fontSize: 12)),
+                  GestureDetector(
+                    onTap: () => context.push('/user/user_${widget.id}'),
+                    child: const CircleAvatar(
+                      radius: 16,
+                      backgroundColor: AppTheme.primaryColor,
+                      child: Text(
+                        'U',
+                        style: TextStyle(color: Colors.white, fontSize: 12),
+                      ),
+                    ),
                   ),
                   const SizedBox(width: 8),
-                  const Text(
-                    'User Name',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                      shadows: [Shadow(color: Colors.black, blurRadius: 2)],
+                  GestureDetector(
+                    onTap: () => context.push('/user/user_${widget.id}'),
+                    child: const Text(
+                      'User Name',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                        shadows: [Shadow(color: Colors.black, blurRadius: 2)],
+                      ),
                     ),
+                  ),
+                  const SizedBox(width: 12),
+                  SizedBox(
+                    height: 32,
+                    child: _isFollowing
+                        ? OutlinedButton(
+                            onPressed: () =>
+                                setState(() => _isFollowing = false),
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                              ),
+                              side: const BorderSide(
+                                color: AppTheme.borderColor,
+                              ),
+                              backgroundColor: AppTheme.cardColor,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                            ),
+                            child: const Text(
+                              'Following',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                                color: AppTheme.textSecondary,
+                              ),
+                            ),
+                          )
+                        : ElevatedButton(
+                            onPressed: () =>
+                                setState(() => _isFollowing = true),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.primaryColor,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                              ),
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                            ),
+                            child: const Text(
+                              'Follow',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
                   ),
                 ],
               ),
               const SizedBox(height: 12),
               GestureDetector(
                 onTap: () => setState(
-                    () => _isDescriptionExpanded = !_isDescriptionExpanded),
+                  () => _isDescriptionExpanded = !_isDescriptionExpanded,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -329,10 +388,7 @@ class _DetailItemState extends State<_DetailItem> {
           ),
         ),
         // Right: Details Sidebar
-        Container(
-          width: 1,
-          color: AppTheme.borderColor,
-        ),
+        Container(width: 1, color: AppTheme.borderColor),
         Expanded(
           flex: 1,
           child: Container(
@@ -348,11 +404,14 @@ class _DetailItemState extends State<_DetailItem> {
                     children: [
                       _buildUserInfo(),
                       const SizedBox(height: 16),
-                      Text(_description,
-                          style: const TextStyle(
-                              fontSize: 14,
-                              height: 1.5,
-                              color: AppTheme.textPrimary)),
+                      Text(
+                        _description,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          height: 1.5,
+                          color: AppTheme.textPrimary,
+                        ),
+                      ),
                       const SizedBox(height: 20),
                       _buildRecreateButton(),
                       const SizedBox(height: 20),
@@ -381,21 +440,28 @@ class _DetailItemState extends State<_DetailItem> {
   Widget _buildUserInfo() {
     return Row(
       children: [
-        Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            gradient: const LinearGradient(
-              colors: [AppTheme.accentPurple, AppTheme.accentPink],
+        InkWell(
+          onTap: () => context.push('/user/user_${widget.id}'),
+          borderRadius: BorderRadius.circular(20),
+          child: Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: const LinearGradient(
+                colors: [AppTheme.accentPurple, AppTheme.accentPink],
+              ),
             ),
-          ),
-          child: const Center(
-            child: Text('U',
+            child: const Center(
+              child: Text(
+                'U',
                 style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white)),
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
+            ),
           ),
         ),
         const SizedBox(width: 12),
@@ -403,16 +469,25 @@ class _DetailItemState extends State<_DetailItem> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('User Name',
+              InkWell(
+                onTap: () => context.push('/user/user_${widget.id}'),
+                child: const Text(
+                  'User Name',
                   style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 14,
-                      color: AppTheme.textPrimary)),
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                    color: AppTheme.textPrimary,
+                  ),
+                ),
+              ),
               const SizedBox(height: 2),
-              Text('Created 2 hours ago',
-                  style: TextStyle(
-                      fontSize: 12,
-                      color: AppTheme.textSecondary.withOpacity(0.7))),
+              Text(
+                'Created 2 hours ago',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: AppTheme.textSecondary.withOpacity(0.7),
+                ),
+              ),
             ],
           ),
         ),
@@ -426,13 +501,17 @@ class _DetailItemState extends State<_DetailItem> {
                     side: const BorderSide(color: AppTheme.borderColor),
                     backgroundColor: AppTheme.cardColor,
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16)),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                   ),
-                  child: const Text('Following',
-                      style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                          color: AppTheme.textSecondary)),
+                  child: const Text(
+                    'Following',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: AppTheme.textSecondary,
+                    ),
+                  ),
                 )
               : ElevatedButton(
                   onPressed: () => setState(() => _isFollowing = true),
@@ -442,11 +521,13 @@ class _DetailItemState extends State<_DetailItem> {
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     elevation: 0,
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16)),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                   ),
-                  child: const Text('Follow',
-                      style:
-                          TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                  child: const Text(
+                    'Follow',
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                  ),
                 ),
         ),
       ],
@@ -467,7 +548,9 @@ class _DetailItemState extends State<_DetailItem> {
         ),
         const SizedBox(width: 20),
         const _InteractionItem(
-            icon: Icons.chat_bubble_outline_rounded, label: '42'),
+          icon: Icons.chat_bubble_outline_rounded,
+          label: '42',
+        ),
         const SizedBox(width: 20),
         const _InteractionItem(icon: Icons.share_outlined, label: 'Share'),
       ],
@@ -499,11 +582,14 @@ class _DetailItemState extends State<_DetailItem> {
       children: [
         Row(
           children: [
-            const Text('Comments',
-                style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.textPrimary)),
+            const Text(
+              'Comments',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: AppTheme.textPrimary,
+              ),
+            ),
             const SizedBox(width: 8),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
@@ -512,11 +598,14 @@ class _DetailItemState extends State<_DetailItem> {
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: AppTheme.borderColor),
               ),
-              child: const Text('42',
-                  style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: AppTheme.textSecondary)),
+              child: const Text(
+                '42',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.textSecondary,
+                ),
+              ),
             ),
           ],
         ),
@@ -530,15 +619,20 @@ class _DetailItemState extends State<_DetailItem> {
     return Column(
       children: [
         _CommentItem(
-            user: 'Alice',
-            text: 'Amazing work! The lighting is incredible.',
-            time: '1h ago'),
+          user: 'Alice',
+          text: 'Amazing work! The lighting is incredible.',
+          time: '1h ago',
+        ),
         _CommentItem(
-            user: 'Bob',
-            text: 'Which model version is this?',
-            time: '30m ago'),
+          user: 'Bob',
+          text: 'Which model version is this?',
+          time: '30m ago',
+        ),
         _CommentItem(
-            user: 'Charlie', text: 'Can you share the seed?', time: '10m ago'),
+          user: 'Charlie',
+          text: 'Can you share the seed?',
+          time: '10m ago',
+        ),
       ],
     );
   }
@@ -553,19 +647,22 @@ class _DetailItemState extends State<_DetailItem> {
       child: Row(
         children: [
           CircleAvatar(
-              radius: 16,
-              backgroundColor: AppTheme.primaryColor,
-              child: const Text('Me', style: TextStyle(fontSize: 10))),
+            radius: 16,
+            backgroundColor: AppTheme.primaryColor,
+            child: const Text('Me', style: TextStyle(fontSize: 10)),
+          ),
           const SizedBox(width: 12),
           Expanded(
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               decoration: BoxDecoration(
-                  color: AppTheme.cardColor,
-                  borderRadius: BorderRadius.circular(20)),
-              child: const Text('Add a comment...',
-                  style:
-                      TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
+                color: AppTheme.cardColor,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: const Text(
+                'Add a comment...',
+                style: TextStyle(color: AppTheme.textSecondary, fontSize: 13),
+              ),
             ),
           ),
         ],
@@ -626,17 +723,20 @@ class _CommentsBottomSheet extends StatelessWidget {
             child: ListView(
               children: const [
                 _CommentItem(
-                    user: 'Alice',
-                    text: 'Amazing work! The lighting is incredible.',
-                    time: '1h ago'),
+                  user: 'Alice',
+                  text: 'Amazing work! The lighting is incredible.',
+                  time: '1h ago',
+                ),
                 _CommentItem(
-                    user: 'Bob',
-                    text: 'Which model version is this?',
-                    time: '30m ago'),
+                  user: 'Bob',
+                  text: 'Which model version is this?',
+                  time: '30m ago',
+                ),
                 _CommentItem(
-                    user: 'Charlie',
-                    text: 'Can you share the seed?',
-                    time: '10m ago'),
+                  user: 'Charlie',
+                  text: 'Can you share the seed?',
+                  time: '10m ago',
+                ),
               ],
             ),
           ),
@@ -835,7 +935,8 @@ class _MediaPlaceholderState extends State<_MediaPlaceholder> {
   Future<void> _initializeVideo() async {
     _controller = VideoPlayerController.networkUrl(
       Uri.parse(
-          'https://flutter.github.io/assets-for-api-docs/assets/videos/bee.mp4'),
+        'https://flutter.github.io/assets-for-api-docs/assets/videos/bee.mp4',
+      ),
     );
 
     try {
@@ -871,6 +972,13 @@ class _MediaPlaceholderState extends State<_MediaPlaceholder> {
     });
   }
 
+  String _formatDuration(Duration duration) {
+    String twoDigits(int n) => n.toString().padLeft(2, "0");
+    String twoDigitMinutes = twoDigits(duration.inMinutes.remainder(60));
+    String twoDigitSeconds = twoDigits(duration.inSeconds.remainder(60));
+    return "$twoDigitMinutes:$twoDigitSeconds";
+  }
+
   @override
   Widget build(BuildContext context) {
     if (widget.isVideo) {
@@ -901,10 +1009,13 @@ class _MediaPlaceholderState extends State<_MediaPlaceholder> {
 
       return GestureDetector(
         onTap: _togglePlay,
+        behavior: HitTestBehavior.opaque,
         child: Stack(
           alignment: Alignment.center,
           children: [
             videoView,
+            // Transparent layer to capture taps on Web if videoView swallows them
+            Container(color: Colors.transparent),
             if (!_controller!.value.isPlaying)
               Container(
                 decoration: BoxDecoration(
@@ -922,14 +1033,48 @@ class _MediaPlaceholderState extends State<_MediaPlaceholder> {
               bottom: 0,
               left: 0,
               right: 0,
-              child: VideoProgressIndicator(
-                _controller!,
-                allowScrubbing: true,
-                colors: const VideoProgressColors(
-                  playedColor: AppTheme.primaryColor,
-                  bufferedColor: Colors.white24,
-                  backgroundColor: Colors.white10,
-                ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: ValueListenableBuilder(
+                      valueListenable: _controller!,
+                      builder: (context, VideoPlayerValue value, child) {
+                        return Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              _formatDuration(value.position),
+                              style: TextStyle(
+                                color: Colors.white70,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            Text(
+                              _formatDuration(value.duration),
+                              style: const TextStyle(
+                                color: Colors.white70,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                  ),
+                  VideoProgressIndicator(
+                    _controller!,
+                    allowScrubbing: true,
+                    colors: const VideoProgressColors(
+                      playedColor: AppTheme.primaryColor,
+                      bufferedColor: Colors.white24,
+                      backgroundColor: Colors.white10,
+                    ),
+                  ),
+                ],
               ),
             ),
           ],

@@ -6,8 +6,9 @@ import 'package:go_router/go_router.dart';
 
 class MainLayout extends StatefulWidget {
   final Widget child; // Thay đổi từ StatefulNavigationShell sang Widget
+  final String location;
 
-  const MainLayout({super.key, required this.child});
+  const MainLayout({super.key, required this.child, required this.location});
 
   @override
   State<MainLayout> createState() => _MainLayoutState();
@@ -18,14 +19,10 @@ class _MainLayoutState extends State<MainLayout> {
 
   @override
   Widget build(BuildContext context) {
-    final location = GoRouter.of(
-      context,
-    ).routeInformationProvider.value.uri.path;
-
     return Scaffold(
       body: Responsive(
-        mobile: _buildMobileLayout(location),
-        desktop: _buildDesktopLayout(location),
+        mobile: _buildMobileLayout(widget.location),
+        desktop: _buildDesktopLayout(widget.location),
       ),
     );
   }
