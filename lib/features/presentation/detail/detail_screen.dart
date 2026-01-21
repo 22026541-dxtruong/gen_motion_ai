@@ -89,7 +89,7 @@ class _DetailScreenState extends State<DetailScreen> {
               child: IconButton(
                 icon: const Icon(Icons.arrow_back, color: Colors.white),
                 onPressed: () =>
-                    context.canPop() ? context.pop() : context.go('/home'),
+                    context.canPop() ? context.pop() : context.go('/explore'),
               ),
             ),
           ),
@@ -696,51 +696,94 @@ class _CommentsBottomSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: MediaQuery.of(context).size.height * 0.7,
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        children: [
-          Container(
-            width: 40,
-            height: 4,
-            margin: const EdgeInsets.only(bottom: 16),
-            decoration: BoxDecoration(
-              color: AppTheme.borderColor,
-              borderRadius: BorderRadius.circular(2),
+    return Padding(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
+      child: Container(
+        height: MediaQuery.of(context).size.height * 0.7,
+        decoration: const BoxDecoration(
+          color: AppTheme.surfaceColor,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+        ),
+        child: Column(
+          children: [
+            const SizedBox(height: 16),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppTheme.borderColor,
+                borderRadius: BorderRadius.circular(2),
+              ),
             ),
-          ),
-          const Text(
-            'Comments',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: AppTheme.textPrimary,
+            const SizedBox(height: 16),
+            const Text(
+              'Comments',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: AppTheme.textPrimary,
+              ),
             ),
-          ),
-          const SizedBox(height: 16),
-          Expanded(
-            child: ListView(
-              children: const [
-                _CommentItem(
-                  user: 'Alice',
-                  text: 'Amazing work! The lighting is incredible.',
-                  time: '1h ago',
-                ),
-                _CommentItem(
-                  user: 'Bob',
-                  text: 'Which model version is this?',
-                  time: '30m ago',
-                ),
-                _CommentItem(
-                  user: 'Charlie',
-                  text: 'Can you share the seed?',
-                  time: '10m ago',
-                ),
-              ],
+            const SizedBox(height: 16),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                children: const [
+                  _CommentItem(
+                    user: 'Alice',
+                    text: 'Amazing work! The lighting is incredible.',
+                    time: '1h ago',
+                  ),
+                  _CommentItem(
+                    user: 'Bob',
+                    text: 'Which model version is this?',
+                    time: '30m ago',
+                  ),
+                  _CommentItem(
+                    user: 'Charlie',
+                    text: 'Can you share the seed?',
+                    time: '10m ago',
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+            const Divider(height: 1, color: AppTheme.borderColor),
+            Container(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  const CircleAvatar(
+                    radius: 16,
+                    backgroundColor: AppTheme.primaryColor,
+                    child: Text('Me', style: TextStyle(fontSize: 10)),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 10,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppTheme.cardColor,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: const Text(
+                        'Add a comment...',
+                        style: TextStyle(
+                          color: AppTheme.textSecondary,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

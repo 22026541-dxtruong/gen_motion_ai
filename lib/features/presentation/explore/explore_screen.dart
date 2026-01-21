@@ -1,7 +1,8 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:gen_motion_ai/core/theme/app_theme.dart';
+import 'package:gen_motion_ai/core/utils/responsive.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/theme/app_theme.dart';
-import '../../../../core/utils/responsive.dart';
 
 class ExploreScreen extends StatefulWidget {
   const ExploreScreen({super.key});
@@ -10,160 +11,373 @@ class ExploreScreen extends StatefulWidget {
   State<ExploreScreen> createState() => _ExploreScreenState();
 }
 
-class _ExploreScreenState extends State<ExploreScreen> {
-  String _selectedCategory = 'All';
-  
-  final categories = [
-    'All',
-    'Trending',
-    'Art',
-    'Photography',
-    'Character',
-    'Landscape',
-    'Architecture',
-    'Abstract',
-  ];
+class _ExploreScreenState extends State<ExploreScreen>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 6, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        // Categories filter
-        _buildCategoryFilter(),
-        
-        // Grid content
-        Expanded(
-          child: _buildGrid(),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildCategoryFilter() {
-    return Container(
-      height: context.isMobile ? 56 : 60,
-      padding: EdgeInsets.symmetric(horizontal: context.isMobile ? 16 : 24),
-      decoration: const BoxDecoration(
-        color: AppTheme.surfaceColor,
-        border: Border(
-          bottom: BorderSide(color: AppTheme.borderColor),
+    return Scaffold(
+      backgroundColor: AppTheme.backgroundColor,
+      body: NestedScrollView(
+        controller: _scrollController,
+        headerSliverBuilder: (context, innerBoxIsScrolled) {
+          return [
+            SliverToBoxAdapter(
+              child: const _BannerCarousel(),
+            ),
+            SliverOverlapAbsorber(
+              handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
+              sliver: SliverPersistentHeader(
+                delegate: _StickyTabBarDelegate(
+                  child: TabBar(
+                    controller: _tabController,
+                    isScrollable: true,
+                    labelColor: AppTheme.textPrimary,
+                    unselectedLabelColor: AppTheme.textSecondary,
+                    indicatorColor: AppTheme.primaryColor,
+                    indicatorSize: TabBarIndicatorSize.label,
+                    dividerColor: Colors.transparent,
+                    tabAlignment: TabAlignment.start,
+                    padding: EdgeInsets.symmetric(horizontal: context.isMobile ? 8 : 16),
+                    tabs: const [
+                      Tab(text: 'Recommended'),
+                      Tab(text: 'Trending'),
+                      Tab(text: 'New Arrivals'),
+                      Tab(text: 'Realistic'),
+                      Tab(text: 'Anime'),
+                      Tab(text: '3D Animation'),
+                    ],
+                  ),
+                ),
+              pinned: true,
+              ),
+            ),
+          ];
+        },
+        body: TabBarView(
+          controller: _tabController,
+          children: const [
+            _ExploreTabContent(tabKey: 'Recommended'),
+            _ExploreTabContent(tabKey: 'Trending'),
+            _ExploreTabContent(tabKey: 'New Arrivals'),
+            _ExploreTabContent(tabKey: 'Realistic'),
+            _ExploreTabContent(tabKey: 'Anime'),
+            _ExploreTabContent(tabKey: '3D Animation'),
+          ],
         ),
       ),
-      child: context.isMobile 
-        ? _buildMobileCategories()
-        : _buildDesktopCategories(),
     );
   }
+}
 
-  Widget _buildMobileCategories() {
-    return ListView.separated(
-      scrollDirection: Axis.horizontal,
-      itemCount: categories.length,
-      separatorBuilder: (context, index) => const SizedBox(width: 8),
-      itemBuilder: (context, index) {
-        final category = categories[index];
-        final isSelected = _selectedCategory == category;
-        
-        return FilterChip(
-          label: Text(category),
-          selected: isSelected,
-          onSelected: (selected) {
-            setState(() => _selectedCategory = category);
-          },
-          selectedColor: AppTheme.primaryColor,
-          backgroundColor: AppTheme.cardColor,
-          labelStyle: TextStyle(
-            fontSize: 13,
-            color: isSelected ? Colors.white : AppTheme.textSecondary,
-            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-          ),
-          side: BorderSide(
-            color: isSelected ? AppTheme.primaryColor : AppTheme.borderColor,
-          ),
-        );
-      },
-    );
+class _BannerCarousel extends StatefulWidget {
+  const _BannerCarousel();
+
+  @override
+  State<_BannerCarousel> createState() => _BannerCarouselState();
+}
+
+class _BannerCarouselState extends State<_BannerCarousel> {
+  final PageController _pageController = PageController();
+  int _currentPage = 0;
+  Timer? _timer;
+
+  final List<Map<String, String>> _banners = [
+    {
+      'image': 'https://picsum.photos/1200/600?random=1',
+      'title': 'Explore the Community\'s\nImagination',
+      'subtitle': 'Discover amazing videos generated by Kling AI creators'
+    },
+    {
+      'image': 'https://picsum.photos/1200/600?random=2',
+      'title': 'New V1.5 Model\nAvailable Now',
+      'subtitle': 'Experience higher fidelity and better motion consistency'
+    },
+    {
+      'image': 'https://picsum.photos/1200/600?random=3',
+      'title': 'Weekly Challenge:\nCyberpunk City',
+      'subtitle': 'Join the contest and win free credits'
+    },
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _startTimer();
   }
 
-  Widget _buildDesktopCategories() {
-    return Row(
-      children: [
-        const Text(
-          'Categories',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-          ),
+  void _startTimer() {
+    _timer = Timer.periodic(const Duration(seconds: 5), (Timer timer) {
+      if (_currentPage < _banners.length - 1) {
+        _currentPage++;
+      } else {
+        _currentPage = 0;
+      }
+      _animateToPage(_currentPage);
+    });
+  }
+
+  void _animateToPage(int page) {
+    if (_pageController.hasClients) {
+      _pageController.animateToPage(
+        page,
+        duration: const Duration(milliseconds: 800),
+        curve: Curves.fastOutSlowIn,
+      );
+    }
+  }
+
+  void _manualNavigate(int direction) {
+    _timer?.cancel();
+    int next = (_currentPage + direction + _banners.length) % _banners.length;
+    _animateToPage(next);
+    _startTimer();
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isMobile = Responsive.isMobile(context);
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+      height: isMobile ? 180 : 280,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: Stack(
+          children: [
+            PageView.builder(
+              controller: _pageController,
+              onPageChanged: (index) {
+                setState(() {
+                  _currentPage = index;
+                });
+              },
+              itemCount: _banners.length,
+              itemBuilder: (context, index) {
+                return _buildBannerItem(
+                    context, _banners[index], isMobile);
+              },
+            ),
+            Positioned(
+              bottom: 16,
+              right: 24,
+              child: Row(
+                children: List.generate(
+                  _banners.length,
+                  (index) => AnimatedContainer(
+                    duration: const Duration(milliseconds: 300),
+                    margin: const EdgeInsets.only(left: 6),
+                    width: _currentPage == index ? 24 : 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: _currentPage == index
+                          ? AppTheme.primaryColor
+                          : Colors.white.withOpacity(0.3),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            // Previous Button
+            Positioned(
+              left: 16,
+              top: 0,
+              bottom: 0,
+              child: Center(
+                child: IconButton(
+                  onPressed: () => _manualNavigate(-1),
+                  style: IconButton.styleFrom(
+                    backgroundColor: Colors.black.withOpacity(0.3),
+                    hoverColor: Colors.black.withOpacity(0.5),
+                    padding: const EdgeInsets.all(12),
+                  ),
+                  icon: const Icon(
+                    Icons.arrow_back_ios_new,
+                    color: Colors.white,
+                    size: 20,
+                  ),
+                ),
+              ),
+            ),
+            // Next Button
+            Positioned(
+              right: 16,
+              top: 0,
+              bottom: 0,
+              child: Center(
+                child: IconButton(
+                  onPressed: () => _manualNavigate(1),
+                  style: IconButton.styleFrom(
+                    backgroundColor: Colors.black.withOpacity(0.3),
+                    hoverColor: Colors.black.withOpacity(0.5),
+                    padding: const EdgeInsets.all(12),
+                  ),
+                  icon: const Icon(
+                    Icons.arrow_forward_ios,
+                    color: Colors.white,
+                    size: 20,
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
-        const SizedBox(width: 24),
-        Expanded(
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            itemCount: categories.length,
-            separatorBuilder: (context, index) => const SizedBox(width: 8),
-            itemBuilder: (context, index) {
-              final category = categories[index];
-              final isSelected = _selectedCategory == category;
-              
-              return FilterChip(
-                label: Text(category),
-                selected: isSelected,
-                onSelected: (selected) {
-                  setState(() => _selectedCategory = category);
-                },
-                selectedColor: AppTheme.primaryColor,
-                backgroundColor: AppTheme.cardColor,
-                labelStyle: TextStyle(
-                  color: isSelected ? Colors.white : AppTheme.textSecondary,
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+      ),
+    );
+  }
+
+  Widget _buildBannerItem(
+      BuildContext context, Map<String, String> data, bool isMobile) {
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        Image.network(
+          data['image']!,
+          fit: BoxFit.cover,
+        ),
+        Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                Colors.black.withOpacity(0.9),
+                Colors.transparent,
+              ],
+              begin: Alignment.bottomLeft,
+              end: Alignment.center,
+            ),
+          ),
+          padding: EdgeInsets.all(isMobile ? 16 : 24),
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.bottomLeft,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.end,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryColor,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: const Text(
+                    'Featured',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
-                side: BorderSide(
-                  color: isSelected ? AppTheme.primaryColor : AppTheme.borderColor,
+                const SizedBox(height: 12),
+                Text(
+                  data['title']!,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: isMobile ? 24 : 36,
+                    fontWeight: FontWeight.bold,
+                    height: 1.2,
+                  ),
                 ),
-              );
-            },
+                const SizedBox(height: 8),
+                Text(
+                  data['subtitle']!,
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.8),
+                    fontSize: isMobile ? 14 : 16,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ],
     );
   }
+}
 
-  Widget _buildGrid() {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final crossAxisCount = context.isMobile 
-          ? 2 
-          : (context.isTablet ? 3 : 4);
-        
-        return GridView.builder(
-          padding: EdgeInsets.all(context.isMobile ? 16 : 24),
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: crossAxisCount,
-            mainAxisSpacing: context.isMobile ? 12 : 16,
-            crossAxisSpacing: context.isMobile ? 12 : 16,
-            childAspectRatio: 0.7,
+class _ExploreTabContent extends StatefulWidget {
+  final String tabKey;
+
+  const _ExploreTabContent({required this.tabKey});
+
+  @override
+  State<_ExploreTabContent> createState() => _ExploreTabContentState();
+}
+
+class _ExploreTabContentState extends State<_ExploreTabContent>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+    final isMobile = Responsive.isMobile(context);
+
+    return CustomScrollView(
+      key: PageStorageKey<String>(widget.tabKey),
+      slivers: <Widget>[
+        SliverOverlapInjector(
+          handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
+        ),
+        SliverPadding(
+          padding: EdgeInsets.all(isMobile ? 10 : 16),
+          sliver: SliverGrid(
+            gridDelegate: isMobile
+                ? const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    childAspectRatio: 0.7,
+                    crossAxisSpacing: 10,
+                    mainAxisSpacing: 10,
+                  )
+                : const SliverGridDelegateWithMaxCrossAxisExtent(
+                    maxCrossAxisExtent: 300,
+                    childAspectRatio: 0.7,
+                    crossAxisSpacing: 16,
+                    mainAxisSpacing: 16,
+                  ),
+            delegate: SliverChildBuilderDelegate(
+              (BuildContext context, int index) {
+                return _ExploreCard(index: index);
+              },
+              childCount: 20,
+            ),
           ),
-          itemCount: 20,
-          itemBuilder: (context, index) {
-            return _ExploreCard(
-              index: index,
-              isMobile: context.isMobile,
-            );
-          },
-        );
-      },
+        ),
+      ],
     );
   }
 }
 
 class _ExploreCard extends StatefulWidget {
   final int index;
-  final bool isMobile;
-  
-  const _ExploreCard({
-    required this.index,
-    required this.isMobile,
-  });
+  const _ExploreCard({required this.index});
 
   @override
   State<_ExploreCard> createState() => _ExploreCardState();
@@ -171,116 +385,216 @@ class _ExploreCard extends StatefulWidget {
 
 class _ExploreCardState extends State<_ExploreCard> {
   bool _isHovered = false;
-  
+
   @override
   Widget build(BuildContext context) {
+    final isMobile = Responsive.isMobile(context);
+
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),
       onExit: (_) => setState(() => _isHovered = false),
-      child: Card(
-        child: InkWell(
-          onTap: () => context.push('/detail/${widget.index}'),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        transform: _isHovered && !isMobile
+            ? (Matrix4.identity()..translate(0, -4, 0))
+            : Matrix4.identity(),
+        decoration: BoxDecoration(
+          color: AppTheme.cardColor,
           borderRadius: BorderRadius.circular(12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Expanded(
-                child: Stack(
-                  children: [
-                    Container(
-                      decoration: BoxDecoration(
-                        color: AppTheme.surfaceColor,
-                        borderRadius: const BorderRadius.vertical(
-                          top: Radius.circular(12),
-                        ),
-                      ),
-                      child: Center(
-                        child: Icon(
-                          Icons.image_outlined,
-                          size: widget.isMobile ? 36 : 48,
-                          color: AppTheme.textSecondary.withOpacity(0.3),
-                        ),
-                      ),
-                    ),
-                    
-                    // Like button
-                    Positioned(
-                      top: 8,
-                      right: 8,
-                      child: IconButton(
-                        icon: Icon(
-                          widget.index % 3 == 0 
-                            ? Icons.favorite 
-                            : Icons.favorite_border,
-                          color: widget.index % 3 == 0 
-                            ? Colors.red 
-                            : Colors.white,
-                          size: widget.isMobile ? 18 : 20,
-                        ),
-                        onPressed: () {},
-                        style: IconButton.styleFrom(
-                          backgroundColor: Colors.black.withOpacity(0.5),
-                          padding: EdgeInsets.all(widget.isMobile ? 6 : 8),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              
-              Padding(
-                padding: EdgeInsets.all(widget.isMobile ? 8 : 12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'A beautiful ${["landscape", "portrait", "cityscape", "artwork"][widget.index % 4]}...',
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: widget.isMobile ? 12 : 13,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    SizedBox(height: widget.isMobile ? 6 : 8),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.favorite,
-                          size: widget.isMobile ? 12 : 14,
-                          color: AppTheme.textSecondary,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          '${(widget.index + 1) * 123}',
-                          style: TextStyle(
-                            fontSize: widget.isMobile ? 11 : 12,
-                            color: AppTheme.textSecondary,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Icon(
-                          Icons.remove_red_eye,
-                          size: widget.isMobile ? 12 : 14,
-                          color: AppTheme.textSecondary,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          '${(widget.index + 1) * 1234}',
-                          style: TextStyle(
-                            fontSize: widget.isMobile ? 11 : 12,
-                            color: AppTheme.textSecondary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ],
+          border: Border.all(
+            color: _isHovered && !isMobile
+                ? AppTheme.primaryColor.withOpacity(0.5)
+                : AppTheme.borderColor,
           ),
+          boxShadow: _isHovered && !isMobile
+              ? [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.3),
+                    blurRadius: 12,
+                    offset: const Offset(0, 8),
+                  )
+                ]
+              : [],
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ================= VIDEO / THUMBNAIL =================
+            Expanded(
+              child: MouseRegion(
+                cursor: SystemMouseCursors.click,
+                child: GestureDetector(
+                  onTap: () {
+                    context.push('/detail/${widget.index}');
+                  },
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      Image.network(
+                        'https://picsum.photos/seed/${widget.index + 50}/400/600',
+                        fit: BoxFit.cover,
+                      ),
+                      if (_isHovered || isMobile)
+                        Container(
+                          color: isMobile ? Colors.transparent : Colors.black.withOpacity(0.3),
+                          child: Center(
+                            child: Icon(
+                              Icons.play_circle_fill,
+                              color: Colors.white.withOpacity(isMobile ? 0.8 : 1.0),
+                              size: isMobile ? 32 : 48,
+                            ),
+                          ),
+                        ),
+                      Positioned(
+                        top: 8,
+                        right: 8,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withOpacity(0.6),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: const Text(
+                            '00:05',
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
+            // ================= INFO =================
+            Padding(
+              padding: EdgeInsets.all(isMobile ? 8 : 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Cinematic shot of a futuristic city with neon lights...',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: AppTheme.textPrimary,
+                      fontSize: isMobile ? 12 : 13,
+                      height: 1.4,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  SizedBox(height: isMobile ? 8 : 12),
+
+                  // ================= USER + LIKE =================
+                  Row(
+                    children: [
+                      Expanded(
+                        child: MouseRegion(
+                          cursor: SystemMouseCursors.click,
+                          child: GestureDetector(
+                            onTap: () {
+                              context.push('/user/user_${widget.index}');
+                            },
+                            behavior: HitTestBehavior.opaque,
+                            child: Row(
+                              children: [
+                                CircleAvatar(
+                                  radius: isMobile ? 8 : 10,
+                                  backgroundColor: AppTheme.accentPurple,
+                                  child: Text(
+                                    'U${widget.index}',
+                                    style: TextStyle(
+                                        fontSize: isMobile ? 7 : 8, color: Colors.white),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    'User ${widget.index}',
+                                    style: const TextStyle(
+                                      color: AppTheme.textSecondary,
+                                      fontSize: 12,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(width: 4),
+
+                      // LIKE BUTTON
+                      MouseRegion(
+                        cursor: SystemMouseCursors.click,
+                        child: GestureDetector(
+                          onTap: () {
+                            // handle like
+                          },
+                          child: Row(
+                            children: [
+                              Icon(
+                                _isHovered
+                                    ? Icons.favorite
+                                    : Icons.favorite_border,
+                                size: isMobile ? 14 : 16,
+                                color: _isHovered
+                                    ? AppTheme.accentPink
+                                    : AppTheme.textSecondary,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                '${245 + widget.index}',
+                                style: const TextStyle(
+                                  color: AppTheme.textSecondary,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
+  }
+}
+
+
+class _StickyTabBarDelegate extends SliverPersistentHeaderDelegate {
+  final Widget child;
+
+  _StickyTabBarDelegate({required this.child});
+
+  @override
+  double get minExtent => 48.0;
+  @override
+  double get maxExtent => 48.0;
+
+  @override
+  Widget build(
+      BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return Container(
+      color: AppTheme.backgroundColor,
+      child: child,
+    );
+  }
+
+  @override
+  bool shouldRebuild(_StickyTabBarDelegate oldDelegate) {
+    return false;
   }
 }

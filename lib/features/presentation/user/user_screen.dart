@@ -83,7 +83,7 @@ class _UserScreenState extends State<UserScreen>
               child: IconButton(
                 icon: const Icon(Icons.arrow_back, color: Colors.white),
                 onPressed: () =>
-                    context.canPop() ? context.pop() : context.go('/home'),
+                    context.canPop() ? context.pop() : context.go('/explore'),
               ),
             ),
           ),

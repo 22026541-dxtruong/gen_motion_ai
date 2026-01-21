@@ -403,27 +403,41 @@ class _MobileCanvasLayoutState extends ConsumerState<_MobileCanvasLayout> {
                     icon: const Icon(Icons.add_circle_outline, size: 20),
                     label: const Text('Icons'),
                     style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 12,
+                        horizontal: 12,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 8),
                   OutlinedButton.icon(
                     onPressed: () => _pickImages(ref),
-                    icon: const Icon(Icons.add_photo_alternate_outlined, size: 20),
+                    icon: const Icon(
+                      Icons.add_photo_alternate_outlined,
+                      size: 20,
+                    ),
                     label: const Text('Images'),
                     style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 12,
+                        horizontal: 12,
+                      ),
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  OutlinedButton.icon(
-                    onPressed: () => _pickVideo(ref),
-                    icon: const Icon(Icons.video_library_outlined, size: 20),
-                    label: const Text('Video'),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+                  if (ref.read(canvasProvider).mode == GenerationMode.video) ...[
+                    const SizedBox(width: 8),
+                    OutlinedButton.icon(
+                      onPressed: () => _pickVideo(ref),
+                      icon: const Icon(Icons.video_library_outlined, size: 20),
+                      label: const Text('Video'),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 12,
+                          horizontal: 12,
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                 ],
               ),
             ),

@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:gen_motion_ai/features/presentation/canvas/canvas_screen.dart';
@@ -6,26 +5,19 @@ import 'package:gen_motion_ai/features/presentation/detail/detail_screen.dart';
 import 'package:gen_motion_ai/features/presentation/generate/generate_screen.dart';
 import 'package:gen_motion_ai/features/presentation/explore/explore_screen.dart';
 import 'package:gen_motion_ai/features/presentation/gallery/gallery_screen.dart';
-import 'package:gen_motion_ai/features/presentation/home/home_screen.dart';
 import 'package:gen_motion_ai/features/presentation/queue/queue_screen.dart';
 import 'package:gen_motion_ai/features/presentation/user/user_screen.dart';
 import 'package:gen_motion_ai/features/presentation/widgets/main_layout.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
-    initialLocation: '/home',
+    initialLocation: '/explore',
     routes: [
       ShellRoute(
         builder: (context, state, child) {
           return MainLayout(child: child, location: state.uri.path);
         },
         routes: [
-          GoRoute(
-            path: '/home',
-            name: 'home',
-            pageBuilder: (context, state) =>
-                const NoTransitionPage(child: HomeScreen()),
-          ),
           GoRoute(
             path: '/explore',
             name: 'explore',
@@ -59,9 +51,6 @@ final routerProvider = Provider<GoRouter>((ref) {
         ],
       ),
 
-      /// ===============================
-      /// FULLSCREEN ROUTES (KHÔNG SIDEBAR)
-      /// ===============================
       GoRoute(
         path: '/detail/:id',
         name: 'detail',

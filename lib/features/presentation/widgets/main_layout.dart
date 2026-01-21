@@ -207,17 +207,10 @@ class __DesktopSidebarState extends State<_DesktopSidebar> {
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               children: [
                 _DesktopNavItem(
-                  icon: Icons.home_rounded,
-                  label: 'Home',
-                  route: '/home',
-                  isActive: currentRoute == '/home',
-                  collapsed: !_expandedDone,
-                ),
-                _DesktopNavItem(
-                  icon: Icons.add_circle_outline,
-                  label: 'Create',
-                  route: '/create',
-                  isActive: currentRoute == '/create',
+                  icon: Icons.explore_outlined,
+                  label: 'Explore',
+                  route: '/explore',
+                  isActive: currentRoute == '/explore',
                   collapsed: !_expandedDone,
                 ),
                 _DesktopNavItem(
@@ -228,10 +221,10 @@ class __DesktopSidebarState extends State<_DesktopSidebar> {
                   collapsed: !_expandedDone,
                 ),
                 _DesktopNavItem(
-                  icon: Icons.explore_outlined,
-                  label: 'Explore',
-                  route: '/explore',
-                  isActive: currentRoute == '/explore',
+                  icon: Icons.add_circle_outline,
+                  label: 'Create',
+                  route: '/create',
+                  isActive: currentRoute == '/create',
                   collapsed: !_expandedDone,
                 ),
                 _DesktopNavItem(
@@ -442,7 +435,7 @@ class _MobileTopBar extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           const Text(
-            'Kling AI',
+            'Gen Motion AI',
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
           const Spacer(),
@@ -523,19 +516,19 @@ class _MobileDrawer extends StatelessWidget {
                 ),
                 children: const [
                   _MobileNavItem(
-                    icon: Icons.home_rounded,
-                    label: 'Home',
-                    route: '/home',
+                    icon: Icons.explore_outlined,
+                    label: 'Explore',
+                    route: '/explore',
+                  ),
+                  _MobileNavItem(
+                    icon: Icons.draw_outlined,
+                    label: 'Canvas',
+                    route: '/canvas',
                   ),
                   _MobileNavItem(
                     icon: Icons.add_circle_outline,
                     label: 'Create',
                     route: '/create',
-                  ),
-                  _MobileNavItem(
-                    icon: Icons.explore_outlined,
-                    label: 'Explore',
-                    route: '/explore',
                   ),
                   _MobileNavItem(
                     icon: Icons.photo_library_outlined,
@@ -643,22 +636,22 @@ class _MobileBottomNav extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
           _BottomNavItem(
-            icon: Icons.home_rounded,
-            label: 'Home',
-            route: '/home',
-            isActive: currentRoute == '/home',
-          ),
-          _BottomNavItem(
             icon: Icons.explore_outlined,
             label: 'Explore',
             route: '/explore',
             isActive: currentRoute == '/explore',
           ),
           _BottomNavItem(
-            icon: Icons.add_circle,
-            label: 'Create',
+            icon: Icons.draw_outlined,
+            label: 'Canvas',
             route: '/canvas',
             isActive: currentRoute == '/canvas',
+          ),
+          _BottomNavItem(
+            icon: Icons.add_circle,
+            label: 'Create',
+            route: '/create',
+            isActive: currentRoute == '/create',
             isCenter: true,
           ),
           _BottomNavItem(
