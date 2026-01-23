@@ -4,6 +4,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:gen_motion_ai/features/presentation/canvas/canvas_provider.dart';
 import 'package:gen_motion_ai/features/presentation/canvas/models.dart';
 import 'package:gen_motion_ai/features/presentation/widgets/canvas_area.dart';
+
+import 'package:gen_motion_ai/features/presentation/widgets/gallery_panel.dart';
 import 'package:gen_motion_ai/features/presentation/widgets/icon_library_panel.dart';
 import 'package:gen_motion_ai/features/presentation/widgets/properties_panel.dart';
 import 'package:gen_motion_ai/features/presentation/widgets/video_timeline.dart';
@@ -35,6 +37,7 @@ class _DesktopCanvasLayoutState extends ConsumerState<_DesktopCanvasLayout> {
   double _leftPanelWidth = 280.0;
   double _rightPanelWidth = 280.0;
   double _timelineHeight = 250.0;
+  int _selectedLeftTabIndex = 0; // 0: Icons, 1: Gallery
 
   @override
   Widget build(BuildContext context) {
@@ -46,7 +49,29 @@ class _DesktopCanvasLayoutState extends ConsumerState<_DesktopCanvasLayout> {
           child: Row(
             children: [
               // Left: Icon Library
-              SizedBox(width: _leftPanelWidth, child: const IconLibraryPanel()),
+              SizedBox(
+                width: _leftPanelWidth,
+                child: Column(
+                  children: [
+                    Container(
+                      decoration: const BoxDecoration(
+                        border: Border(bottom: BorderSide(color: AppTheme.borderColor)),
+                      ),
+                      child: Row(
+                        children: [
+                          _buildTabButton('Icons', 0),
+                          _buildTabButton('Gallery', 1),
+                        ],
+                      ),
+                    ),
+                    Expanded(
+                      child: _selectedLeftTabIndex == 0
+                          ? const IconLibraryPanel()
+                          : const GalleryPanel(),
+                    ),
+                  ],
+                ),
+              ),
 
               // Resizer Left
               MouseRegion(
@@ -108,6 +133,34 @@ class _DesktopCanvasLayoutState extends ConsumerState<_DesktopCanvasLayout> {
       ],
     );
   }
+
+  Widget _buildTabButton(String label, int index) {
+    final isSelected = _selectedLeftTabIndex == index;
+    return Expanded(
+      child: InkWell(
+        onTap: () => setState(() => _selectedLeftTabIndex = index),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: BoxDecoration(
+            border: Border(
+              bottom: BorderSide(
+                color: isSelected ? AppTheme.primaryColor : Colors.transparent,
+                width: 2,
+              ),
+            ),
+          ),
+          child: Text(
+            label,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+              color: isSelected ? AppTheme.primaryColor : AppTheme.textSecondary,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 // ==================== MOBILE LAYOUT ====================
@@ -121,6 +174,7 @@ class _MobileCanvasLayout extends ConsumerStatefulWidget {
 
 class _MobileCanvasLayoutState extends ConsumerState<_MobileCanvasLayout> {
   bool _showIconLibrary = false;
+  bool _showGallery = false;
   bool _showProperties = false;
   double _timelineHeight = 200.0;
 
@@ -150,6 +204,7 @@ class _MobileCanvasLayoutState extends ConsumerState<_MobileCanvasLayout> {
         setState(() {
           _showProperties = true;
           _showIconLibrary = false;
+          _showGallery = false;
         });
       } else if (nextSelection == null && prevSelection != null) {
         setState(() {
@@ -169,7 +224,8 @@ class _MobileCanvasLayoutState extends ConsumerState<_MobileCanvasLayout> {
             if (canvasState.mode == GenerationMode.video &&
                 canvasState.showTimeline &&
                 !_showIconLibrary &&
-                !_showProperties)
+                !_showProperties &&
+                !_showGallery)
               Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -211,13 +267,20 @@ class _MobileCanvasLayoutState extends ConsumerState<_MobileCanvasLayout> {
                 ],
               ),
 
-            if (!_showIconLibrary && !_showProperties) _buildBottomToolbar(),
+            if (!_showIconLibrary && !_showProperties && !_showGallery) _buildBottomToolbar(),
 
             if (_showIconLibrary)
               _buildBottomPanel(
                 title: 'Library',
                 onClose: () => setState(() => _showIconLibrary = false),
                 child: const IconLibraryPanel(),
+              ),
+
+            if (_showGallery)
+              _buildBottomPanel(
+                title: 'Gallery',
+                onClose: () => setState(() => _showGallery = false),
+                child: const GalleryPanel(),
               ),
 
             if (_showProperties && hasSelection)
@@ -343,7 +406,10 @@ class _MobileCanvasLayoutState extends ConsumerState<_MobileCanvasLayout> {
               ),
               onPressed: () => setState(() {
                 _showProperties = !_showProperties;
-                if (_showProperties) _showIconLibrary = false;
+                if (_showProperties) {
+                  _showIconLibrary = false;
+                  _showGallery = false;
+                }
               }),
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
@@ -395,13 +461,28 @@ class _MobileCanvasLayoutState extends ConsumerState<_MobileCanvasLayout> {
                 children: [
                   OutlinedButton.icon(
                     onPressed: () {
-                      setState(() => _showIconLibrary = true);
+                      setState(() {
+                        _showIconLibrary = true;
+                        _showGallery = false;
+                      });
                       if (ref.read(canvasProvider).isDrawingMode) {
                         ref.read(canvasProvider.notifier).toggleDrawingMode();
                       }
                     },
                     icon: const Icon(Icons.add_circle_outline, size: 20),
                     label: const Text('Icons'),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 12,
+                        horizontal: 12,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  OutlinedButton.icon(
+                    onPressed: () => setState(() => _showGallery = true),
+                    icon: const Icon(Icons.collections_bookmark_outlined, size: 20),
+                    label: const Text('Gallery'),
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(
                         vertical: 12,

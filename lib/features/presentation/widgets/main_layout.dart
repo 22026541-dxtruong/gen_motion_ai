@@ -20,6 +20,8 @@ class _MainLayoutState extends State<MainLayout> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: _scaffoldKey,
+      drawer: context.isMobile ? const _MobileDrawer() : null,
       body: Responsive(
         mobile: _buildMobileLayout(widget.location),
         desktop: _buildDesktopLayout(widget.location),
@@ -59,26 +61,19 @@ class _MainLayoutState extends State<MainLayout> {
       children: [
         const _DesktopSidebar(),
         Expanded(
-          child: Column(
-            children: [
-              const _DesktopTopBar(),
-              Expanded(
-                child: PageTransitionSwitcher(
-                  duration: const Duration(milliseconds: 500),
-                  transitionBuilder: (child, animation, secondaryAnimation) {
-                    return FadeThroughTransition(
-                      animation: animation,
-                      secondaryAnimation: secondaryAnimation,
-                      child: child,
-                    );
-                  },
-                  child: KeyedSubtree(
-                    key: ValueKey(location),
-                    child: widget.child,
-                  ),
-                ),
-              ),
-            ],
+          child: PageTransitionSwitcher(
+            duration: const Duration(milliseconds: 500),
+            transitionBuilder: (child, animation, secondaryAnimation) {
+              return FadeThroughTransition(
+                animation: animation,
+                secondaryAnimation: secondaryAnimation,
+                child: child,
+              );
+            },
+            child: KeyedSubtree(
+              key: ValueKey(location),
+              child: widget.child,
+            ),
           ),
         ),
       ],
@@ -749,69 +744,6 @@ class _BottomNavItem extends StatelessWidget {
               ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _DesktopTopBar extends StatelessWidget {
-  const _DesktopTopBar();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 64,
-      decoration: const BoxDecoration(
-        color: AppTheme.surfaceColor,
-        border: Border(bottom: BorderSide(color: AppTheme.borderColor)),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Row(
-        children: [
-          // Search bar
-          Expanded(
-            child: Container(
-              height: 40,
-              constraints: const BoxConstraints(maxWidth: 500),
-              child: TextField(
-                decoration: InputDecoration(
-                  hintText: 'Search prompts, styles...',
-                  hintStyle: const TextStyle(
-                    color: AppTheme.textSecondary,
-                    fontSize: 14,
-                  ),
-                  prefixIcon: const Icon(
-                    Icons.search,
-                    color: AppTheme.textSecondary,
-                    size: 20,
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(20),
-                    borderSide: const BorderSide(color: AppTheme.borderColor),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(20),
-                    borderSide: const BorderSide(color: AppTheme.borderColor),
-                  ),
-                ),
-              ),
-            ),
-          ),
-
-          const SizedBox(width: 16),
-
-          // Actions
-          IconButton(
-            icon: const Icon(Icons.notifications_outlined),
-            onPressed: () {},
-          ),
-          const SizedBox(width: 8),
-          IconButton(
-            icon: const Icon(Icons.settings_outlined),
-            onPressed: () {},
-          ),
-        ],
       ),
     );
   }

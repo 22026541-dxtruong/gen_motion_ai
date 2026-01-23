@@ -600,7 +600,7 @@ class _CanvasUserVideoWidgetState extends ConsumerState<_CanvasUserVideoWidget> 
 
   Future<void> _initializeController() async {
     try {
-      if (kIsWeb) {
+      if (kIsWeb || widget.video.path.startsWith('http')) {
         _controller = VideoPlayerController.networkUrl(Uri.parse(widget.video.path));
       } else {
         _controller = VideoPlayerController.file(File(widget.video.path));
@@ -1025,7 +1025,7 @@ class _CanvasUserImageWidgetState extends ConsumerState<_CanvasUserImageWidget> 
             child: Stack(
               children: [
                 Positioned.fill(
-                  child: kIsWeb
+                  child: (kIsWeb || widget.image.path.startsWith('http'))
                       ? Image.network(
                           widget.image.path,
                           fit: BoxFit.cover,

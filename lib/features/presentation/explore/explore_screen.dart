@@ -33,38 +33,69 @@ class _ExploreScreenState extends State<ExploreScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
+      floatingActionButton: context.isMobile
+          ? FloatingActionButton.extended(
+              onPressed: () => _showPublishModal(context),
+              backgroundColor: AppTheme.primaryColor,
+              foregroundColor: Colors.white,
+              icon: const Icon(Icons.add_photo_alternate_outlined),
+              label: const Text('Publish'),
+            )
+          : null,
       body: NestedScrollView(
         controller: _scrollController,
         headerSliverBuilder: (context, innerBoxIsScrolled) {
           return [
-            SliverToBoxAdapter(
-              child: const _BannerCarousel(),
-            ),
+            if (context.isMobile) SliverToBoxAdapter(child: const _SearchBar()),
+            SliverToBoxAdapter(child: const _BannerCarousel()),
             SliverOverlapAbsorber(
               handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
               sliver: SliverPersistentHeader(
                 delegate: _StickyTabBarDelegate(
-                  child: TabBar(
-                    controller: _tabController,
-                    isScrollable: true,
-                    labelColor: AppTheme.textPrimary,
-                    unselectedLabelColor: AppTheme.textSecondary,
-                    indicatorColor: AppTheme.primaryColor,
-                    indicatorSize: TabBarIndicatorSize.label,
-                    dividerColor: Colors.transparent,
-                    tabAlignment: TabAlignment.start,
-                    padding: EdgeInsets.symmetric(horizontal: context.isMobile ? 8 : 16),
-                    tabs: const [
-                      Tab(text: 'Recommended'),
-                      Tab(text: 'Trending'),
-                      Tab(text: 'New Arrivals'),
-                      Tab(text: 'Realistic'),
-                      Tab(text: 'Anime'),
-                      Tab(text: '3D Animation'),
-                    ],
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: context.isMobile ? 8 : 16,
+                    ),
+                    child: Row(
+                      mainAxisAlignment: context.isDesktop
+                          ? MainAxisAlignment.spaceBetween
+                          : MainAxisAlignment.start,
+                      children: [
+                        TabBar(
+                          controller: _tabController,
+                          isScrollable: true,
+                          labelColor: AppTheme.textPrimary,
+                          unselectedLabelColor: AppTheme.textSecondary,
+                          indicatorColor: AppTheme.primaryColor,
+                          indicatorSize: TabBarIndicatorSize.label,
+                          dividerColor: Colors.transparent,
+                          tabAlignment: TabAlignment.start,
+                          tabs: const [
+                            Tab(text: 'Recommended'),
+                            Tab(text: 'Trending'),
+                            Tab(text: 'New Arrivals'),
+                            Tab(text: 'Realistic'),
+                            Tab(text: 'Anime'),
+                            Tab(text: '3D Animation'),
+                          ],
+                        ),
+                        if (context.isDesktop) ...[
+                          const _SearchBar(isDesktop: true),
+                          FloatingActionButton.extended(
+                            onPressed: () => _showPublishModal(context),
+                            backgroundColor: AppTheme.primaryColor,
+                            foregroundColor: Colors.white,
+                            icon: const Icon(
+                              Icons.add_photo_alternate_outlined,
+                            ),
+                            label: const Text('Publish'),
+                          )
+                        ]
+                      ],
+                    ),
                   ),
                 ),
-              pinned: true,
+                pinned: true,
               ),
             ),
           ];
@@ -78,6 +109,119 @@ class _ExploreScreenState extends State<ExploreScreen>
             _ExploreTabContent(tabKey: 'Realistic'),
             _ExploreTabContent(tabKey: 'Anime'),
             _ExploreTabContent(tabKey: '3D Animation'),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showPublishModal(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppTheme.surfaceColor,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+          left: 20,
+          right: 20,
+          top: 20,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Publish Creation',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.textPrimary,
+                  ),
+                ),
+                IconButton(
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.close, color: AppTheme.textSecondary),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            // Mock Media Selector
+            Container(
+              height: 150,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: AppTheme.cardColor,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: AppTheme.borderColor,
+                  style: BorderStyle.solid,
+                ),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(
+                    Icons.cloud_upload_outlined,
+                    size: 40,
+                    color: AppTheme.primaryColor,
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Select Video or Image generated',
+                    style: TextStyle(
+                      color: AppTheme.textSecondary.withOpacity(0.8),
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+            const TextField(
+              maxLines: 3,
+              decoration: InputDecoration(
+                hintText: 'Write a description or prompt used...',
+                hintStyle: TextStyle(color: AppTheme.textSecondary),
+                filled: true,
+                fillColor: AppTheme.cardColor,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(12)),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Published successfully!'),
+                      backgroundColor: AppTheme.accentGreen,
+                    ),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primaryColor,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text('Post to Community'),
+              ),
+            ),
+            const SizedBox(height: 32),
           ],
         ),
       ),
@@ -101,17 +245,17 @@ class _BannerCarouselState extends State<_BannerCarousel> {
     {
       'image': 'https://picsum.photos/1200/600?random=1',
       'title': 'Explore the Community\'s\nImagination',
-      'subtitle': 'Discover amazing videos generated by Kling AI creators'
+      'subtitle': 'Discover amazing videos generated by Kling AI creators',
     },
     {
       'image': 'https://picsum.photos/1200/600?random=2',
       'title': 'New V1.5 Model\nAvailable Now',
-      'subtitle': 'Experience higher fidelity and better motion consistency'
+      'subtitle': 'Experience higher fidelity and better motion consistency',
     },
     {
       'image': 'https://picsum.photos/1200/600?random=3',
       'title': 'Weekly Challenge:\nCyberpunk City',
-      'subtitle': 'Join the contest and win free credits'
+      'subtitle': 'Join the contest and win free credits',
     },
   ];
 
@@ -176,8 +320,7 @@ class _BannerCarouselState extends State<_BannerCarousel> {
               },
               itemCount: _banners.length,
               itemBuilder: (context, index) {
-                return _buildBannerItem(
-                    context, _banners[index], isMobile);
+                return _buildBannerItem(context, _banners[index], isMobile);
               },
             ),
             Positioned(
@@ -250,21 +393,18 @@ class _BannerCarouselState extends State<_BannerCarousel> {
   }
 
   Widget _buildBannerItem(
-      BuildContext context, Map<String, String> data, bool isMobile) {
+    BuildContext context,
+    Map<String, String> data,
+    bool isMobile,
+  ) {
     return Stack(
       fit: StackFit.expand,
       children: [
-        Image.network(
-          data['image']!,
-          fit: BoxFit.cover,
-        ),
+        Image.network(data['image']!, fit: BoxFit.cover),
         Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [
-                Colors.black.withOpacity(0.9),
-                Colors.transparent,
-              ],
+              colors: [Colors.black.withOpacity(0.9), Colors.transparent],
               begin: Alignment.bottomLeft,
               end: Alignment.center,
             ),
@@ -279,8 +419,10 @@ class _BannerCarouselState extends State<_BannerCarousel> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: AppTheme.primaryColor,
                     borderRadius: BorderRadius.circular(20),
@@ -362,12 +504,12 @@ class _ExploreTabContentState extends State<_ExploreTabContent>
                     crossAxisSpacing: 16,
                     mainAxisSpacing: 16,
                   ),
-            delegate: SliverChildBuilderDelegate(
-              (BuildContext context, int index) {
-                return _ExploreCard(index: index);
-              },
-              childCount: 20,
-            ),
+            delegate: SliverChildBuilderDelegate((
+              BuildContext context,
+              int index,
+            ) {
+              return _ExploreCard(index: index);
+            }, childCount: 20),
           ),
         ),
       ],
@@ -412,7 +554,7 @@ class _ExploreCardState extends State<_ExploreCard> {
                     color: Colors.black.withOpacity(0.3),
                     blurRadius: 12,
                     offset: const Offset(0, 8),
-                  )
+                  ),
                 ]
               : [],
         ),
@@ -437,11 +579,15 @@ class _ExploreCardState extends State<_ExploreCard> {
                       ),
                       if (_isHovered || isMobile)
                         Container(
-                          color: isMobile ? Colors.transparent : Colors.black.withOpacity(0.3),
+                          color: isMobile
+                              ? Colors.transparent
+                              : Colors.black.withOpacity(0.3),
                           child: Center(
                             child: Icon(
                               Icons.play_circle_fill,
-                              color: Colors.white.withOpacity(isMobile ? 0.8 : 1.0),
+                              color: Colors.white.withOpacity(
+                                isMobile ? 0.8 : 1.0,
+                              ),
                               size: isMobile ? 32 : 48,
                             ),
                           ),
@@ -451,7 +597,9 @@ class _ExploreCardState extends State<_ExploreCard> {
                         right: 8,
                         child: Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 6, vertical: 2),
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.black.withOpacity(0.6),
                             borderRadius: BorderRadius.circular(4),
@@ -459,9 +607,10 @@ class _ExploreCardState extends State<_ExploreCard> {
                           child: const Text(
                             '00:05',
                             style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold),
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ),
@@ -509,7 +658,9 @@ class _ExploreCardState extends State<_ExploreCard> {
                                   child: Text(
                                     'U${widget.index}',
                                     style: TextStyle(
-                                        fontSize: isMobile ? 7 : 8, color: Colors.white),
+                                      fontSize: isMobile ? 7 : 8,
+                                      color: Colors.white,
+                                    ),
                                   ),
                                 ),
                                 const SizedBox(width: 8),
@@ -573,7 +724,6 @@ class _ExploreCardState extends State<_ExploreCard> {
   }
 }
 
-
 class _StickyTabBarDelegate extends SliverPersistentHeaderDelegate {
   final Widget child;
 
@@ -586,15 +736,80 @@ class _StickyTabBarDelegate extends SliverPersistentHeaderDelegate {
 
   @override
   Widget build(
-      BuildContext context, double shrinkOffset, bool overlapsContent) {
-    return Container(
-      color: AppTheme.backgroundColor,
-      child: child,
-    );
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
+    return Container(color: AppTheme.backgroundColor, child: child);
   }
 
   @override
   bool shouldRebuild(_StickyTabBarDelegate oldDelegate) {
     return false;
+  }
+}
+
+class _SearchBar extends StatelessWidget {
+  final bool isDesktop;
+
+  const _SearchBar({this.isDesktop = false});
+
+  @override
+  Widget build(BuildContext context) {
+    if (isDesktop) {
+      return Container(
+        constraints: BoxConstraints(maxWidth: 400),
+        height: 36,
+        margin: const EdgeInsets.only(right: 16),
+        decoration: BoxDecoration(
+          color: AppTheme.cardColor,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: AppTheme.borderColor),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        child: Row(
+          children: [
+            const Icon(Icons.search, color: AppTheme.textSecondary, size: 18),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Search...',
+                style: TextStyle(
+                  color: AppTheme.textSecondary.withOpacity(0.7),
+                  fontSize: 13,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      child: Container(
+        height: 48,
+        decoration: BoxDecoration(
+          color: AppTheme.cardColor,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: AppTheme.borderColor),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Row(
+          children: [
+            const Icon(Icons.search, color: AppTheme.textSecondary),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'Search prompts, styles, users...',
+                style: TextStyle(
+                  color: AppTheme.textSecondary.withOpacity(0.7),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
