@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:gen_motion_ai/features/presentation/auth/auth_screen.dart';
 import 'package:gen_motion_ai/features/presentation/canvas/canvas_screen.dart';
 import 'package:gen_motion_ai/features/presentation/detail/detail_screen.dart';
 import 'package:gen_motion_ai/features/presentation/generate/generate_screen.dart';
@@ -13,6 +14,16 @@ final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     initialLocation: '/explore',
     routes: [
+      GoRoute(
+        path: '/login',
+        name: 'login',
+        pageBuilder: (context, state) => const NoTransitionPage(child: AuthScreen()),
+      ),
+      GoRoute(
+        path: '/register',
+        name: 'register',
+        pageBuilder: (context, state) => const NoTransitionPage(child: AuthScreen()),
+      ),
       ShellRoute(
         builder: (context, state, child) {
           return MainLayout(child: child, location: state.uri.path);

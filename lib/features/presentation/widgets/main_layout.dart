@@ -293,6 +293,15 @@ class __DesktopSidebarState extends State<_DesktopSidebar> {
                         ],
                       ),
                     ),
+                    IconButton(
+                      onPressed: () => context.go('/login'),
+                      icon: const Icon(
+                        Icons.logout,
+                        size: 20,
+                        color: AppTheme.textSecondary,
+                      ),
+                      tooltip: 'Logout',
+                    ),
                   ],
                 ],
               ),
@@ -547,6 +556,14 @@ class _MobileDrawer extends StatelessWidget {
               leading: const Icon(Icons.settings_outlined),
               title: const Text('Settings'),
               onTap: () {},
+            ),
+            ListTile(
+              leading: const Icon(Icons.logout, color: AppTheme.textSecondary),
+              title: const Text(
+                'Logout',
+                style: TextStyle(color: AppTheme.textSecondary),
+              ),
+              onTap: () => context.go('/login'),
             ),
           ],
         ),
