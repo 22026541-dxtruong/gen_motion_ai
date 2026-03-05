@@ -571,7 +571,7 @@ class _VideoTimelineState extends ConsumerState<VideoTimeline> {
     final mins = (seconds / 60).floor();
     final secs = (seconds % 60).floor();
     final ms = ((seconds % 1) * 10).floor();
-    return '${mins.toString().padLeft(2, '0')}:${secs.toString().padLeft(2, '0')}.${ms}';
+    return '${mins.toString().padLeft(2, '0')}:${secs.toString().padLeft(2, '0')}.$ms';
   }
 }
 

@@ -447,8 +447,9 @@ class _CanvasAreaState extends ConsumerState<CanvasArea> {
     }
 
     if (sketch.points.length == 1) {
-      if ((local - sketch.points.first.offset).distance <= threshold)
+      if ((local - sketch.points.first.offset).distance <= threshold) {
         return true;
+      }
     }
 
     return false;

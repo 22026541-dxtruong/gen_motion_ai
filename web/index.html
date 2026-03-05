@@ -18,21 +18,118 @@
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="A new Flutter project.">
+  <meta name="description" content="Gen Motion AI is a professional AI video generation platform. Turn text to video and image to video instantly with high quality.">
+  <meta name="keywords" content="AI video, text to video, image to video, sora alternative, kling ai alternative, gen motion, generative ai">
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Gen Motion AI - Unleash your creativity">
+  <meta property="og:description" content="Create cinematic videos from text prompts. The next generation of AI video creation is here.">
+  <meta property="og:image" content="icons/Icon-512.png">
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="gen_motion_ai">
+  <meta name="apple-mobile-web-app-title" content="Gen Motion AI">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
 
-  <title>gen_motion_ai</title>
+  <title>Gen Motion AI - AI Video Generator</title>
   <link rel="manifest" href="manifest.json">
+
+  <style>
+    body {
+      background-color: #0F0F10;
+      color: #ffffff;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      height: 100vh;
+      width: 100vw;
+      overflow: hidden;
+    }
+    
+    /* Loading / SEO Content Styles */
+    #seo-landing {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background: radial-gradient(circle at 50% 50%, #1E1E24 0%, #000000 100%);
+      z-index: 0;
+      text-align: center;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+
+    .logo {
+      font-size: 24px;
+      font-weight: bold;
+      margin-bottom: 40px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .hero-title {
+      font-size: 48px;
+      font-weight: 800;
+      line-height: 1.2;
+      margin-bottom: 24px;
+      background: linear-gradient(to right, #fff, #aaa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      max-width: 800px;
+    }
+
+    .hero-desc {
+      font-size: 18px;
+      color: #888;
+      max-width: 600px;
+      margin-bottom: 40px;
+      line-height: 1.6;
+    }
+
+    .loader {
+      margin-top: 60px;
+      width: 40px;
+      height: 40px;
+      border: 3px solid rgba(255,255,255,0.1);
+      border-radius: 50%;
+      border-top-color: #0175C2;
+      animation: spin 1s ease-in-out infinite;
+    }
+
+    @media (max-width: 768px) {
+      .hero-title { font-size: 32px; }
+      .hero-desc { font-size: 16px; }
+    }
+  </style>
 </head>
 <body>
+  <!-- SEO Content & Loading Screen -->
+  <div id="seo-landing">
+    <div class="logo">
+      <span>✨ Gen Motion AI</span>
+    </div>
+    
+    <h1 class="hero-title">Unleash your creativity with AI Video Generation</h1>
+    
+    <p class="hero-desc">
+      Transform your ideas into stunning videos in seconds. 
+      Professional Text-to-Video and Image-to-Video generation powered by advanced AI models.
+    </p>
+
+    <div class="loader"></div>
+  </div>
+
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

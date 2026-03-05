@@ -330,24 +330,30 @@ class CanvasIcon {
     }
     
     if (before == null && after == null) return this;
-    if (before == null) return copyWith(
+    if (before == null) {
+      return copyWith(
       position: after!.position,
       size: after.size,
       rotation: after.rotation,
       opacity: after.opacity,
     );
-    if (after == null) return copyWith(
+    }
+    if (after == null) {
+      return copyWith(
       position: before.position,
       size: before.size,
       rotation: before.rotation,
       opacity: before.opacity,
     );
-    if (before.time == after.time) return copyWith(
+    }
+    if (before.time == after.time) {
+      return copyWith(
       position: before.position,
       size: before.size,
       rotation: before.rotation,
       opacity: before.opacity,
     );
+    }
     
     final t = (time - before.time) / (after.time - before.time);
     

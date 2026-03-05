@@ -26,7 +26,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       ShellRoute(
         builder: (context, state, child) {
-          return MainLayout(child: child, location: state.uri.path);
+          return MainLayout(location: state.uri.path, child: child);
         },
         routes: [
           GoRoute(

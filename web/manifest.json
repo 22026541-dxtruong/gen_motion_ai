@@ -1,11 +1,11 @@
 {
-    "name": "gen_motion_ai",
-    "short_name": "gen_motion_ai",
+    "name": "Gen Motion AI - AI Video Generator",
+    "short_name": "GenMotion",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#0F0F10",
+    "theme_color": "#0F0F10",
+    "description": "Unleash your creativity with Gen Motion AI. Create stunning videos from text and images.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

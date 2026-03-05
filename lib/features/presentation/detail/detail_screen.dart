@@ -954,7 +954,6 @@ class _MediaPlaceholder extends StatefulWidget {
   final bool isMobileFull;
 
   const _MediaPlaceholder({
-    super.key,
     required this.isVideo,
     this.isMobileFull = false,
   });

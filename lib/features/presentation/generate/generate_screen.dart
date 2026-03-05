@@ -356,7 +356,7 @@ class _GenerateScreenState extends State<GenerateScreen> {
         ),
         const SizedBox(height: 8),
         DropdownButtonFormField<String>(
-          value: _selectedModel,
+          initialValue: _selectedModel,
           style: TextStyle(
             fontSize: isMobile ? 13 : 14,
             color: AppTheme.textPrimary,

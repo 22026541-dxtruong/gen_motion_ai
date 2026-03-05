@@ -1,17 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:gen_motion_ai/core/data/local/storage/secure_storage.dart';
+import 'package:gen_motion_ai/core/data/network/api_providers.dart';
+import 'package:gen_motion_ai/core/data/network/auth/dto/login.dto.dart';
+import 'package:gen_motion_ai/core/data/network/auth/dto/register.dto.dart';
 import 'package:gen_motion_ai/core/theme/app_theme.dart';
 import 'package:gen_motion_ai/core/utils/responsive.dart';
 import 'package:go_router/go_router.dart';
 
-class AuthScreen extends StatefulWidget {
+class AuthScreen extends ConsumerStatefulWidget {
   const AuthScreen({super.key});
 
   @override
-  State<AuthScreen> createState() => _AuthScreenState();
+  ConsumerState<AuthScreen> createState() => _AuthScreenState();
 }
 
-class _AuthScreenState extends State<AuthScreen> {
+class _AuthScreenState extends ConsumerState<AuthScreen> {
   bool _isLogin = true; // Trạng thái chuyển đổi giữa Login/Register
+  bool _isLoading = false;
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
@@ -26,6 +32,47 @@ class _AuthScreenState extends State<AuthScreen> {
     setState(() {
       _isLogin = !_isLogin;
     });
+  }
+
+  Future<void> _handleAuth() async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+
+    if (email.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please fill in all fields')),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      final authApi = ref.read(authApiProvider);
+
+      if (_isLogin) {
+        final response = await authApi.login(LoginDto(email: email, password: password));
+        await ref.read(secureStorageProvider).saveAccessToken(response.accessToken);
+        if (mounted) context.go('/explore');
+      } else {
+        final response = await authApi.register(RegisterDto(email: email, password: password));
+        await ref.read(secureStorageProvider).saveAccessToken(response.accessToken);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Registration successful! Please sign in.')),
+          );
+          setState(() => _isLogin = true);
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Authentication failed: ${e.toString()}')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   @override
@@ -259,10 +306,7 @@ class _AuthScreenState extends State<AuthScreen> {
         SizedBox(
           height: 50,
           child: ElevatedButton(
-            onPressed: () {
-              // Mock login success -> go to home
-              context.go('/explore');
-            },
+            onPressed: _isLoading ? null : _handleAuth,
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.primaryColor,
               shape: RoundedRectangleBorder(
@@ -270,14 +314,19 @@ class _AuthScreenState extends State<AuthScreen> {
               ),
               elevation: 0,
             ),
-            child: Text(
-              _isLogin ? 'Sign In' : 'Create Account',
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: Colors.white,
-              ),
-            ),
+            child: _isLoading
+                ? const SizedBox(
+                    height: 24,
+                    width: 24,
+                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                : Text(
+                    _isLogin ? 'Sign In' : 'Create Account',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
           ),
         ),
 

@@ -627,7 +627,7 @@ class PropertiesPanel extends ConsumerWidget {
             SizedBox(height: context.isMobile ? 8 : 12),
             
             DropdownButtonFormField<String>(
-              value: icon.animation,
+              initialValue: icon.animation,
               decoration: InputDecoration(
                 contentPadding: EdgeInsets.symmetric(
                   horizontal: context.isMobile ? 10 : 14,
