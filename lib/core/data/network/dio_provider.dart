@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gen_motion_ai/core/data/local/storage/secure_storage.dart';
+import 'package:gen_motion_ai/core/data/network/auth/auth_interceptor.dart';
 import 'api_endpoints.dart';
 
 class DioClient {
@@ -22,7 +23,7 @@ class DioClient {
 
     // Add interceptors
     _dio.interceptors.addAll([
-      // AuthInterceptor(secureStorage, _dio),
+      AuthInterceptor(secureStorage),
       LogInterceptor(
         requestHeader: true,
         requestBody: true,

@@ -23,7 +23,7 @@ class ApiEndpoints {
 
   // User
   static const String userMe = '/users/me';
-  static String userById(String userId) => '/users/$userId';
+  static const String userById = '/users/{userId}';
 
   // Credits
   static const String creditsBalance = '/credits/balance';
@@ -44,18 +44,18 @@ class ApiEndpoints {
 
   // Posts (Social)
   static const String posts = '/posts';
-  static String postById(String postId) => '/posts/$postId';
-  static String postLike(String postId) => '/posts/$postId/post-like';
-  static String postComments(String postId) => '/posts/$postId/comments';
-  static String postCommentById(String postId, String commentId) => '/posts/$postId/comments/$commentId';
+  static const postById = '/posts/{id}';
+  static const postLike = '/posts/{postId}/post-likes';
+  static const postComments = '/posts/{postId}/comments';
+  static const postCommentById = '/posts/{postId}/comments/{id}';
 
   // Explore
   static const String explore = '/explore';
 
   // Follow
-  static String userFollow(String userId) => '/users/$userId/follow';
-  static String userFollowers(String userId) => '/users/$userId/followers';
-  static String userFollowing(String userId) => '/users/$userId/following';
+  static const String userFollow = '/users/{userId}/follows';
+  static const String userFollowers = '/users/{userId}/followers';
+  static const String userFollowing = '/users/{userId}/following';
 
   // Canvas
   static const String canvasSessions = '/canvas/sessions';

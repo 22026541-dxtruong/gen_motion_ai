@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:gen_motion_ai/features/presentation/auth/auth_provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:gen_motion_ai/features/presentation/auth/auth_screen.dart';
 import 'package:gen_motion_ai/features/presentation/canvas/canvas_screen.dart';
@@ -11,18 +12,32 @@ import 'package:gen_motion_ai/features/presentation/user/user_screen.dart';
 import 'package:gen_motion_ai/features/presentation/widgets/main_layout.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
+  final auth = ref.watch(authProvider);
   return GoRouter(
     initialLocation: '/explore',
+    redirect: (context, state) => auth.when(
+      data: (isAuthenticated) {
+        final loggingIn =
+            state.uri.path == '/login' || state.uri.path == '/register';
+        if (!isAuthenticated && !loggingIn) return '/login';
+        if (isAuthenticated && loggingIn) return '/explore';
+        return null;
+      },
+      loading: () => null,
+      error: (e, st) => null,
+    ),
     routes: [
       GoRoute(
         path: '/login',
         name: 'login',
-        pageBuilder: (context, state) => const NoTransitionPage(child: AuthScreen()),
+        pageBuilder: (context, state) =>
+            const NoTransitionPage(child: AuthScreen()),
       ),
       GoRoute(
         path: '/register',
         name: 'register',
-        pageBuilder: (context, state) => const NoTransitionPage(child: AuthScreen()),
+        pageBuilder: (context, state) =>
+            const NoTransitionPage(child: AuthScreen()),
       ),
       ShellRoute(
         builder: (context, state, child) {
@@ -67,9 +82,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         name: 'detail',
         pageBuilder: (context, state) {
           final id = state.pathParameters['id']!;
-          return NoTransitionPage(
-            child: DetailScreen(id: id),
-          );
+          return NoTransitionPage(child: DetailScreen(id: id));
         },
       ),
       GoRoute(
@@ -77,9 +90,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         name: 'user',
         pageBuilder: (context, state) {
           final id = state.pathParameters['id']!;
-          return NoTransitionPage(
-            child: UserScreen(userId: id),
-          );
+          return NoTransitionPage(child: UserScreen(userId: id));
         },
       ),
     ],
