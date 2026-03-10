@@ -6,6 +6,8 @@ import 'package:gen_motion_ai/core/data/network/auth/dto/login.dto.dart';
 import 'package:gen_motion_ai/core/data/network/auth/dto/register.dto.dart';
 import 'package:gen_motion_ai/core/theme/app_theme.dart';
 import 'package:gen_motion_ai/core/utils/responsive.dart';
+import 'package:gen_motion_ai/features/presentation/auth/auth_provider.dart';
+import 'package:gen_motion_ai/features/presentation/user/user_provider.dart';
 import 'package:go_router/go_router.dart';
 
 class AuthScreen extends ConsumerStatefulWidget {
@@ -51,15 +53,21 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       final authApi = ref.read(authApiProvider);
 
       if (_isLogin) {
-        final response = await authApi.login(LoginDto(email: email, password: password));
-        await ref.read(secureStorageProvider).saveAccessToken(response.accessToken);
+        final response = await authApi.login(
+          LoginDto(email: email, password: password),
+        );
+        await ref.read(authProvider.notifier).login(response.accessToken);
         if (mounted) context.go('/explore');
       } else {
-        final response = await authApi.register(RegisterDto(email: email, password: password));
-        await ref.read(secureStorageProvider).saveAccessToken(response.accessToken);
+        final response = await authApi.register(
+          RegisterDto(email: email, password: password),
+        );
+        await ref.read(authProvider.notifier).login(response.accessToken);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Registration successful! Please sign in.')),
+            const SnackBar(
+              content: Text('Registration successful! Please sign in.'),
+            ),
           );
           setState(() => _isLogin = true);
         }
@@ -118,7 +126,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                           color: AppTheme.primaryColor.withOpacity(0.1),
                           blurRadius: 100,
                           spreadRadius: 20,
-                        )
+                        ),
                       ],
                     ),
                   ),
@@ -132,7 +140,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                       const Spacer(),
                       Text(
                         'Unleash your creativity\nwith AI Video Generation',
-                        style: Theme.of(context).textTheme.displayMedium?.copyWith(
+                        style: Theme.of(context).textTheme.displayMedium
+                            ?.copyWith(
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
                               height: 1.1,
@@ -142,14 +151,14 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                       Text(
                         'Transform your ideas into stunning videos in seconds.\nJoin the next generation of content creators.',
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              color: AppTheme.textSecondary,
-                              height: 1.4,
-                              fontWeight: FontWeight.w400,
-                            ),
+                          color: AppTheme.textSecondary,
+                          height: 1.4,
+                          fontWeight: FontWeight.w400,
+                        ),
                       ),
                       const SizedBox(height: 40),
-                ],
-              ),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -215,7 +224,11 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
               ),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: const Icon(Icons.auto_awesome, color: Colors.white, size: 24),
+            child: const Icon(
+              Icons.auto_awesome,
+              color: Colors.white,
+              size: 24,
+            ),
           ),
           const SizedBox(width: 12),
           const Text(
@@ -239,18 +252,18 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
         Text(
           _isLogin ? 'Welcome back' : 'Create an account',
           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                color: AppTheme.textPrimary,
-                fontWeight: FontWeight.bold,
-              ),
+            color: AppTheme.textPrimary,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         const SizedBox(height: 8),
         Text(
           _isLogin
               ? 'Please enter your details to sign in.'
               : 'Enter your details to get started with GenMotion.',
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: AppTheme.textSecondary,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.bodyMedium?.copyWith(color: AppTheme.textSecondary),
         ),
         const SizedBox(height: 32),
 
@@ -262,7 +275,11 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
           style: const TextStyle(color: AppTheme.textPrimary),
           decoration: const InputDecoration(
             hintText: 'name@example.com',
-            prefixIcon: Icon(Icons.email_outlined, color: AppTheme.textSecondary, size: 20),
+            prefixIcon: Icon(
+              Icons.email_outlined,
+              color: AppTheme.textSecondary,
+              size: 20,
+            ),
           ),
         ),
         const SizedBox(height: 20),
@@ -276,8 +293,16 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
           style: const TextStyle(color: AppTheme.textPrimary),
           decoration: const InputDecoration(
             hintText: '••••••••',
-            prefixIcon: Icon(Icons.lock_outline, color: AppTheme.textSecondary, size: 20),
-            suffixIcon: Icon(Icons.visibility_off_outlined, color: AppTheme.textSecondary, size: 20),
+            prefixIcon: Icon(
+              Icons.lock_outline,
+              color: AppTheme.textSecondary,
+              size: 20,
+            ),
+            suffixIcon: Icon(
+              Icons.visibility_off_outlined,
+              color: AppTheme.textSecondary,
+              size: 20,
+            ),
           ),
         ),
 
@@ -318,7 +343,11 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                 ? const SizedBox(
                     height: 24,
                     width: 24,
-                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                    child: CircularProgressIndicator(
+                      color: Colors.white,
+                      strokeWidth: 2,
+                    ),
+                  )
                 : Text(
                     _isLogin ? 'Sign In' : 'Create Account',
                     style: const TextStyle(
@@ -367,7 +396,9 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              _isLogin ? "Don't have an account? " : "Already have an account? ",
+              _isLogin
+                  ? "Don't have an account? "
+                  : "Already have an account? ",
               style: const TextStyle(color: AppTheme.textSecondary),
             ),
             GestureDetector(
@@ -408,10 +439,9 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
         onPressed: onTap,
         style: OutlinedButton.styleFrom(
           side: const BorderSide(color: AppTheme.borderColor),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
-          backgroundColor: AppTheme.surfaceColor, // Màu nền tối hơn card một chút
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          backgroundColor:
+              AppTheme.surfaceColor, // Màu nền tối hơn card một chút
           foregroundColor: AppTheme.textPrimary,
         ),
         child: Row(
@@ -421,10 +451,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
             const SizedBox(width: 12),
             Text(
               label,
-              style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w500,
-              ),
+              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
             ),
           ],
         ),

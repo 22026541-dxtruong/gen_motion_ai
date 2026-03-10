@@ -4,8 +4,6 @@ part 'auth_response.dto.g.dart'; // Tên file sinh ra phải khớp với tên f
 
 @JsonSerializable()
 class AuthResponse {
-  @JsonKey(name: 'user_id')
-  final String userId;
   final String email;
   final String username;
   @JsonKey(name: 'access_token')
@@ -13,7 +11,6 @@ class AuthResponse {
 
   AuthResponse({
     required this.accessToken,
-    required this.userId,
     required this.email,
     required this.username,
   });

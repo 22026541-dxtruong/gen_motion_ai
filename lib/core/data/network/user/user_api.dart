@@ -13,7 +13,7 @@ abstract class UserApi {
   Future<UserDto> updateUser(@Body() UserDto body);
 
   @GET(ApiEndpoints.userMe)
-  Future<UserDto> getUser();
+  Future<UserDto> getMe();
 
   @DELETE(ApiEndpoints.userMe)
   Future<void> deleteUser();

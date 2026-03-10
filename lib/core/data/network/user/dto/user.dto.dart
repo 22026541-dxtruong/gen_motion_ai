@@ -6,14 +6,14 @@ part 'user.dto.g.dart';
 class UserDto {
   final String id;
   final String email;
-  final String name;
+  final String username;
   final String? avatarUrl;
   final String? bio;
 
   UserDto({
     required this.id,
     required this.email,
-    required this.name,
+    required this.username,
     this.avatarUrl,
     this.bio,
   });

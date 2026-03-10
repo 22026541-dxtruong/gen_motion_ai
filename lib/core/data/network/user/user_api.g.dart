@@ -48,7 +48,7 @@ class _UserApi implements UserApi {
   }
 
   @override
-  Future<UserDto> getUser() async {
+  Future<UserDto> getMe() async {
     final _extra = <String, dynamic>{};
     final queryParameters = <String, dynamic>{};
     final _headers = <String, dynamic>{};
