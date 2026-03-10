@@ -1,20 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gen_motion_ai/core/theme/app_theme.dart';
 import 'package:gen_motion_ai/core/utils/responsive.dart';
+import 'package:gen_motion_ai/features/presentation/post/post_provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:video_player/video_player.dart';
 
-class DetailScreen extends StatefulWidget {
+class PostScreen extends StatefulWidget {
   final String id;
 
-  const DetailScreen({super.key, required this.id});
+  const PostScreen({super.key, required this.id});
 
   @override
-  State<DetailScreen> createState() => _DetailScreenState();
+  State<PostScreen> createState() => _PostScreenState();
 }
 
-class _DetailScreenState extends State<DetailScreen> {
+class _PostScreenState extends State<PostScreen> {
   late PageController _pageController;
 
   @override
@@ -43,7 +45,7 @@ class _DetailScreenState extends State<DetailScreen> {
                 ? const NeverScrollableScrollPhysics()
                 : const BouncingScrollPhysics(),
             itemBuilder: (context, index) {
-              return _DetailItem(id: index.toString());
+              return _PostItem(id: index.toString());
             },
           ),
           if (Responsive.isDesktop(context))
@@ -138,16 +140,16 @@ class _NavButton extends StatelessWidget {
   }
 }
 
-class _DetailItem extends StatefulWidget {
+class _PostItem extends ConsumerStatefulWidget {
   final String id;
 
-  const _DetailItem({required this.id});
+  const _PostItem({required this.id});
 
   @override
-  State<_DetailItem> createState() => _DetailItemState();
+  ConsumerState<_PostItem> createState() => _PostItemState();
 }
 
-class _DetailItemState extends State<_DetailItem> {
+class _PostItemState extends ConsumerState<_PostItem> {
   late final bool _isVideo;
   bool _isFollowing = false;
   bool _isLiked = false;
@@ -164,6 +166,7 @@ class _DetailItemState extends State<_DetailItem> {
 
   @override
   Widget build(BuildContext context) {
+    final postAsync = ref.watch(postProvider(widget.id));
     return Responsive(
       mobile: _buildMobileLayout(),
       desktop: _buildDesktopLayout(),

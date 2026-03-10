@@ -14,4 +14,6 @@ class ExploreItem {
 
   factory ExploreItem.fromJson(Map<String, dynamic> json) =>
       _$ExploreItemFromJson(json);
+
+  Map<String, dynamic> toJson() => _$ExploreItemToJson(this);
 }

@@ -1,9 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gen_motion_ai/features/presentation/auth/auth_provider.dart';
+import 'package:gen_motion_ai/features/presentation/user/user_provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:gen_motion_ai/features/presentation/auth/auth_screen.dart';
 import 'package:gen_motion_ai/features/presentation/canvas/canvas_screen.dart';
-import 'package:gen_motion_ai/features/presentation/detail/detail_screen.dart';
+import 'package:gen_motion_ai/features/presentation/post/post_screen.dart';
 import 'package:gen_motion_ai/features/presentation/generate/generate_screen.dart';
 import 'package:gen_motion_ai/features/presentation/explore/explore_screen.dart';
 import 'package:gen_motion_ai/features/presentation/gallery/gallery_screen.dart';
@@ -78,11 +79,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
 
       GoRoute(
-        path: '/detail/:id',
-        name: 'detail',
+        path: '/post/:id',
+        name: 'post',
         pageBuilder: (context, state) {
           final id = state.pathParameters['id']!;
-          return NoTransitionPage(child: DetailScreen(id: id));
+          return NoTransitionPage(child: PostScreen(id: id));
         },
       ),
       GoRoute(
@@ -91,6 +92,17 @@ final routerProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) {
           final id = state.pathParameters['id']!;
           return NoTransitionPage(child: UserScreen(userId: id));
+        },
+      ),
+      GoRoute(
+        path: '/me',
+        name: 'me',
+        redirect: (context, state) {
+          final user = ref.read(currentUserProvider).value;
+
+          if (user == null) return '/explore';
+
+          return '/user/${user.id}';
         },
       ),
     ],

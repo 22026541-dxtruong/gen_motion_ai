@@ -568,7 +568,7 @@ class _ExploreCardState extends State<_ExploreCard> {
                 cursor: SystemMouseCursors.click,
                 child: GestureDetector(
                   onTap: () {
-                    context.push('/detail/${widget.index}');
+                    context.push('/post/${widget.index}');
                   },
                   child: Stack(
                     fit: StackFit.expand,

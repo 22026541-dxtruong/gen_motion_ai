@@ -1,35 +1,40 @@
 import 'package:animations/animations.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:gen_motion_ai/core/data/network/user/dto/user.dto.dart';
 import 'package:gen_motion_ai/core/theme/app_theme.dart';
 import 'package:gen_motion_ai/core/utils/responsive.dart';
+import 'package:gen_motion_ai/features/presentation/auth/auth_provider.dart';
+import 'package:gen_motion_ai/features/presentation/user/user_provider.dart';
 import 'package:go_router/go_router.dart';
 
-class MainLayout extends StatefulWidget {
+class MainLayout extends ConsumerStatefulWidget {
   final Widget child; // Thay đổi từ StatefulNavigationShell sang Widget
   final String location;
 
   const MainLayout({super.key, required this.child, required this.location});
 
   @override
-  State<MainLayout> createState() => _MainLayoutState();
+  ConsumerState<MainLayout> createState() => _MainLayoutState();
 }
 
-class _MainLayoutState extends State<MainLayout> {
+class _MainLayoutState extends ConsumerState<MainLayout> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   @override
   Widget build(BuildContext context) {
+    final userAsync = ref.watch(currentUserProvider);
     return Scaffold(
       key: _scaffoldKey,
-      drawer: context.isMobile ? const _MobileDrawer() : null,
+      drawer: context.isMobile ? _MobileDrawer(userAsync: userAsync) : null,
       body: Responsive(
-        mobile: _buildMobileLayout(widget.location),
-        desktop: _buildDesktopLayout(widget.location),
+        mobile: _buildMobileLayout(widget.location, userAsync),
+        desktop: _buildDesktopLayout(widget.location, userAsync),
       ),
     );
   }
 
-  Widget _buildMobileLayout(String location) {
+  Widget _buildMobileLayout(String location, AsyncValue<UserDto?> userAsync) {
     return Column(
       children: [
         SafeArea(
@@ -56,10 +61,10 @@ class _MainLayoutState extends State<MainLayout> {
     );
   }
 
-  Widget _buildDesktopLayout(String location) {
+  Widget _buildDesktopLayout(String location, AsyncValue<UserDto?> userAsync) {
     return Row(
       children: [
-        const _DesktopSidebar(),
+        _DesktopSidebar(userAsync: userAsync),
         Expanded(
           child: PageTransitionSwitcher(
             duration: const Duration(milliseconds: 500),
@@ -70,10 +75,7 @@ class _MainLayoutState extends State<MainLayout> {
                 child: child,
               );
             },
-            child: KeyedSubtree(
-              key: ValueKey(location),
-              child: widget.child,
-            ),
+            child: KeyedSubtree(key: ValueKey(location), child: widget.child),
           ),
         ),
       ],
@@ -81,14 +83,16 @@ class _MainLayoutState extends State<MainLayout> {
   }
 }
 
-class _DesktopSidebar extends StatefulWidget {
-  const _DesktopSidebar();
+class _DesktopSidebar extends ConsumerStatefulWidget {
+  final AsyncValue<UserDto?> userAsync;
+
+  const _DesktopSidebar({required this.userAsync});
 
   @override
-  State<_DesktopSidebar> createState() => __DesktopSidebarState();
+  ConsumerState<_DesktopSidebar> createState() => __DesktopSidebarState();
 }
 
-class __DesktopSidebarState extends State<_DesktopSidebar> {
+class __DesktopSidebarState extends ConsumerState<_DesktopSidebar> {
   bool _collapsed = false;
   bool _hoverLogo = false;
   bool _expandedDone = true;
@@ -257,8 +261,18 @@ class __DesktopSidebarState extends State<_DesktopSidebar> {
                 children: [
                   CircleAvatar(
                     radius: 16,
-                    backgroundColor: AppTheme.primaryColor,
-                    child: const Text('U', style: TextStyle(fontSize: 14)),
+                    backgroundImage: widget.userAsync.value?.avatarUrl != null
+                        ? NetworkImage(widget.userAsync.value!.avatarUrl!)
+                        : null,
+                    child: widget.userAsync.value?.avatarUrl == null
+                        ? Text(
+                            widget.userAsync.value?.username
+                                    .substring(0, 1)
+                                    .toUpperCase() ??
+                                'U',
+                            style: const TextStyle(fontSize: 14),
+                          )
+                        : null,
                   ),
                   if (_expandedDone) ...[
                     const SizedBox(width: 12),
@@ -266,8 +280,8 @@ class __DesktopSidebarState extends State<_DesktopSidebar> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            'User Name',
+                          Text(
+                            widget.userAsync.value?.username ?? 'User',
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
@@ -294,7 +308,11 @@ class __DesktopSidebarState extends State<_DesktopSidebar> {
                       ),
                     ),
                     IconButton(
-                      onPressed: () => context.go('/login'),
+                      onPressed: () async {
+                        await ref.read(authProvider.notifier).logout();
+                        if (!context.mounted) return;
+                        context.go('/login');
+                      },
                       icon: const Icon(
                         Icons.logout,
                         size: 20,
@@ -453,11 +471,12 @@ class _MobileTopBar extends StatelessWidget {
   }
 }
 
-class _MobileDrawer extends StatelessWidget {
-  const _MobileDrawer();
+class _MobileDrawer extends ConsumerWidget {
+  final AsyncValue<UserDto?> userAsync;
+  const _MobileDrawer({required this.userAsync});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Drawer(
       backgroundColor: AppTheme.surfaceColor,
       child: SafeArea(
@@ -470,8 +489,17 @@ class _MobileDrawer extends StatelessWidget {
                 children: [
                   CircleAvatar(
                     radius: 24,
-                    backgroundColor: AppTheme.primaryColor,
-                    child: const Text('U', style: TextStyle(fontSize: 18)),
+                    backgroundImage: userAsync.value?.avatarUrl != null
+                        ? NetworkImage(userAsync.value!.avatarUrl!)
+                        : null,
+                    child: userAsync.value?.avatarUrl == null
+                        ? Text(
+                            userAsync.value?.username
+                                    .substring(0, 1)
+                                    .toUpperCase() ??
+                                'U',
+                          )
+                        : null,
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -563,7 +591,11 @@ class _MobileDrawer extends StatelessWidget {
                 'Logout',
                 style: TextStyle(color: AppTheme.textSecondary),
               ),
-              onTap: () => context.go('/login'),
+              onTap: () async {
+                await ref.read(authProvider.notifier).logout();
+                if (!context.mounted) return;
+                context.go('/login');
+              },
             ),
           ],
         ),

@@ -18,6 +18,9 @@ class ExploreQuery {
     this.cursor,
   });
 
+  factory ExploreQuery.fromJson(Map<String, dynamic> json) =>
+      _$ExploreQueryFromJson(json);
+
   Map<String, dynamic> toJson() => _$ExploreQueryToJson(this);
 }
 

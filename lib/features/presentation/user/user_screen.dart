@@ -1,18 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:gen_motion_ai/core/data/network/user/dto/user.dto.dart';
 import 'package:gen_motion_ai/core/theme/app_theme.dart';
 import 'package:gen_motion_ai/core/utils/responsive.dart';
+import 'package:gen_motion_ai/features/presentation/user/user_provider.dart';
 import 'package:go_router/go_router.dart';
 
-class UserScreen extends StatefulWidget {
+class UserScreen extends ConsumerStatefulWidget {
   final String userId;
 
   const UserScreen({super.key, required this.userId});
 
   @override
-  State<UserScreen> createState() => _UserScreenState();
+  ConsumerState<UserScreen> createState() => _UserScreenState();
 }
 
-class _UserScreenState extends State<UserScreen>
+class _UserScreenState extends ConsumerState<UserScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final List<String> _tabs = ['Works', 'Likes', 'Collections'];
@@ -32,9 +35,20 @@ class _UserScreenState extends State<UserScreen>
 
   @override
   Widget build(BuildContext context) {
+    final userAsync = ref.watch(userProvider(widget.userId));
+
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
-      body: Stack(
+      body: userAsync.when(
+        data: (user) => _buildBody(user),
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, st) => Center(child: Text('Error: $e')),
+      ),
+    );
+  }
+
+  Widget _buildBody(UserDto? user) {
+    return Stack(
         children: [
           NestedScrollView(
             headerSliverBuilder: (context, innerBoxIsScrolled) {
@@ -44,7 +58,7 @@ class _UserScreenState extends State<UserScreen>
                     child: Container(
                       constraints: const BoxConstraints(maxWidth: 1000),
                       padding: const EdgeInsets.all(32),
-                      child: _buildProfileHeader(),
+                      child: _buildProfileHeader(user),
                     ),
                   ),
                 ),
@@ -59,7 +73,9 @@ class _UserScreenState extends State<UserScreen>
                       indicatorSize: TabBarIndicatorSize.label,
                       dividerColor: AppTheme.borderColor,
                       labelStyle: const TextStyle(
-                          fontWeight: FontWeight.w600, fontSize: 14),
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                      ),
                     ),
                   ),
                   pinned: true,
@@ -88,11 +104,10 @@ class _UserScreenState extends State<UserScreen>
             ),
           ),
         ],
-      ),
-    );
+      );
   }
 
-  Widget _buildProfileHeader() {
+  Widget _buildProfileHeader(UserDto? user) {
     final isDesktop = Responsive.isDesktop(context);
 
     if (isDesktop) {
@@ -163,10 +178,7 @@ class _UserScreenState extends State<UserScreen>
         const SizedBox(height: 4),
         Text(
           'ID: ${widget.userId}',
-          style: const TextStyle(
-            color: AppTheme.textSecondary,
-            fontSize: 12,
-          ),
+          style: const TextStyle(color: AppTheme.textSecondary, fontSize: 12),
         ),
         const SizedBox(height: 16),
         _buildStatsRow(),
@@ -226,74 +238,76 @@ class _UserScreenState extends State<UserScreen>
       children: [
         _buildStatItem('12', 'Following'),
         Container(
-            height: 12,
-            width: 1,
-            color: AppTheme.borderColor,
-            margin: const EdgeInsets.symmetric(horizontal: 16)),
+          height: 12,
+          width: 1,
+          color: AppTheme.borderColor,
+          margin: const EdgeInsets.symmetric(horizontal: 16),
+        ),
         _buildStatItem('3.5k', 'Followers'),
         Container(
-            height: 12,
-            width: 1,
-            color: AppTheme.borderColor,
-            margin: const EdgeInsets.symmetric(horizontal: 16)),
+          height: 12,
+          width: 1,
+          color: AppTheme.borderColor,
+          margin: const EdgeInsets.symmetric(horizontal: 16),
+        ),
         _buildStatItem('12.8k', 'Likes'),
       ],
     );
   }
 
   Widget _buildStatItem(String value, String label) {
-    return context.isMobile ?
-      Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-        Text(
-          value,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
-            color: AppTheme.textPrimary,
-          ),
-        ),
-        const SizedBox(width: 6),
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 13,
-            color: AppTheme.textSecondary,
-          ),
-        ),
-      ],
-      )
-     : Row(
-      children: [
-        Text(
-          value,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
-            color: AppTheme.textPrimary,
-          ),
-        ),
-        const SizedBox(width: 6),
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 13,
-            color: AppTheme.textSecondary,
-          ),
-        ),
-      ],
-    );
+    return context.isMobile
+        ? Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Text(
+                value,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  color: AppTheme.textPrimary,
+                ),
+              ),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: AppTheme.textSecondary,
+                ),
+              ),
+            ],
+          )
+        : Row(
+            children: [
+              Text(
+                value,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  color: AppTheme.textPrimary,
+                ),
+              ),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: AppTheme.textSecondary,
+                ),
+              ),
+            ],
+          );
   }
 
   Widget _buildFollowButton() {
     return ElevatedButton(
       onPressed: () => setState(() => _isFollowing = !_isFollowing),
       style: ElevatedButton.styleFrom(
-        backgroundColor:
-            _isFollowing ? AppTheme.cardColor : AppTheme.primaryColor,
-        foregroundColor:
-            _isFollowing ? AppTheme.textPrimary : Colors.white,
+        backgroundColor: _isFollowing
+            ? AppTheme.cardColor
+            : AppTheme.primaryColor,
+        foregroundColor: _isFollowing ? AppTheme.textPrimary : Colors.white,
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
         elevation: 0,
       ),
@@ -328,7 +342,7 @@ class _UserScreenState extends State<UserScreen>
       itemCount: itemCount,
       itemBuilder: (context, index) {
         return InkWell(
-          onTap: () => context.push('/detail/$index'),
+          onTap: () => context.push('/post/$index'),
           borderRadius: BorderRadius.circular(12),
           child: Container(
             decoration: BoxDecoration(
@@ -362,17 +376,17 @@ class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
 
   @override
   Widget build(
-      BuildContext context, double shrinkOffset, bool overlapsContent) {
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
     return Container(
       color: AppTheme.backgroundColor,
       child: Center(
         child: Container(
           constraints: const BoxConstraints(maxWidth: 1000),
           width: double.infinity,
-          child: Align(
-            alignment: Alignment.centerLeft,
-            child: _tabBar,
-          ),
+          child: Align(alignment: Alignment.centerLeft, child: _tabBar),
         ),
       ),
     );
