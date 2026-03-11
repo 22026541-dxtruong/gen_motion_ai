@@ -1,72 +1,47 @@
-import 'package:json_annotation/json_annotation.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 
-part 'get_post.dto.g.dart';
+part 'get_post.dto.freezed.dart';
+part 'get_post.dto.g.dart'; // File cho JSON
 
-@JsonSerializable()
-class GetPostDto {
-  final String id;
-  final String? caption;
-  final int viewCount;
-  @JsonKey(name: 'comment_count')
-  final int commentCount;
-  @JsonKey(name: 'like_count')
-  final int likeCount;
-  @JsonKey(name: 'created_at')
-  final DateTime createdAt;
-
-  final PostUserDto user;
-  @JsonKey(name: 'asset_version')
-  final PostAssetVersionDto assetVersion;
-
-  GetPostDto({
-    required this.id,
-    this.caption,
-    required this.viewCount,
-    required this.commentCount,
-    required this.likeCount,
-    required this.createdAt,
-    required this.user,
-    required this.assetVersion,
-  });
+@freezed
+abstract class GetPostDto with _$GetPostDto {
+  const factory GetPostDto({
+    required String id,
+    String? caption,
+    @JsonKey(name: 'view_count') required int viewCount,
+    @JsonKey(name: 'comment_count') required int commentCount,
+    @JsonKey(name: 'like_count') required int likeCount,
+    @JsonKey(name: 'created_at') required DateTime createdAt,
+    @JsonKey(name: 'is_liked') required bool isLiked,
+    @JsonKey(name: 'is_followed') required bool isFollowed,
+    required PostUserDto user,
+    @JsonKey(name: 'asset_version') required PostAssetVersionDto assetVersion,
+  }) = _GetPostDto;
 
   factory GetPostDto.fromJson(Map<String, dynamic> json) =>
       _$GetPostDtoFromJson(json);
-
-  Map<String, dynamic> toJson() => _$GetPostDtoToJson(this);
 }
 
-@JsonSerializable()
-class PostUserDto {
-  final String id;
-  final String username;
-
-  PostUserDto({
-    required this.id,
-    required this.username,
-  });
+@freezed
+abstract class PostUserDto with _$PostUserDto {
+  const factory PostUserDto({
+    required String id,
+    required String username,
+    @JsonKey(name: 'avatar_url') String? avatarUrl,
+  }) = _PostUserDto;
 
   factory PostUserDto.fromJson(Map<String, dynamic> json) =>
       _$PostUserDtoFromJson(json);
-
-  Map<String, dynamic> toJson() => _$PostUserDtoToJson(this);
 }
 
-@JsonSerializable()
-class PostAssetVersionDto {
-  final String id;
-  @JsonKey(name: 'file_url')
-  final String fileUrl;
-
-  final Map<String, dynamic>? metadata;
-
-  PostAssetVersionDto({
-    required this.id,
-    required this.fileUrl,
-    this.metadata,
-  });
+@freezed
+abstract class PostAssetVersionDto with _$PostAssetVersionDto {
+  const factory PostAssetVersionDto({
+    required String id,
+    @JsonKey(name: 'file_url') required String fileUrl,
+    Map<String, dynamic>? metadata,
+  }) = _PostAssetVersionDto;
 
   factory PostAssetVersionDto.fromJson(Map<String, dynamic> json) =>
       _$PostAssetVersionDtoFromJson(json);
-
-  Map<String, dynamic> toJson() => _$PostAssetVersionDtoToJson(this);
 }

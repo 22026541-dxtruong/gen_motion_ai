@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:gen_motion_ai/core/data/network/post/dto/get_post.dto.dart';
 import 'package:gen_motion_ai/core/theme/app_theme.dart';
 import 'package:gen_motion_ai/core/utils/responsive.dart';
 import 'package:gen_motion_ai/features/presentation/post/post_provider.dart';
@@ -151,12 +152,8 @@ class _PostItem extends ConsumerStatefulWidget {
 
 class _PostItemState extends ConsumerState<_PostItem> {
   late final bool _isVideo;
-  bool _isFollowing = false;
-  bool _isLiked = false;
-  int _likeCount = 1245;
+  late bool _isFollowing;
   bool _isDescriptionExpanded = false;
-  final String _description =
-      "Just created this amazing scene using the new v1.5 model! The lighting effects are insane. 🐕🤖 #cyberpunk #aiart";
 
   @override
   void initState() {
@@ -167,13 +164,24 @@ class _PostItemState extends ConsumerState<_PostItem> {
   @override
   Widget build(BuildContext context) {
     final postAsync = ref.watch(postProvider(widget.id));
-    return Responsive(
-      mobile: _buildMobileLayout(),
-      desktop: _buildDesktopLayout(),
+    return postAsync.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+
+      error: (e, st) => Center(child: Text('Error loading post')),
+
+      data: (post) {
+        if (post == null) {
+          return const Center(child: Text("Post not found"));
+        }
+        return Responsive(
+          mobile: _buildMobileLayout(post),
+          desktop: _buildDesktopLayout(post),
+        );
+      },
     );
   }
 
-  Widget _buildMobileLayout() {
+  Widget _buildMobileLayout(GetPostDto post) {
     return Stack(
       fit: StackFit.expand,
       children: [
@@ -203,10 +211,10 @@ class _PostItemState extends ConsumerState<_PostItem> {
             mainAxisSize: MainAxisSize.min,
             children: [
               _ReelAction(
-                icon: _isLiked ? Icons.favorite : Icons.favorite_border,
-                label: _formatNumber(_likeCount),
-                color: _isLiked ? Colors.red : Colors.white,
-                onTap: () => setState(() => _isLiked = !_isLiked),
+                icon: post.isLiked ? Icons.favorite : Icons.favorite_border,
+                label: _formatNumber(post.likeCount),
+                color: post.isLiked ? Colors.red : Colors.white,
+                onTap: () => ref.read(postProvider(post.id).notifier).toggleLike(),
               ),
               const SizedBox(height: 20),
               _ReelAction(
@@ -241,21 +249,29 @@ class _PostItemState extends ConsumerState<_PostItem> {
               Row(
                 children: [
                   GestureDetector(
-                    onTap: () => context.push('/user/user_${widget.id}'),
-                    child: const CircleAvatar(
+                    onTap: () => context.push('/user/${post.user.id}'),
+                    child: CircleAvatar(
                       radius: 16,
+                      backgroundImage: post.user.avatarUrl != null
+                          ? NetworkImage(post.user.avatarUrl!)
+                          : null,
                       backgroundColor: AppTheme.primaryColor,
-                      child: Text(
-                        'U',
-                        style: TextStyle(color: Colors.white, fontSize: 12),
-                      ),
+                      child: post.user.avatarUrl == null
+                          ? Text(
+                              post.user.username[0].toUpperCase(),
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                              ),
+                            )
+                          : null,
                     ),
                   ),
                   const SizedBox(width: 8),
                   GestureDetector(
-                    onTap: () => context.push('/user/user_${widget.id}'),
-                    child: const Text(
-                      'User Name',
+                    onTap: () => context.push('/user/${post.user.id}'),
+                    child: Text(
+                      post.user.username,
                       style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
@@ -326,7 +342,7 @@ class _PostItemState extends ConsumerState<_PostItem> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      _description,
+                      post.caption ?? '',
                       maxLines: _isDescriptionExpanded ? null : 2,
                       overflow: _isDescriptionExpanded
                           ? TextOverflow.visible
@@ -357,7 +373,7 @@ class _PostItemState extends ConsumerState<_PostItem> {
     );
   }
 
-  Widget _buildDesktopLayout() {
+  Widget _buildDesktopLayout(GetPostDto post) {
     return Row(
       children: [
         // Left: Media Preview Area
@@ -405,10 +421,10 @@ class _PostItemState extends ConsumerState<_PostItem> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildUserInfo(),
+                      _buildUserInfo(post),
                       const SizedBox(height: 16),
                       Text(
-                        _description,
+                        post.caption ?? '',
                         style: const TextStyle(
                           fontSize: 14,
                           height: 1.5,
@@ -418,7 +434,7 @@ class _PostItemState extends ConsumerState<_PostItem> {
                       const SizedBox(height: 20),
                       _buildRecreateButton(),
                       const SizedBox(height: 20),
-                      _buildInteractionRow(),
+                      _buildInteractionRow(post),
                     ],
                   ),
                 ),
@@ -440,11 +456,11 @@ class _PostItemState extends ConsumerState<_PostItem> {
     );
   }
 
-  Widget _buildUserInfo() {
+  Widget _buildUserInfo(GetPostDto post) {
     return Row(
       children: [
         InkWell(
-          onTap: () => context.push('/user/user_${widget.id}'),
+          onTap: () => context.push('/user/${post.user.id}'),
           borderRadius: BorderRadius.circular(20),
           child: Container(
             width: 40,
@@ -473,9 +489,9 @@ class _PostItemState extends ConsumerState<_PostItem> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               InkWell(
-                onTap: () => context.push('/user/user_${widget.id}'),
-                child: const Text(
-                  'User Name',
+                onTap: () => context.push('/user/${post.user.id}'),
+                child: Text(
+                  post.user.username,
                   style: TextStyle(
                     fontWeight: FontWeight.w600,
                     fontSize: 14,
@@ -537,17 +553,14 @@ class _PostItemState extends ConsumerState<_PostItem> {
     );
   }
 
-  Widget _buildInteractionRow() {
+  Widget _buildInteractionRow(GetPostDto post) {
     return Row(
       children: [
         _InteractionItem(
-          icon: _isLiked ? Icons.favorite : Icons.favorite_border,
-          label: _formatNumber(_likeCount),
-          color: _isLiked ? Colors.red : null,
-          onTap: () => setState(() {
-            _isLiked = !_isLiked;
-            _likeCount += _isLiked ? 1 : -1;
-          }),
+          icon: post.isLiked ? Icons.favorite : Icons.favorite_border,
+          label: _formatNumber(post.likeCount),
+          color: post.isLiked ? Colors.red : null,
+          onTap: () => ref.read(postProvider(post.id).notifier).toggleLike(),
         ),
         const SizedBox(width: 20),
         const _InteractionItem(
@@ -956,10 +969,7 @@ class _MediaPlaceholder extends StatefulWidget {
   final bool isVideo;
   final bool isMobileFull;
 
-  const _MediaPlaceholder({
-    required this.isVideo,
-    this.isMobileFull = false,
-  });
+  const _MediaPlaceholder({required this.isVideo, this.isMobileFull = false});
 
   @override
   State<_MediaPlaceholder> createState() => _MediaPlaceholderState();
