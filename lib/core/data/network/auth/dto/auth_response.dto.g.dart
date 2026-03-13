@@ -6,8 +6,8 @@ part of 'auth_response.dto.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-AuthResponse _$AuthResponseFromJson(Map<String, dynamic> json) =>
-    AuthResponse(accessToken: json['access_token'] as String);
+_AuthResponse _$AuthResponseFromJson(Map<String, dynamic> json) =>
+    _AuthResponse(accessToken: json['access_token'] as String);
 
-Map<String, dynamic> _$AuthResponseToJson(AuthResponse instance) =>
+Map<String, dynamic> _$AuthResponseToJson(_AuthResponse instance) =>
     <String, dynamic>{'access_token': instance.accessToken};

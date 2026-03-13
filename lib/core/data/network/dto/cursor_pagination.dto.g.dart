@@ -6,18 +6,18 @@ part of 'cursor_pagination.dto.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-CursorPaginationDto<T> _$CursorPaginationDtoFromJson<T>(
+_CursorPaginationDto<T> _$CursorPaginationDtoFromJson<T>(
   Map<String, dynamic> json,
   T Function(Object? json) fromJsonT,
-) => CursorPaginationDto<T>(
+) => _CursorPaginationDto<T>(
   data: (json['data'] as List<dynamic>).map(fromJsonT).toList(),
-  nextCursor: json['nextCursor'] as String?,
+  nextCursor: json['next_cursor'] as String?,
 );
 
 Map<String, dynamic> _$CursorPaginationDtoToJson<T>(
-  CursorPaginationDto<T> instance,
+  _CursorPaginationDto<T> instance,
   Object? Function(T value) toJsonT,
 ) => <String, dynamic>{
   'data': instance.data.map(toJsonT).toList(),
-  'nextCursor': instance.nextCursor,
+  'next_cursor': instance.nextCursor,
 };

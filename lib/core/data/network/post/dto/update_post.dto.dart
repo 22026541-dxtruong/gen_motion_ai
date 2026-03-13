@@ -1,21 +1,17 @@
-import 'package:json_annotation/json_annotation.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 
+part 'update_post.dto.freezed.dart';
 part 'update_post.dto.g.dart';
 
-@JsonSerializable(includeIfNull: false)
-class UpdatePostDto {
-  final String? assetVersionId;
-  final String? caption;
-  final bool? isPublic;
-
-  UpdatePostDto({
-    this.assetVersionId,
-    this.caption,
-    this.isPublic,
-  });
+@freezed
+abstract class UpdatePostDto with _$UpdatePostDto {
+  @JsonSerializable(includeIfNull: false)
+  const factory UpdatePostDto({
+    @JsonKey(name: 'asset_version_id') String? assetVersionId,
+    String? caption,
+    @JsonKey(name: 'is_public') bool? isPublic,
+  }) = _UpdatePostDto;
 
   factory UpdatePostDto.fromJson(Map<String, dynamic> json) =>
       _$UpdatePostDtoFromJson(json);
-
-  Map<String, dynamic> toJson() => _$UpdatePostDtoToJson(this);
 }

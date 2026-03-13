@@ -1,22 +1,16 @@
-import 'package:json_annotation/json_annotation.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'create_post.dto.g.dart';
+part 'create_post.dto.freezed.dart';
 
-@JsonSerializable()
-class CreatePostDto {
-  @JsonKey(name: 'asset_version_id')
-  final String assetVersionId;
-  final String? caption;
-  @JsonKey(name: 'is_public')
-  final String isPublic;
-
-  CreatePostDto({
-    required this.assetVersionId,
-    this.caption,
-    required this.isPublic,
-  });
+@freezed
+abstract class CreatePostDto with _$CreatePostDto {
+  const factory CreatePostDto({
+    @JsonKey(name: 'asset_version_id') required String assetVersionId,
+    String? caption,
+    @JsonKey(name: 'is_public') required String isPublic,
+  }) = _CreatePostDto;
 
   factory CreatePostDto.fromJson(Map<String, dynamic> json) =>
       _$CreatePostDtoFromJson(json);
-  Map<String, dynamic> toJson() => _$CreatePostDtoToJson(this);
 }

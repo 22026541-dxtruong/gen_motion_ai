@@ -1,7 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'get_post.dto.freezed.dart';
-part 'get_post.dto.g.dart'; // File cho JSON
+part 'get_post.dto.g.dart';
 
 @freezed
 abstract class GetPostDto with _$GetPostDto {

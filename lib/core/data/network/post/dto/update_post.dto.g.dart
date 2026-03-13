@@ -6,16 +6,16 @@ part of 'update_post.dto.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-UpdatePostDto _$UpdatePostDtoFromJson(Map<String, dynamic> json) =>
-    UpdatePostDto(
-      assetVersionId: json['assetVersionId'] as String?,
+_UpdatePostDto _$UpdatePostDtoFromJson(Map<String, dynamic> json) =>
+    _UpdatePostDto(
+      assetVersionId: json['asset_version_id'] as String?,
       caption: json['caption'] as String?,
-      isPublic: json['isPublic'] as bool?,
+      isPublic: json['is_public'] as bool?,
     );
 
-Map<String, dynamic> _$UpdatePostDtoToJson(UpdatePostDto instance) =>
+Map<String, dynamic> _$UpdatePostDtoToJson(_UpdatePostDto instance) =>
     <String, dynamic>{
-      'assetVersionId': ?instance.assetVersionId,
+      'asset_version_id': ?instance.assetVersionId,
       'caption': ?instance.caption,
-      'isPublic': ?instance.isPublic,
+      'is_public': ?instance.isPublic,
     };

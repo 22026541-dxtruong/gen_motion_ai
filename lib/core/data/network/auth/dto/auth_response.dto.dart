@@ -1,16 +1,14 @@
-import 'package:json_annotation/json_annotation.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 
-part 'auth_response.dto.g.dart'; // Tên file sinh ra phải khớp với tên file hiện tại
+part 'auth_response.dto.freezed.dart';
+part 'auth_response.dto.g.dart';
 
-@JsonSerializable()
-class AuthResponse {
-  @JsonKey(name: 'access_token')
-  final String accessToken;
+@freezed
+abstract class AuthResponse with _$AuthResponse {
+  const factory AuthResponse({
+    @JsonKey(name: 'access_token') required String accessToken,
+  }) = _AuthResponse;
 
-  AuthResponse({
-    required this.accessToken,
-  });
-
-  factory AuthResponse.fromJson(Map<String, dynamic> json) => _$AuthResponseFromJson(json);
-  Map<String, dynamic> toJson() => _$AuthResponseToJson(this);
+  factory AuthResponse.fromJson(Map<String, dynamic> json) =>
+      _$AuthResponseFromJson(json);
 }
