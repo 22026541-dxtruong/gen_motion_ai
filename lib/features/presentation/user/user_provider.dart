@@ -14,21 +14,16 @@ class CurrentUserNotifier extends AsyncNotifier<UserDto?> {
   }
 
   Future<void> fetchMe() async {
-    state = const AsyncLoading();
+    final previous = state.asData?.value;
+    if (previous == null) {
+      state = const AsyncLoading();
+    }
 
     final api = ref.read(userApiProvider);
 
     final dto = await api.getMe();
 
-    final user = UserDto(
-      id: dto.id,
-      username: dto.username,
-      email: dto.email,
-      avatarUrl: dto.avatarUrl,
-      bio: dto.bio,
-    );
-
-    state = AsyncData(user);
+    state = AsyncData(dto);
   }
 
   void logout() {
@@ -64,6 +59,13 @@ class UserNotifier extends AsyncNotifier<UserDto?> {
     state = const AsyncLoading();
 
     final api = ref.read(userApiProvider);
+
+    final currentUserId = ref.read(currentUserProvider).value?.id;
+    if (userId == currentUserId) {
+      await ref.read(currentUserProvider.notifier).fetchMe();
+      state = AsyncData(ref.read(currentUserProvider).value);
+      return;
+    }
 
     final user = await api.getUserById(userId);
 

@@ -8,10 +8,7 @@ class FollowerDto {
   final String id;
   final FollowUserDto follower;
 
-  FollowerDto({
-    required this.id,
-    required this.follower,
-  });
+  FollowerDto({required this.id, required this.follower});
 
   factory FollowerDto.fromJson(Map<String, dynamic> json) =>
       _$FollowerDtoFromJson(json);

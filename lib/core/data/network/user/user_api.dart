@@ -1,5 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:gen_motion_ai/core/data/network/api_endpoints.dart';
+import 'package:gen_motion_ai/core/data/network/user/dto/top_up_credit.dto.dart';
+import 'package:gen_motion_ai/core/data/network/user/dto/update_user.dto.dart';
 import 'package:gen_motion_ai/core/data/network/user/dto/user.dto.dart';
 import 'package:retrofit/retrofit.dart';
 
@@ -10,15 +12,20 @@ abstract class UserApi {
   factory UserApi(Dio dio) = _UserApi;
 
   @PATCH(ApiEndpoints.userMe)
-  Future<UserDto> updateUser(@Body() UserDto body);
+  Future<UserDto> updateUser(@Body() UpdateUserDto body);
 
   @GET(ApiEndpoints.userMe)
-  Future<UserDto> getMe();
+  Future<UserDto> getMe({
+    @Query('cursor') String? cursor,
+    @Query('take') int? take,
+  });
 
   @DELETE(ApiEndpoints.userMe)
-  Future<void> deleteUser();
+  Future<UserDto> deleteUser();
 
   @GET(ApiEndpoints.userById)
-  Future<UserDto> getUserById(@Path('userId') String userId);
+  Future<UserDto?> getUserById(@Path('userId') String userId);
 
+  @POST(ApiEndpoints.userTopUpCredits)
+  Future<TopUpCreditResponseDto> topUpMyCredits(@Body() TopUpCreditDto body);
 }

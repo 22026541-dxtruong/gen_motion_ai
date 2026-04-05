@@ -17,10 +17,11 @@ class _IconLibraryPanelState extends ConsumerState<IconLibraryPanel> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.appColors;
     return Container(
-      decoration: const BoxDecoration(
-        color: AppTheme.surfaceColor,
-        border: Border(right: BorderSide(color: AppTheme.borderColor)),
+      decoration: BoxDecoration(
+        color: colors.surface,
+        border: Border(right: BorderSide(color: colors.border)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -92,7 +93,7 @@ class _IconLibraryPanelState extends ConsumerState<IconLibraryPanel> {
             ),
           ),
 
-          const Divider(height: 1, color: AppTheme.borderColor),
+          Divider(height: 1, color: colors.border),
 
           SizedBox(
             height: 56,
@@ -120,10 +121,10 @@ class _IconLibraryPanelState extends ConsumerState<IconLibraryPanel> {
                       setState(() => _selectedCategory = category);
                     },
                     selectedColor: AppTheme.primaryColor,
-                    backgroundColor: AppTheme.cardColor,
+                    backgroundColor: colors.card,
                     labelStyle: TextStyle(
                       fontSize: context.isMobile ? 12 : 13,
-                      color: isSelected ? Colors.white : AppTheme.textSecondary,
+                      color: isSelected ? Colors.white : colors.textSecondary,
                     ),
                   ),
                 );
@@ -131,7 +132,7 @@ class _IconLibraryPanelState extends ConsumerState<IconLibraryPanel> {
             ),
           ),
 
-          const Divider(height: 1, color: AppTheme.borderColor),
+          Divider(height: 1, color: colors.border),
 
           Expanded(child: _buildIconGrid()),
 
@@ -139,8 +140,8 @@ class _IconLibraryPanelState extends ConsumerState<IconLibraryPanel> {
             padding: EdgeInsets.all(context.isMobile ? 12 : 16),
             decoration: BoxDecoration(
               color: AppTheme.primaryColor.withOpacity(0.1),
-              border: const Border(
-                top: BorderSide(color: AppTheme.borderColor),
+              border: Border(
+                top: BorderSide(color: colors.border),
               ),
             ),
             child: Row(
@@ -170,6 +171,7 @@ class _IconLibraryPanelState extends ConsumerState<IconLibraryPanel> {
   }
 
   Widget _buildIconGrid() {
+    final colors = context.appColors;
     final icons = SmartIconLibrary.getByCategory(_selectedCategory).where((
       icon,
     ) {
@@ -185,12 +187,12 @@ class _IconLibraryPanelState extends ConsumerState<IconLibraryPanel> {
             Icon(
               Icons.search_off,
               size: 48,
-              color: AppTheme.textSecondary.withOpacity(0.3),
+              color: colors.textSecondary.withOpacity(0.3),
             ),
             const SizedBox(height: 12),
             Text(
               'No icons found',
-              style: TextStyle(color: AppTheme.textSecondary.withOpacity(0.5)),
+              style: TextStyle(color: colors.textSecondary.withOpacity(0.5)),
             ),
           ],
         ),
@@ -260,13 +262,14 @@ class _IconLibraryItemState extends State<_IconLibraryItem> {
   }
 
   Widget _buildCard() {
+    final colors = context.appColors;
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
       decoration: BoxDecoration(
         color: widget.icon.color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: _isHovered ? widget.icon.color : AppTheme.borderColor,
+          color: _isHovered ? widget.icon.color : colors.border,
           width: _isHovered ? 2 : 1,
         ),
       ),
@@ -285,7 +288,7 @@ class _IconLibraryItemState extends State<_IconLibraryItem> {
             style: TextStyle(
               fontSize: context.isMobile ? 11 : 12,
               fontWeight: FontWeight.w600,
-              color: AppTheme.textPrimary,
+              color: colors.textPrimary,
             ),
           ),
           const SizedBox(height: 2),
@@ -293,7 +296,7 @@ class _IconLibraryItemState extends State<_IconLibraryItem> {
             '${widget.icon.variations.length} styles',
             style: TextStyle(
               fontSize: context.isMobile ? 9 : 10,
-              color: AppTheme.textSecondary,
+              color: colors.textSecondary,
             ),
           ),
         ],

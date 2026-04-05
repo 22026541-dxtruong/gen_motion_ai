@@ -33,7 +33,5 @@ abstract class CommentApi {
   );
 
   @DELETE(ApiEndpoints.postCommentById)
-  Future<IdResponseDto> deleteComment(
-    @Path('id') String id,
-  );
+  Future<IdResponseDto> deleteComment(@Path('id') String id);
 }

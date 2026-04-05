@@ -23,7 +23,7 @@ class DioClient {
 
     // Add interceptors
     _dio.interceptors.addAll([
-      AuthInterceptor(secureStorage),
+      AuthInterceptor(_dio, secureStorage),
       LogInterceptor(
         requestHeader: true,
         requestBody: true,

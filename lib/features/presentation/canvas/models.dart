@@ -65,7 +65,13 @@ class SmartIconLibrary {
       name: 'Tree',
       category: IconCategory.nature,
       icon: Icons.park,
-      variations: ['Oak Tree', 'Pine Tree', 'Autumn Tree', 'Dead Tree', 'Palm Tree'],
+      variations: [
+        'Oak Tree',
+        'Pine Tree',
+        'Autumn Tree',
+        'Dead Tree',
+        'Palm Tree',
+      ],
       color: Colors.green,
     ),
     SmartIconType(
@@ -100,7 +106,7 @@ class SmartIconLibrary {
       variations: ['White Cloud', 'Storm Cloud', 'Wispy Cloud', 'Fog'],
       color: Colors.blueGrey,
     ),
-    
+
     // Buildings
     SmartIconType(
       id: 'house',
@@ -126,7 +132,7 @@ class SmartIconLibrary {
       variations: ['Suspension Bridge', 'Arch Bridge', 'Wooden Bridge'],
       color: Colors.brown,
     ),
-    
+
     // Characters
     SmartIconType(
       id: 'person',
@@ -144,7 +150,7 @@ class SmartIconLibrary {
       variations: ['Couple', 'Family', 'Friends', 'Crowd'],
       color: Colors.deepPurple,
     ),
-    
+
     // Celestial
     SmartIconType(
       id: 'sun',
@@ -162,7 +168,7 @@ class SmartIconLibrary {
       variations: ['Full Moon', 'Crescent Moon', 'Half Moon'],
       color: Colors.grey.shade400,
     ),
-    
+
     // Animals
     SmartIconType(
       id: 'bird',
@@ -188,7 +194,7 @@ class SmartIconLibrary {
       variations: ['Kitten', 'Adult Cat', 'Tiger', 'Lion'],
       color: Colors.orange.shade800,
     ),
-    
+
     // Objects
     SmartIconType(
       id: 'car',
@@ -255,12 +261,12 @@ class CanvasIcon {
   final double rotation;
   final String? selectedVariation;
   final double opacity;
-  
+
   final double startTime;
   final double endTime;
   final String animation;
   final double animationDuration;
-  
+
   final List<Keyframe> keyframes;
 
   CanvasIcon({
@@ -305,17 +311,17 @@ class CanvasIcon {
       keyframes: keyframes ?? this.keyframes,
     );
   }
-  
+
   bool isVisibleAt(double time) {
     return time >= startTime && time <= endTime;
   }
-  
+
   CanvasIcon interpolateAt(double time) {
     if (keyframes.isEmpty) return this;
-    
+
     Keyframe? before;
     Keyframe? after;
-    
+
     for (final kf in keyframes) {
       if (kf.time <= time) {
         if (before == null || kf.time > before.time) {
@@ -328,35 +334,35 @@ class CanvasIcon {
         }
       }
     }
-    
+
     if (before == null && after == null) return this;
     if (before == null) {
       return copyWith(
-      position: after!.position,
-      size: after.size,
-      rotation: after.rotation,
-      opacity: after.opacity,
-    );
+        position: after!.position,
+        size: after.size,
+        rotation: after.rotation,
+        opacity: after.opacity,
+      );
     }
     if (after == null) {
       return copyWith(
-      position: before.position,
-      size: before.size,
-      rotation: before.rotation,
-      opacity: before.opacity,
-    );
+        position: before.position,
+        size: before.size,
+        rotation: before.rotation,
+        opacity: before.opacity,
+      );
     }
     if (before.time == after.time) {
       return copyWith(
-      position: before.position,
-      size: before.size,
-      rotation: before.rotation,
-      opacity: before.opacity,
-    );
+        position: before.position,
+        size: before.size,
+        rotation: before.rotation,
+        opacity: before.opacity,
+      );
     }
-    
+
     final t = (time - before.time) / (after.time - before.time);
-    
+
     return copyWith(
       position: Offset.lerp(before.position, after.position, t),
       size: before.size + (after.size - before.size) * t,
@@ -416,7 +422,7 @@ class SketchStroke {
       size: size ?? this.size,
     );
   }
-  
+
   bool isVisibleAt(double time) {
     return time >= startTime && time <= endTime;
   }
@@ -548,12 +554,12 @@ class CanvasState {
   final List<DrawingPoint> currentSketchPoints;
   final bool isDrawingMode;
   final GenerationMode mode;
-  
+
   final double videoDuration;
   final double currentTime;
   final bool isPlaying;
   final bool showTimeline;
-  
+
   final AspectRatio aspectRatio;
 
   CanvasState({
@@ -601,10 +607,18 @@ class CanvasState {
       userImages: userImages ?? this.userImages,
       userVideos: userVideos ?? this.userVideos,
       backgroundColor: backgroundColor ?? this.backgroundColor,
-      selectedIconId: selectedIconId == _undefined ? this.selectedIconId : selectedIconId as String?,
-      selectedSketchId: selectedSketchId == _undefined ? this.selectedSketchId : selectedSketchId as String?,
-      selectedUserImageId: selectedUserImageId == _undefined ? this.selectedUserImageId : selectedUserImageId as String?,
-      selectedUserVideoId: selectedUserVideoId == _undefined ? this.selectedUserVideoId : selectedUserVideoId as String?,
+      selectedIconId: selectedIconId == _undefined
+          ? this.selectedIconId
+          : selectedIconId as String?,
+      selectedSketchId: selectedSketchId == _undefined
+          ? this.selectedSketchId
+          : selectedSketchId as String?,
+      selectedUserImageId: selectedUserImageId == _undefined
+          ? this.selectedUserImageId
+          : selectedUserImageId as String?,
+      selectedUserVideoId: selectedUserVideoId == _undefined
+          ? this.selectedUserVideoId
+          : selectedUserVideoId as String?,
       currentSketchPoints: currentSketchPoints ?? this.currentSketchPoints,
       isDrawingMode: isDrawingMode ?? this.isDrawingMode,
       mode: mode ?? this.mode,
@@ -615,14 +629,14 @@ class CanvasState {
       aspectRatio: aspectRatio ?? this.aspectRatio,
     );
   }
-  
+
   List<CanvasIcon> getVisibleIconsAt(double time) {
     if (mode == GenerationMode.image) {
       return icons;
     }
     return icons.where((icon) => icon.isVisibleAt(time)).toList();
   }
-  
+
   List<SketchStroke> getVisibleSketchesAt(double time) {
     if (mode == GenerationMode.image) {
       return sketches;
@@ -656,10 +670,17 @@ class AnimationType {
   static const String zoomIn = 'zoom-in';
   static const String zoomOut = 'zoom-out';
   static const String rotate = 'rotate';
-  
+
   static List<String> get all => [
-    none, fadeIn, fadeOut, 
-    slideLeft, slideRight, slideUp, slideDown,
-    zoomIn, zoomOut, rotate,
+    none,
+    fadeIn,
+    fadeOut,
+    slideLeft,
+    slideRight,
+    slideUp,
+    slideDown,
+    zoomIn,
+    zoomOut,
+    rotate,
   ];
 }

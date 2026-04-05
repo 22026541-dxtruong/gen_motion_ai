@@ -42,6 +42,7 @@ class _DesktopCanvasLayoutState extends ConsumerState<_DesktopCanvasLayout> {
   @override
   Widget build(BuildContext context) {
     final canvasState = ref.watch(canvasProvider);
+    final colors = context.appColors;
 
     return Column(
       children: [
@@ -54,8 +55,10 @@ class _DesktopCanvasLayoutState extends ConsumerState<_DesktopCanvasLayout> {
                 child: Column(
                   children: [
                     Container(
-                      decoration: const BoxDecoration(
-                        border: Border(bottom: BorderSide(color: AppTheme.borderColor)),
+                      decoration: BoxDecoration(
+                        border: Border(
+                          bottom: BorderSide(color: colors.border),
+                        ),
                       ),
                       child: Row(
                         children: [
@@ -83,7 +86,7 @@ class _DesktopCanvasLayoutState extends ConsumerState<_DesktopCanvasLayout> {
                           .clamp(200.0, 500.0);
                     });
                   },
-                  child: Container(width: 4, color: AppTheme.borderColor),
+                  child: Container(width: 4, color: colors.border),
                 ),
               ),
 
@@ -100,7 +103,7 @@ class _DesktopCanvasLayoutState extends ConsumerState<_DesktopCanvasLayout> {
                           .clamp(200.0, 500.0);
                     });
                   },
-                  child: Container(width: 4, color: AppTheme.borderColor),
+                  child: Container(width: 4, color: colors.border),
                 ),
               ),
 
@@ -125,7 +128,7 @@ class _DesktopCanvasLayoutState extends ConsumerState<_DesktopCanvasLayout> {
                   );
                 });
               },
-              child: Container(height: 4, color: AppTheme.borderColor),
+              child: Container(height: 4, color: colors.border),
             ),
           ),
           SizedBox(height: _timelineHeight, child: const VideoTimeline()),
@@ -154,7 +157,9 @@ class _DesktopCanvasLayoutState extends ConsumerState<_DesktopCanvasLayout> {
             textAlign: TextAlign.center,
             style: TextStyle(
               fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-              color: isSelected ? AppTheme.primaryColor : AppTheme.textSecondary,
+              color: isSelected
+                  ? AppTheme.primaryColor
+                  : context.appColors.textSecondary,
             ),
           ),
         ),
@@ -181,6 +186,7 @@ class _MobileCanvasLayoutState extends ConsumerState<_MobileCanvasLayout> {
   @override
   Widget build(BuildContext context) {
     final canvasState = ref.watch(canvasProvider);
+    final colors = context.appColors;
     final hasSelection =
         canvasState.selectedIconId != null ||
         canvasState.selectedSketchId != null ||
@@ -242,10 +248,10 @@ class _MobileCanvasLayoutState extends ConsumerState<_MobileCanvasLayout> {
                     child: Container(
                       height: 24,
                       width: double.infinity,
-                      decoration: const BoxDecoration(
-                        color: AppTheme.surfaceColor,
+                      decoration: BoxDecoration(
+                        color: colors.surface,
                         border: Border(
-                          top: BorderSide(color: AppTheme.borderColor),
+                          top: BorderSide(color: colors.border),
                         ),
                       ),
                       child: Center(
@@ -267,7 +273,8 @@ class _MobileCanvasLayoutState extends ConsumerState<_MobileCanvasLayout> {
                 ],
               ),
 
-            if (!_showIconLibrary && !_showProperties && !_showGallery) _buildBottomToolbar(),
+            if (!_showIconLibrary && !_showProperties && !_showGallery)
+              _buildBottomToolbar(),
 
             if (_showIconLibrary)
               _buildBottomPanel(
@@ -300,11 +307,12 @@ class _MobileCanvasLayoutState extends ConsumerState<_MobileCanvasLayout> {
     required VoidCallback onClose,
     required Widget child,
   }) {
+    final colors = context.appColors;
     return Container(
       height: MediaQuery.of(context).size.height * 0.4,
-      decoration: const BoxDecoration(
-        color: AppTheme.surfaceColor,
-        border: Border(top: BorderSide(color: AppTheme.borderColor)),
+      decoration: BoxDecoration(
+        color: colors.surface,
+        border: Border(top: BorderSide(color: colors.border)),
         boxShadow: [
           BoxShadow(
             color: Colors.black12,
@@ -317,8 +325,8 @@ class _MobileCanvasLayoutState extends ConsumerState<_MobileCanvasLayout> {
         children: [
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            decoration: const BoxDecoration(
-              border: Border(bottom: BorderSide(color: AppTheme.borderColor)),
+            decoration: BoxDecoration(
+              border: Border(bottom: BorderSide(color: colors.border)),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -343,11 +351,12 @@ class _MobileCanvasLayoutState extends ConsumerState<_MobileCanvasLayout> {
   }
 
   Widget _buildMobileToolbar(CanvasState canvasState, bool hasSelection) {
+    final colors = context.appColors;
     return Container(
       height: 56,
-      decoration: const BoxDecoration(
-        color: AppTheme.surfaceColor,
-        border: Border(bottom: BorderSide(color: AppTheme.borderColor)),
+      decoration: BoxDecoration(
+        color: colors.surface,
+        border: Border(bottom: BorderSide(color: colors.border)),
       ),
       child: Row(
         children: [
@@ -446,10 +455,11 @@ class _MobileCanvasLayoutState extends ConsumerState<_MobileCanvasLayout> {
   }
 
   Widget _buildBottomToolbar() {
+    final colors = context.appColors;
     return Container(
-      decoration: const BoxDecoration(
-        color: AppTheme.surfaceColor,
-        border: Border(top: BorderSide(color: AppTheme.borderColor)),
+      decoration: BoxDecoration(
+        color: colors.surface,
+        border: Border(top: BorderSide(color: colors.border)),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
@@ -481,7 +491,10 @@ class _MobileCanvasLayoutState extends ConsumerState<_MobileCanvasLayout> {
                   const SizedBox(width: 8),
                   OutlinedButton.icon(
                     onPressed: () => setState(() => _showGallery = true),
-                    icon: const Icon(Icons.collections_bookmark_outlined, size: 20),
+                    icon: const Icon(
+                      Icons.collections_bookmark_outlined,
+                      size: 20,
+                    ),
                     label: const Text('Gallery'),
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(
@@ -505,7 +518,8 @@ class _MobileCanvasLayoutState extends ConsumerState<_MobileCanvasLayout> {
                       ),
                     ),
                   ),
-                  if (ref.read(canvasProvider).mode == GenerationMode.video) ...[
+                  if (ref.read(canvasProvider).mode ==
+                      GenerationMode.video) ...[
                     const SizedBox(width: 8),
                     OutlinedButton.icon(
                       onPressed: () => _pickVideo(ref),
@@ -543,7 +557,7 @@ class _MobileCanvasLayoutState extends ConsumerState<_MobileCanvasLayout> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: AppTheme.surfaceColor,
+        backgroundColor: context.appColors.surface,
         title: const Text('Generated Prompt'),
         content: SingleChildScrollView(
           child: Column(
@@ -553,16 +567,19 @@ class _MobileCanvasLayoutState extends ConsumerState<_MobileCanvasLayout> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: AppTheme.cardColor,
+                  color: context.appColors.card,
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: AppTheme.borderColor),
+                  border: Border.all(color: context.appColors.border),
                 ),
                 child: Text(prompt, style: const TextStyle(fontSize: 13)),
               ),
               const SizedBox(height: 16),
-              const Text(
+              Text(
                 'This prompt will be used to generate your content.',
-                style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+                style: TextStyle(
+                  fontSize: 12,
+                  color: context.appColors.textSecondary,
+                ),
               ),
             ],
           ),
@@ -594,9 +611,10 @@ class _CanvasContainer extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final canvasState = ref.watch(canvasProvider);
+    final colors = context.appColors;
 
     return Container(
-      color: AppTheme.backgroundColor,
+      color: colors.background,
       child: Column(
         children: [
           if (!context.isMobile)
@@ -645,11 +663,12 @@ class _CanvasContainer extends ConsumerWidget {
     WidgetRef ref,
     CanvasState canvasState,
   ) {
+    final colors = context.appColors;
     return Container(
       height: 56,
-      decoration: const BoxDecoration(
-        color: AppTheme.surfaceColor,
-        border: Border(bottom: BorderSide(color: AppTheme.borderColor)),
+      decoration: BoxDecoration(
+        color: colors.surface,
+        border: Border(bottom: BorderSide(color: colors.border)),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
@@ -783,7 +802,7 @@ class _CanvasContainer extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: AppTheme.surfaceColor,
+        backgroundColor: context.appColors.surface,
         title: Text('Generate ${canvasState.mode.label}'),
         content: SizedBox(
           width: 500,
@@ -794,9 +813,9 @@ class _CanvasContainer extends ConsumerWidget {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: AppTheme.cardColor,
+                  color: context.appColors.card,
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: AppTheme.borderColor),
+                  border: Border.all(color: context.appColors.border),
                 ),
                 child: Text(prompt),
               ),
@@ -805,9 +824,9 @@ class _CanvasContainer extends ConsumerWidget {
                 canvasState.mode == GenerationMode.video
                     ? 'AI will generate a ${canvasState.videoDuration.toStringAsFixed(0)}-second video with your layout, keyframes, and sketches.'
                     : 'AI will generate an image based on your icons and sketches.',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 13,
-                  color: AppTheme.textSecondary,
+                  color: context.appColors.textSecondary,
                 ),
               ),
             ],

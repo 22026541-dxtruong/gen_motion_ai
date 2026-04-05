@@ -36,7 +36,7 @@ class _PostScreenState extends State<PostScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.backgroundColor,
+      backgroundColor: context.appColors.background,
       body: Stack(
         children: [
           PageView.builder(
@@ -116,7 +116,7 @@ class _NavButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: filled ? AppTheme.primaryColor : AppTheme.cardColor,
+      color: filled ? AppTheme.primaryColor : context.appColors.card,
       shape: const CircleBorder(),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
@@ -128,11 +128,11 @@ class _NavButton extends StatelessWidget {
               ? null
               : BoxDecoration(
                   shape: BoxShape.circle,
-                  border: Border.all(color: AppTheme.borderColor),
+                  border: Border.all(color: context.appColors.border),
                 ),
           child: Icon(
             icon,
-            color: filled ? Colors.white : AppTheme.textPrimary,
+            color: filled ? Colors.white : context.appColors.textPrimary,
             size: 28,
           ),
         ),
@@ -214,7 +214,8 @@ class _PostItemState extends ConsumerState<_PostItem> {
                 icon: post.isLiked ? Icons.favorite : Icons.favorite_border,
                 label: _formatNumber(post.likeCount),
                 color: post.isLiked ? Colors.red : Colors.white,
-                onTap: () => ref.read(postProvider(post.id).notifier).toggleLike(),
+                onTap: () =>
+                    ref.read(postProvider(post.id).notifier).toggleLike(),
               ),
               const SizedBox(height: 20),
               _ReelAction(
@@ -223,7 +224,7 @@ class _PostItemState extends ConsumerState<_PostItem> {
                 onTap: () {
                   showModalBottomSheet(
                     context: context,
-                    backgroundColor: AppTheme.surfaceColor,
+                    backgroundColor: context.appColors.surface,
                     isScrollControlled: true,
                     builder: (context) => const _CommentsBottomSheet(),
                   );
@@ -292,9 +293,9 @@ class _PostItemState extends ConsumerState<_PostItem> {
                                 horizontal: 16,
                               ),
                               side: const BorderSide(
-                                color: AppTheme.borderColor,
+                                color: context.appColors.border,
                               ),
-                              backgroundColor: AppTheme.cardColor,
+                              backgroundColor: context.appColors.card,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(16),
                               ),
@@ -304,7 +305,7 @@ class _PostItemState extends ConsumerState<_PostItem> {
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w500,
-                                color: AppTheme.textSecondary,
+                                color: context.appColors.textSecondary,
                               ),
                             ),
                           )
@@ -380,7 +381,7 @@ class _PostItemState extends ConsumerState<_PostItem> {
         Expanded(
           flex: 2,
           child: Container(
-            color: AppTheme.backgroundColor,
+            color: context.appColors.background,
             child: Stack(
               children: [
                 Center(
@@ -407,12 +408,12 @@ class _PostItemState extends ConsumerState<_PostItem> {
           ),
         ),
         // Right: Details Sidebar
-        Container(width: 1, color: AppTheme.borderColor),
+        Container(width: 1, color: context.appColors.border),
         Expanded(
           flex: 1,
           child: Container(
             constraints: const BoxConstraints(minWidth: 400, maxWidth: 600),
-            color: AppTheme.surfaceColor,
+            color: context.appColors.surface,
             child: Column(
               children: [
                 // Fixed Header: User Info, Description, Actions
@@ -428,7 +429,7 @@ class _PostItemState extends ConsumerState<_PostItem> {
                         style: const TextStyle(
                           fontSize: 14,
                           height: 1.5,
-                          color: AppTheme.textPrimary,
+                          color: context.appColors.textPrimary,
                         ),
                       ),
                       const SizedBox(height: 20),
@@ -438,7 +439,7 @@ class _PostItemState extends ConsumerState<_PostItem> {
                     ],
                   ),
                 ),
-                const Divider(height: 1, color: AppTheme.borderColor),
+                Divider(height: 1, color: context.appColors.border),
                 // Scrollable Comments Area
                 Expanded(
                   child: SingleChildScrollView(
@@ -495,7 +496,7 @@ class _PostItemState extends ConsumerState<_PostItem> {
                   style: TextStyle(
                     fontWeight: FontWeight.w600,
                     fontSize: 14,
-                    color: AppTheme.textPrimary,
+                    color: context.appColors.textPrimary,
                   ),
                 ),
               ),
@@ -504,7 +505,7 @@ class _PostItemState extends ConsumerState<_PostItem> {
                 'Created 2 hours ago',
                 style: TextStyle(
                   fontSize: 12,
-                  color: AppTheme.textSecondary.withOpacity(0.7),
+                  color: context.appColors.textSecondary.withOpacity(0.7),
                 ),
               ),
             ],
@@ -517,8 +518,8 @@ class _PostItemState extends ConsumerState<_PostItem> {
                   onPressed: () => setState(() => _isFollowing = false),
                   style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
-                    side: const BorderSide(color: AppTheme.borderColor),
-                    backgroundColor: AppTheme.cardColor,
+                    side: BorderSide(color: context.appColors.border),
+                    backgroundColor: context.appColors.card,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
                     ),
@@ -528,7 +529,7 @@ class _PostItemState extends ConsumerState<_PostItem> {
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
-                      color: AppTheme.textSecondary,
+                      color: context.appColors.textSecondary,
                     ),
                   ),
                 )
@@ -581,11 +582,11 @@ class _PostItemState extends ConsumerState<_PostItem> {
         icon: const Icon(Icons.auto_awesome, size: 18),
         label: const Text('Try this prompt'),
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppTheme.cardColor,
-          foregroundColor: AppTheme.textPrimary,
+          backgroundColor: context.appColors.card,
+          foregroundColor: context.appColors.textPrimary,
           elevation: 0,
           padding: const EdgeInsets.symmetric(vertical: 16),
-          side: const BorderSide(color: AppTheme.borderColor),
+          side: BorderSide(color: context.appColors.border),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
       ),
@@ -603,23 +604,23 @@ class _PostItemState extends ConsumerState<_PostItem> {
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
-                color: AppTheme.textPrimary,
+                color: context.appColors.textPrimary,
               ),
             ),
             const SizedBox(width: 8),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
               decoration: BoxDecoration(
-                color: AppTheme.cardColor,
+                color: context.appColors.card,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppTheme.borderColor),
+                border: Border.all(color: context.appColors.border),
               ),
               child: const Text(
                 '42',
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
-                  color: AppTheme.textSecondary,
+                  color: context.appColors.textSecondary,
                 ),
               ),
             ),
@@ -657,8 +658,8 @@ class _PostItemState extends ConsumerState<_PostItem> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: const BoxDecoration(
-        color: AppTheme.surfaceColor,
-        border: Border(top: BorderSide(color: AppTheme.borderColor)),
+        color: context.appColors.surface,
+        border: Border(top: BorderSide(color: context.appColors.border)),
       ),
       child: Row(
         children: [
@@ -672,12 +673,12 @@ class _PostItemState extends ConsumerState<_PostItem> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               decoration: BoxDecoration(
-                color: AppTheme.cardColor,
+                color: context.appColors.card,
                 borderRadius: BorderRadius.circular(20),
               ),
               child: const Text(
                 'Add a comment...',
-                style: TextStyle(color: AppTheme.textSecondary, fontSize: 13),
+                style: TextStyle(color: context.appColors.textSecondary, fontSize: 13),
               ),
             ),
           ),
@@ -698,7 +699,7 @@ class _PostItemState extends ConsumerState<_PostItem> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: const Text('Copied to clipboard'),
-        backgroundColor: AppTheme.cardColor,
+        backgroundColor: context.appColors.card,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         margin: const EdgeInsets.all(16),
@@ -719,7 +720,7 @@ class _CommentsBottomSheet extends StatelessWidget {
       child: Container(
         height: MediaQuery.of(context).size.height * 0.7,
         decoration: const BoxDecoration(
-          color: AppTheme.surfaceColor,
+          color: context.appColors.surface,
           borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
         ),
         child: Column(
@@ -729,7 +730,7 @@ class _CommentsBottomSheet extends StatelessWidget {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: AppTheme.borderColor,
+                color: context.appColors.border,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -739,7 +740,7 @@ class _CommentsBottomSheet extends StatelessWidget {
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
-                color: AppTheme.textPrimary,
+                color: context.appColors.textPrimary,
               ),
             ),
             const SizedBox(height: 16),
@@ -765,7 +766,7 @@ class _CommentsBottomSheet extends StatelessWidget {
                 ],
               ),
             ),
-            const Divider(height: 1, color: AppTheme.borderColor),
+            Divider(height: 1, color: context.appColors.border),
             Container(
               padding: const EdgeInsets.all(16),
               child: Row(
@@ -783,13 +784,13 @@ class _CommentsBottomSheet extends StatelessWidget {
                         vertical: 10,
                       ),
                       decoration: BoxDecoration(
-                        color: AppTheme.cardColor,
+                        color: context.appColors.card,
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: const Text(
                         'Add a comment...',
                         style: TextStyle(
-                          color: AppTheme.textSecondary,
+                          color: context.appColors.textSecondary,
                           fontSize: 13,
                         ),
                       ),
@@ -828,14 +829,14 @@ class _InteractionItem extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 20, color: color ?? AppTheme.textSecondary),
+            Icon(icon, size: 20, color: color ?? context.appColors.textSecondary),
             const SizedBox(width: 6),
             Text(
               label,
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
-                color: color ?? AppTheme.textSecondary,
+                color: color ?? context.appColors.textSecondary,
               ),
             ),
           ],
@@ -898,7 +899,7 @@ class _CommentItem extends StatelessWidget {
                       style: const TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
-                        color: AppTheme.textPrimary,
+                        color: context.appColors.textPrimary,
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -906,7 +907,7 @@ class _CommentItem extends StatelessWidget {
                       time,
                       style: TextStyle(
                         fontSize: 11,
-                        color: AppTheme.textSecondary.withOpacity(0.6),
+                        color: context.appColors.textSecondary.withOpacity(0.6),
                       ),
                     ),
                   ],
@@ -916,7 +917,7 @@ class _CommentItem extends StatelessWidget {
                   text,
                   style: TextStyle(
                     fontSize: 13,
-                    color: AppTheme.textSecondary.withOpacity(0.9),
+                    color: context.appColors.textSecondary.withOpacity(0.9),
                     height: 1.5,
                   ),
                 ),
@@ -1150,7 +1151,7 @@ class _MediaPlaceholderState extends State<_MediaPlaceholder> {
       aspectRatio: 1,
       child: Container(
         decoration: BoxDecoration(
-          color: AppTheme.cardColor,
+          color: context.appColors.card,
           borderRadius: BorderRadius.circular(12),
         ),
         child: ClipRRect(
@@ -1166,3 +1167,4 @@ class _MediaPlaceholderState extends State<_MediaPlaceholder> {
     );
   }
 }
+

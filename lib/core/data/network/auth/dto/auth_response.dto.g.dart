@@ -7,7 +7,19 @@ part of 'auth_response.dto.dart';
 // **************************************************************************
 
 _AuthResponse _$AuthResponseFromJson(Map<String, dynamic> json) =>
-    _AuthResponse(accessToken: json['access_token'] as String);
+    _AuthResponse(
+      userId: json['userId'] as String,
+      username: json['username'] as String,
+      email: json['email'] as String,
+      accessToken: json['accessToken'] as String,
+      refreshToken: json['refreshToken'] as String,
+    );
 
 Map<String, dynamic> _$AuthResponseToJson(_AuthResponse instance) =>
-    <String, dynamic>{'access_token': instance.accessToken};
+    <String, dynamic>{
+      'userId': instance.userId,
+      'username': instance.username,
+      'email': instance.email,
+      'accessToken': instance.accessToken,
+      'refreshToken': instance.refreshToken,
+    };

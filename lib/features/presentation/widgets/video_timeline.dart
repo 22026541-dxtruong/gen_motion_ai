@@ -26,6 +26,7 @@ class _VideoTimelineState extends ConsumerState<VideoTimeline> {
   @override
   Widget build(BuildContext context) {
     final canvasState = ref.watch(canvasProvider);
+    final colors = context.appColors;
 
     if (canvasState.mode != GenerationMode.video) {
       return const SizedBox.shrink();
@@ -34,17 +35,19 @@ class _VideoTimelineState extends ConsumerState<VideoTimeline> {
     return Container(
       height: context.isMobile ? 160 : 250,
       decoration: BoxDecoration(
-        color: AppTheme.surfaceColor,
-        border: context.isMobile ? null : const Border(top: BorderSide(color: AppTheme.borderColor)),
+        color: colors.surface,
+        border: context.isMobile
+            ? null
+            : Border(top: BorderSide(color: colors.border)),
       ),
       child: Column(
         children: [
           _buildPlaybackControls(canvasState),
 
-          const Divider(height: 1, color: AppTheme.borderColor),
-          
+          Divider(height: 1, color: colors.border),
+
           _buildTimeRuler(canvasState),
-          const Divider(height: 1, color: AppTheme.borderColor),
+          Divider(height: 1, color: colors.border),
 
           Expanded(child: _buildTimeline(canvasState)),
         ],
@@ -121,28 +124,28 @@ class _VideoTimelineState extends ConsumerState<VideoTimeline> {
             ),
           ),
 
-            SizedBox(width: context.isMobile ? 4 : 16),
-            const Icon(Icons.schedule, size: 16, color: AppTheme.textSecondary),
-            const SizedBox(width: 8),
-            DropdownButton<double>(
-              value: state.videoDuration,
-              underline: const SizedBox(),
-              items: [5.0, 10.0, 15.0, 30.0].map((duration) {
-                return DropdownMenuItem(
-                  value: duration,
-                  child: Text(
-                    '${duration.toInt()}s',
-                    style: TextStyle(fontSize: context.isMobile ? 10 : 13),
-                  ),
-                );
-              }).toList(),
-              onChanged: (value) {
-                if (value != null) {
-                  ref.read(canvasProvider.notifier).setVideoDuration(value);
-                }
-              },
-            ),
-          ],
+          SizedBox(width: context.isMobile ? 4 : 16),
+          Icon(Icons.schedule, size: 16, color: context.appColors.textSecondary),
+          const SizedBox(width: 8),
+          DropdownButton<double>(
+            value: state.videoDuration,
+            underline: const SizedBox(),
+            items: [5.0, 10.0, 15.0, 30.0].map((duration) {
+              return DropdownMenuItem(
+                value: duration,
+                child: Text(
+                  '${duration.toInt()}s',
+                  style: TextStyle(fontSize: context.isMobile ? 10 : 13),
+                ),
+              );
+            }).toList(),
+            onChanged: (value) {
+              if (value != null) {
+                ref.read(canvasProvider.notifier).setVideoDuration(value);
+              }
+            },
+          ),
+        ],
       ),
     );
   }
@@ -168,7 +171,8 @@ class _VideoTimelineState extends ConsumerState<VideoTimeline> {
               currentTime: state.currentTime,
               isSelected: state.selectedUserVideoId == video.id,
               isIcon: false,
-              onTap: () => ref.read(canvasProvider.notifier).selectUserVideo(video.id),
+              onTap: () =>
+                  ref.read(canvasProvider.notifier).selectUserVideo(video.id),
               onDragStart: (details) {
                 setState(() {
                   _draggingId = video.id;
@@ -179,12 +183,18 @@ class _VideoTimelineState extends ConsumerState<VideoTimeline> {
               },
               onDragUpdate: (details) {
                 if (_draggingId != video.id) return;
-                final pixelsPerSecond = MediaQuery.of(context).size.width / state.videoDuration;
+                final pixelsPerSecond =
+                    MediaQuery.of(context).size.width / state.videoDuration;
                 final dx = details.localPosition.dx - _dragStartDx!;
                 final deltaTime = dx / pixelsPerSecond;
                 final duration = _initialEndTime! - _initialStartTime!;
-                final newStart = (_initialStartTime! + deltaTime).clamp(0.0, state.videoDuration - duration);
-                ref.read(canvasProvider.notifier).updateUserVideoTimeline(video.id, startTime: newStart);
+                final newStart = (_initialStartTime! + deltaTime).clamp(
+                  0.0,
+                  state.videoDuration - duration,
+                );
+                ref
+                    .read(canvasProvider.notifier)
+                    .updateUserVideoTimeline(video.id, startTime: newStart);
               },
               onDragEnd: () => setState(() => _draggingId = null),
               onResizeStart: (isStart, details) {
@@ -199,29 +209,50 @@ class _VideoTimelineState extends ConsumerState<VideoTimeline> {
               },
               onResizeUpdate: (details) {
                 if (_resizingId != video.id) return;
-                final pixelsPerSecond = MediaQuery.of(context).size.width / state.videoDuration;
+                final pixelsPerSecond =
+                    MediaQuery.of(context).size.width / state.videoDuration;
                 final dx = details.localPosition.dx - _dragStartDx!;
                 final deltaTime = dx / pixelsPerSecond;
-                
+
                 if (_resizingStart) {
                   // Left resize: change start time and trim start
-                  final newStart = (_initialStartTime! + deltaTime).clamp(0.0, _initialEndTime! - 0.5);
+                  final newStart = (_initialStartTime! + deltaTime).clamp(
+                    0.0,
+                    _initialEndTime! - 0.5,
+                  );
                   final timeShift = newStart - _initialStartTime!;
-                  final newTrimStart = _initialTrimStart! + timeShift * video.playbackSpeed;
-                  
-                  if (newTrimStart >= 0 && newTrimStart < video.originalDuration) {
-                     ref.read(canvasProvider.notifier).updateUserVideoTimeline(video.id, startTime: newStart);
-                     final trimEnd = _initialTrimStart! + (_initialEndTime! - _initialStartTime!) * video.playbackSpeed;
-                     ref.read(canvasProvider.notifier).updateUserVideoTrim(video.id, newTrimStart, trimEnd);
+                  final newTrimStart =
+                      _initialTrimStart! + timeShift * video.playbackSpeed;
+
+                  if (newTrimStart >= 0 &&
+                      newTrimStart < video.originalDuration) {
+                    ref
+                        .read(canvasProvider.notifier)
+                        .updateUserVideoTimeline(video.id, startTime: newStart);
+                    final trimEnd =
+                        _initialTrimStart! +
+                        (_initialEndTime! - _initialStartTime!) *
+                            video.playbackSpeed;
+                    ref
+                        .read(canvasProvider.notifier)
+                        .updateUserVideoTrim(video.id, newTrimStart, trimEnd);
                   }
                 } else {
                   // Right resize: change duration (trim end)
-                  final newEnd = (_initialEndTime! + deltaTime).clamp(_initialStartTime! + 0.5, state.videoDuration);
+                  final newEnd = (_initialEndTime! + deltaTime).clamp(
+                    _initialStartTime! + 0.5,
+                    state.videoDuration,
+                  );
                   final newDuration = newEnd - _initialStartTime!;
-                  final maxDuration = (video.originalDuration - video.trimStart) / video.playbackSpeed;
+                  final maxDuration =
+                      (video.originalDuration - video.trimStart) /
+                      video.playbackSpeed;
                   final clampedDuration = newDuration.clamp(0.5, maxDuration);
-                  final trimEnd = video.trimStart + clampedDuration * video.playbackSpeed;
-                  ref.read(canvasProvider.notifier).updateUserVideoTrim(video.id, video.trimStart, trimEnd);
+                  final trimEnd =
+                      video.trimStart + clampedDuration * video.playbackSpeed;
+                  ref
+                      .read(canvasProvider.notifier)
+                      .updateUserVideoTrim(video.id, video.trimStart, trimEnd);
                 }
               },
               onResizeEnd: () => setState(() => _resizingId = null),
@@ -245,7 +276,9 @@ class _VideoTimelineState extends ConsumerState<VideoTimeline> {
               isSelected: state.selectedUserImageId == entry.value.id,
               isIcon: false,
               onTap: () {
-                ref.read(canvasProvider.notifier).selectUserImage(entry.value.id);
+                ref
+                    .read(canvasProvider.notifier)
+                    .selectUserImage(entry.value.id);
               },
               onDragStart: (details) {
                 setState(() {
@@ -258,15 +291,27 @@ class _VideoTimelineState extends ConsumerState<VideoTimeline> {
               },
               onDragUpdate: (details) {
                 if (_draggingId != entry.value.id) return;
-                final pixelsPerSecond = MediaQuery.of(context).size.width / state.videoDuration;
+                final pixelsPerSecond =
+                    MediaQuery.of(context).size.width / state.videoDuration;
                 final dx = details.localPosition.dx - _dragStartDx!;
                 final deltaTime = dx / pixelsPerSecond;
                 final duration = _initialEndTime! - _initialStartTime!;
-                final newStart = (_initialStartTime! + deltaTime).clamp(0.0, state.videoDuration - duration);
-                ref.read(canvasProvider.notifier).updateUserImageTimeline(entry.value.id, startTime: newStart, endTime: newStart + duration);
+                final newStart = (_initialStartTime! + deltaTime).clamp(
+                  0.0,
+                  state.videoDuration - duration,
+                );
+                ref
+                    .read(canvasProvider.notifier)
+                    .updateUserImageTimeline(
+                      entry.value.id,
+                      startTime: newStart,
+                      endTime: newStart + duration,
+                    );
               },
               onDragEnd: () {
-                setState(() { _draggingId = null; });
+                setState(() {
+                  _draggingId = null;
+                });
               },
               onResizeStart: (isStart, details) {
                 setState(() {
@@ -280,18 +325,36 @@ class _VideoTimelineState extends ConsumerState<VideoTimeline> {
               },
               onResizeUpdate: (details) {
                 if (_resizingId != entry.value.id) return;
-                final pixelsPerSecond = MediaQuery.of(context).size.width / state.videoDuration;
+                final pixelsPerSecond =
+                    MediaQuery.of(context).size.width / state.videoDuration;
                 final dx = details.localPosition.dx - _dragStartDx!;
                 final deltaTime = dx / pixelsPerSecond;
                 if (_resizingStart) {
-                  final newStart = (_initialStartTime! + deltaTime).clamp(0.0, _initialEndTime! - 0.5);
-                  ref.read(canvasProvider.notifier).updateUserImageTimeline(entry.value.id, startTime: newStart);
+                  final newStart = (_initialStartTime! + deltaTime).clamp(
+                    0.0,
+                    _initialEndTime! - 0.5,
+                  );
+                  ref
+                      .read(canvasProvider.notifier)
+                      .updateUserImageTimeline(
+                        entry.value.id,
+                        startTime: newStart,
+                      );
                 } else {
-                  final newEnd = (_initialEndTime! + deltaTime).clamp(_initialStartTime! + 0.5, state.videoDuration);
-                  ref.read(canvasProvider.notifier).updateUserImageTimeline(entry.value.id, endTime: newEnd);
+                  final newEnd = (_initialEndTime! + deltaTime).clamp(
+                    _initialStartTime! + 0.5,
+                    state.videoDuration,
+                  );
+                  ref
+                      .read(canvasProvider.notifier)
+                      .updateUserImageTimeline(entry.value.id, endTime: newEnd);
                 }
               },
-              onResizeEnd: () { setState(() { _resizingId = null; }); },
+              onResizeEnd: () {
+                setState(() {
+                  _resizingId = null;
+                });
+              },
             );
           }),
 
@@ -524,6 +587,7 @@ class _VideoTimelineState extends ConsumerState<VideoTimeline> {
   }
 
   Widget _buildTimeRuler(CanvasState state) {
+    final colors = context.appColors;
     return Container(
       height: context.isMobile ? 24 : 30,
       padding: EdgeInsets.symmetric(horizontal: context.isMobile ? 8 : 12),
@@ -540,6 +604,8 @@ class _VideoTimelineState extends ConsumerState<VideoTimeline> {
                   duration: state.videoDuration,
                   pixelsPerSecond: pixelsPerSecond,
                   isMobile: context.isMobile,
+                  borderColor: colors.border,
+                  labelColor: colors.textSecondary,
                 ),
               ),
 
@@ -621,13 +687,14 @@ class _TimelineTrack extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.appColors;
     return Container(
       height: context.isMobile ? 40 : 60,
       decoration: BoxDecoration(
         color: trackIndex.isEven
-            ? AppTheme.backgroundColor
-            : AppTheme.surfaceColor,
-        border: const Border(bottom: BorderSide(color: AppTheme.borderColor)),
+            ? colors.background
+            : colors.surface,
+        border: Border(bottom: BorderSide(color: colors.border)),
       ),
       padding: EdgeInsets.symmetric(
         horizontal: context.isMobile ? 8 : 12,
@@ -660,7 +727,7 @@ class _TimelineTrack extends StatelessWidget {
                         label,
                         style: TextStyle(
                           fontSize: context.isMobile ? 10 : 12,
-                          color: AppTheme.textSecondary,
+                          color: colors.textSecondary,
                         ),
                       ),
                     ],
@@ -709,7 +776,7 @@ class _TimelineTrack extends StatelessWidget {
                                   style: TextStyle(
                                     fontSize: context.isMobile ? 9 : 11,
                                     fontWeight: FontWeight.w600,
-                                    color: AppTheme.textPrimary,
+                                    color: colors.textPrimary,
                                   ),
                                 ),
                               ),
@@ -771,17 +838,21 @@ class _TimeRulerPainter extends CustomPainter {
   final double duration;
   final double pixelsPerSecond;
   final bool isMobile;
+  final Color borderColor;
+  final Color labelColor;
 
   _TimeRulerPainter({
     required this.duration,
     required this.pixelsPerSecond,
     required this.isMobile,
+    required this.borderColor,
+    required this.labelColor,
   });
 
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = AppTheme.borderColor
+      ..color = borderColor
       ..strokeWidth = 1;
 
     final textPainter = TextPainter(textDirection: TextDirection.ltr);
@@ -800,7 +871,7 @@ class _TimeRulerPainter extends CustomPainter {
           text: '${i}s',
           style: TextStyle(
             fontSize: isMobile ? 9 : 10,
-            color: AppTheme.textSecondary,
+            color: labelColor,
           ),
         );
         textPainter.layout();
@@ -813,5 +884,7 @@ class _TimeRulerPainter extends CustomPainter {
   bool shouldRepaint(_TimeRulerPainter oldDelegate) =>
       duration != oldDelegate.duration ||
       pixelsPerSecond != oldDelegate.pixelsPerSecond ||
-      isMobile != oldDelegate.isMobile;
+      isMobile != oldDelegate.isMobile ||
+      borderColor != oldDelegate.borderColor ||
+      labelColor != oldDelegate.labelColor;
 }

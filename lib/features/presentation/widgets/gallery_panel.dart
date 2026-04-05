@@ -10,7 +10,8 @@ class GalleryPanel extends ConsumerStatefulWidget {
   ConsumerState<GalleryPanel> createState() => _GalleryPanelState();
 }
 
-class _GalleryPanelState extends ConsumerState<GalleryPanel> with SingleTickerProviderStateMixin {
+class _GalleryPanelState extends ConsumerState<GalleryPanel>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
   // Mock data for demonstration - in a real app this would come from an API/Provider
@@ -44,12 +45,13 @@ class _GalleryPanelState extends ConsumerState<GalleryPanel> with SingleTickerPr
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.appColors;
     return Column(
       children: [
         TabBar(
           controller: _tabController,
           labelColor: AppTheme.primaryColor,
-          unselectedLabelColor: AppTheme.textSecondary,
+          unselectedLabelColor: colors.textSecondary,
           indicatorColor: AppTheme.primaryColor,
           tabs: const [
             Tab(text: 'Images'),
@@ -91,8 +93,8 @@ class _GalleryPanelState extends ConsumerState<GalleryPanel> with SingleTickerPr
           },
           child: Container(
             decoration: BoxDecoration(
-              color: AppTheme.cardColor,
-              border: Border.all(color: AppTheme.borderColor),
+              color: context.appColors.card,
+              border: Border.all(color: context.appColors.border),
               borderRadius: BorderRadius.circular(8),
             ),
             clipBehavior: Clip.antiAlias,
@@ -103,7 +105,13 @@ class _GalleryPanelState extends ConsumerState<GalleryPanel> with SingleTickerPr
                     ? Container(color: Colors.black12)
                     : Image.network(url, fit: BoxFit.cover),
                 if (isVideo)
-                  const Center(child: Icon(Icons.play_circle_outline, size: 32, color: AppTheme.textPrimary)),
+                  Center(
+                    child: Icon(
+                      Icons.play_circle_outline,
+                      size: 32,
+                      color: context.appColors.textPrimary,
+                    ),
+                  ),
               ],
             ),
           ),

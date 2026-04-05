@@ -13,7 +13,7 @@ class _GenerateScreenState extends State<GenerateScreen> {
   int _selectedMode = 0;
   final _promptController = TextEditingController();
   final _negativePromptController = TextEditingController();
-  
+
   String _selectedModel = 'KLING 1.5';
   String _aspectRatio = '16:9';
   double _creativityLevel = 0.5;
@@ -35,20 +35,15 @@ class _GenerateScreenState extends State<GenerateScreen> {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: const BoxDecoration(
-            color: AppTheme.surfaceColor,
-            border: Border(
-              bottom: BorderSide(color: AppTheme.borderColor),
-            ),
+            color: context.appColors.surface,
+            border: Border(bottom: BorderSide(color: context.appColors.border)),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const Text(
                 'Mode',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                ),
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: 8),
               SegmentedButton<int>(
@@ -78,14 +73,14 @@ class _GenerateScreenState extends State<GenerateScreen> {
                     if (states.contains(WidgetState.selected)) {
                       return AppTheme.primaryColor;
                     }
-                    return AppTheme.surfaceColor;
+                    return context.appColors.surface;
                   }),
                 ),
               ),
             ],
           ),
         ),
-        
+
         Expanded(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(16),
@@ -95,15 +90,15 @@ class _GenerateScreenState extends State<GenerateScreen> {
                 // Prompt
                 _buildPromptSection(isMobile: true),
                 const SizedBox(height: 16),
-                
+
                 // Preview on mobile
                 _buildMobilePreview(),
                 const SizedBox(height: 16),
-                
+
                 // Settings
                 _buildSettingsSection(isMobile: true),
                 const SizedBox(height: 24),
-                
+
                 // Generate button
                 _buildGenerateButton(),
               ],
@@ -118,9 +113,9 @@ class _GenerateScreenState extends State<GenerateScreen> {
     return Container(
       height: 250,
       decoration: BoxDecoration(
-        color: AppTheme.surfaceColor,
+        color: context.appColors.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppTheme.borderColor),
+        border: Border.all(color: context.appColors.border),
       ),
       child: Center(
         child: Column(
@@ -129,15 +124,12 @@ class _GenerateScreenState extends State<GenerateScreen> {
             Icon(
               Icons.image_outlined,
               size: 48,
-              color: AppTheme.textSecondary.withOpacity(0.3),
+              color: context.appColors.textSecondary.withOpacity(0.3),
             ),
             const SizedBox(height: 12),
             const Text(
               'Preview',
-              style: TextStyle(
-                color: AppTheme.textSecondary,
-                fontSize: 14,
-              ),
+              style: TextStyle(color: context.appColors.textSecondary, fontSize: 14),
             ),
           ],
         ),
@@ -150,16 +142,10 @@ class _GenerateScreenState extends State<GenerateScreen> {
     return Row(
       children: [
         // Left panel - Settings
-        Expanded(
-          flex: 2,
-          child: _buildDesktopSettingsPanel(),
-        ),
-        
+        Expanded(flex: 2, child: _buildDesktopSettingsPanel()),
+
         // Right panel - Preview
-        Expanded(
-          flex: 3,
-          child: _buildDesktopPreviewPanel(),
-        ),
+        Expanded(flex: 3, child: _buildDesktopPreviewPanel()),
       ],
     );
   }
@@ -167,9 +153,7 @@ class _GenerateScreenState extends State<GenerateScreen> {
   Widget _buildDesktopSettingsPanel() {
     return Container(
       decoration: const BoxDecoration(
-        border: Border(
-          right: BorderSide(color: AppTheme.borderColor),
-        ),
+        border: Border(right: BorderSide(color: context.appColors.border)),
       ),
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
@@ -179,13 +163,10 @@ class _GenerateScreenState extends State<GenerateScreen> {
             // Mode selector
             const Text(
               'Generation Mode',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
-            
+
             SegmentedButton<int>(
               segments: const [
                 ButtonSegment(
@@ -213,11 +194,11 @@ class _GenerateScreenState extends State<GenerateScreen> {
                   if (states.contains(WidgetState.selected)) {
                     return AppTheme.primaryColor;
                   }
-                  return AppTheme.surfaceColor;
+                  return context.appColors.surface;
                 }),
               ),
             ),
-            
+
             const SizedBox(height: 24),
             _buildPromptSection(isMobile: false),
             const SizedBox(height: 24),
@@ -232,7 +213,7 @@ class _GenerateScreenState extends State<GenerateScreen> {
 
   Widget _buildDesktopPreviewPanel() {
     return Container(
-      color: AppTheme.backgroundColor,
+      color: context.appColors.background,
       padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -241,27 +222,21 @@ class _GenerateScreenState extends State<GenerateScreen> {
             children: [
               const Text(
                 'Preview',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
               const Spacer(),
-              IconButton(
-                icon: const Icon(Icons.fullscreen),
-                onPressed: () {},
-              ),
+              IconButton(icon: const Icon(Icons.fullscreen), onPressed: () {}),
             ],
           ),
-          
+
           const SizedBox(height: 16),
-          
+
           Expanded(
             child: Container(
               decoration: BoxDecoration(
-                color: AppTheme.surfaceColor,
+                color: context.appColors.surface,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppTheme.borderColor),
+                border: Border.all(color: context.appColors.border),
               ),
               child: Center(
                 child: Column(
@@ -270,14 +245,12 @@ class _GenerateScreenState extends State<GenerateScreen> {
                     Icon(
                       Icons.image_outlined,
                       size: 64,
-                      color: AppTheme.textSecondary.withOpacity(0.3),
+                      color: context.appColors.textSecondary.withOpacity(0.3),
                     ),
                     const SizedBox(height: 16),
                     const Text(
                       'Your generated image will appear here',
-                      style: TextStyle(
-                        color: AppTheme.textSecondary,
-                      ),
+                      style: TextStyle(color: context.appColors.textSecondary),
                     ),
                   ],
                 ),
@@ -290,7 +263,7 @@ class _GenerateScreenState extends State<GenerateScreen> {
   }
 
   // ==================== SHARED COMPONENTS ====================
-  
+
   Widget _buildPromptSection({required bool isMobile}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -309,13 +282,13 @@ class _GenerateScreenState extends State<GenerateScreen> {
           style: TextStyle(fontSize: isMobile ? 13 : 14),
           decoration: InputDecoration(
             hintText: 'Describe what you want to create...',
-            hintStyle: const TextStyle(color: AppTheme.textSecondary),
+            hintStyle: TextStyle(color: context.appColors.textSecondary),
             contentPadding: EdgeInsets.all(isMobile ? 12 : 16),
           ),
         ),
-        
+
         const SizedBox(height: 12),
-        
+
         ExpansionTile(
           title: Text(
             'Negative Prompt',
@@ -332,7 +305,7 @@ class _GenerateScreenState extends State<GenerateScreen> {
               style: TextStyle(fontSize: isMobile ? 13 : 14),
               decoration: InputDecoration(
                 hintText: 'What to avoid...',
-                hintStyle: const TextStyle(color: AppTheme.textSecondary),
+                hintStyle: TextStyle(color: context.appColors.textSecondary),
                 contentPadding: EdgeInsets.all(isMobile ? 12 : 16),
               ),
             ),
@@ -359,7 +332,7 @@ class _GenerateScreenState extends State<GenerateScreen> {
           initialValue: _selectedModel,
           style: TextStyle(
             fontSize: isMobile ? 13 : 14,
-            color: AppTheme.textPrimary,
+            color: context.appColors.textPrimary,
           ),
           decoration: InputDecoration(
             contentPadding: EdgeInsets.symmetric(
@@ -368,18 +341,17 @@ class _GenerateScreenState extends State<GenerateScreen> {
             ),
           ),
           items: ['KLING 1.5', 'KLING 1.0', 'KLING Pro']
-              .map((model) => DropdownMenuItem(
-                    value: model,
-                    child: Text(model),
-                  ))
+              .map(
+                (model) => DropdownMenuItem(value: model, child: Text(model)),
+              )
               .toList(),
           onChanged: (value) {
             setState(() => _selectedModel = value!);
           },
         ),
-        
+
         SizedBox(height: isMobile ? 16 : 24),
-        
+
         // Aspect ratio
         Text(
           'Aspect Ratio',
@@ -404,13 +376,13 @@ class _GenerateScreenState extends State<GenerateScreen> {
                 setState(() => _aspectRatio = ratio);
               },
               selectedColor: AppTheme.primaryColor,
-              backgroundColor: AppTheme.surfaceColor,
+              backgroundColor: context.appColors.surface,
             );
           }).toList(),
         ),
-        
+
         SizedBox(height: isMobile ? 16 : 24),
-        
+
         // Creativity level
         Text(
           'Creativity Level',
@@ -438,21 +410,21 @@ class _GenerateScreenState extends State<GenerateScreen> {
               'Conservative',
               style: TextStyle(
                 fontSize: isMobile ? 11 : 12,
-                color: AppTheme.textSecondary,
+                color: context.appColors.textSecondary,
               ),
             ),
             Text(
               'Creative',
               style: TextStyle(
                 fontSize: isMobile ? 11 : 12,
-                color: AppTheme.textSecondary,
+                color: context.appColors.textSecondary,
               ),
             ),
           ],
         ),
-        
+
         SizedBox(height: isMobile ? 16 : 24),
-        
+
         // Number of images
         Text(
           'Number of Images',
@@ -473,17 +445,15 @@ class _GenerateScreenState extends State<GenerateScreen> {
                     setState(() => _numberOfImages = count);
                   },
                   style: OutlinedButton.styleFrom(
-                    backgroundColor: isSelected 
-                      ? AppTheme.primaryColor 
-                      : AppTheme.surfaceColor,
+                    backgroundColor: isSelected
+                        ? AppTheme.primaryColor
+                        : context.appColors.surface,
                     side: BorderSide(
-                      color: isSelected 
-                        ? AppTheme.primaryColor 
-                        : AppTheme.borderColor,
+                      color: isSelected
+                          ? AppTheme.primaryColor
+                          : context.appColors.border,
                     ),
-                    padding: EdgeInsets.symmetric(
-                      vertical: isMobile ? 10 : 12,
-                    ),
+                    padding: EdgeInsets.symmetric(vertical: isMobile ? 10 : 12),
                   ),
                   child: Text(
                     '$count',
@@ -504,9 +474,7 @@ class _GenerateScreenState extends State<GenerateScreen> {
         ElevatedButton(
           onPressed: () {},
           style: ElevatedButton.styleFrom(
-            padding: EdgeInsets.symmetric(
-              vertical: context.isMobile ? 14 : 16,
-            ),
+            padding: EdgeInsets.symmetric(vertical: context.isMobile ? 14 : 16),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -530,7 +498,7 @@ class _GenerateScreenState extends State<GenerateScreen> {
               '10 credits per generation',
               style: TextStyle(
                 fontSize: context.isMobile ? 11 : 12,
-                color: AppTheme.textSecondary,
+                color: context.appColors.textSecondary,
               ),
             ),
           ],
@@ -546,3 +514,4 @@ class _GenerateScreenState extends State<GenerateScreen> {
     super.dispose();
   }
 }
+

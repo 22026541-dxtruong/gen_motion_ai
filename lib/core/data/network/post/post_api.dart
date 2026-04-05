@@ -22,9 +22,11 @@ abstract class PostApi {
   Future<GetPostDto> getPost(@Path('id') String id);
 
   @PUT(ApiEndpoints.postById)
-  Future<IdResponseDto> updatePost(@Path('id') String id, @Body() UpdatePostDto body);
+  Future<IdResponseDto> updatePost(
+    @Path('id') String id,
+    @Body() UpdatePostDto body,
+  );
 
   @DELETE(ApiEndpoints.postById)
   Future<IdResponseDto> deletePost(@Path('id') String id);
-
 }

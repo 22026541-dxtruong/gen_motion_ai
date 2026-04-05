@@ -13,14 +13,10 @@ abstract class FollowApi {
   factory FollowApi(Dio dio, {String baseUrl}) = _FollowApi;
 
   @POST(ApiEndpoints.userFollow)
-  Future<IdResponseDto> follow(
-    @Path('userId') String userId,
-  );
+  Future<IdResponseDto> follow(@Path('userId') String userId);
 
   @DELETE(ApiEndpoints.userFollow)
-  Future<IdResponseDto> unfollow(
-    @Path('userId') String userId,
-  );
+  Future<IdResponseDto> unfollow(@Path('userId') String userId);
 
   @GET(ApiEndpoints.userFollowers)
   Future<CursorPaginationDto<FollowerDto>> getFollowers(

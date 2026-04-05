@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:gen_motion_ai/core/data/local/storage/secure_storage.dart';
 import 'package:gen_motion_ai/core/data/network/api_providers.dart';
 import 'package:gen_motion_ai/core/data/network/auth/dto/login.dto.dart';
 import 'package:gen_motion_ai/core/data/network/auth/dto/register.dto.dart';
 import 'package:gen_motion_ai/core/theme/app_theme.dart';
 import 'package:gen_motion_ai/core/utils/responsive.dart';
 import 'package:gen_motion_ai/features/presentation/auth/auth_provider.dart';
-import 'package:gen_motion_ai/features/presentation/user/user_provider.dart';
 import 'package:go_router/go_router.dart';
 
 class AuthScreen extends ConsumerStatefulWidget {
@@ -56,21 +54,14 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
         final response = await authApi.login(
           LoginDto(email: email, password: password),
         );
-        await ref.read(authProvider.notifier).login(response.accessToken);
+        await ref.read(authProvider.notifier).login(response);
         if (mounted) context.go('/explore');
       } else {
         final response = await authApi.register(
           RegisterDto(email: email, password: password),
         );
-        await ref.read(authProvider.notifier).login(response.accessToken);
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Registration successful! Please sign in.'),
-            ),
-          );
-          setState(() => _isLogin = true);
-        }
+        await ref.read(authProvider.notifier).login(response);
+        if (mounted) context.go('/explore');
       }
     } catch (e) {
       if (mounted) {
@@ -86,27 +77,40 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   @override
   Widget build(BuildContext context) {
     final isDesktop = Responsive.isDesktop(context);
+    final colors = context.appColors;
+    final mode = ref.watch(themeModeProvider);
 
     return Scaffold(
-      backgroundColor: AppTheme.backgroundColor,
-      body: isDesktop ? _buildDesktopLayout() : _buildMobileLayout(),
+      backgroundColor: colors.background,
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: isDesktop ? _buildDesktopLayout() : _buildMobileLayout(),
+          ),
+          Positioned(
+            top: 16,
+            right: 16,
+            child: SafeArea(child: _buildThemeToggle(mode)),
+          ),
+        ],
+      ),
     );
   }
 
   Widget _buildDesktopLayout() {
+    final colors = context.appColors;
     return Row(
       children: [
         // Left Panel - Branding & Showcase
         Expanded(
           flex: 6,
           child: Container(
-            decoration: const BoxDecoration(
-              color: AppTheme.surfaceColor,
-              // Giả lập background đẹp mắt hoặc dùng ảnh thật
+            decoration: BoxDecoration(
+              color: colors.surface,
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [Color(0xFF1E1E24), Color(0xFF0F0F10)],
+                colors: [colors.heroStart, colors.heroEnd],
               ),
             ),
             child: Stack(
@@ -120,10 +124,10 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                     height: 500,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: AppTheme.primaryColor.withOpacity(0.05),
+                      color: colors.heroGlow.withOpacity(0.08),
                       boxShadow: [
                         BoxShadow(
-                          color: AppTheme.primaryColor.withOpacity(0.1),
+                          color: colors.heroGlow.withOpacity(0.18),
                           blurRadius: 100,
                           spreadRadius: 20,
                         ),
@@ -151,7 +155,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                       Text(
                         'Transform your ideas into stunning videos in seconds.\nJoin the next generation of content creators.',
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          color: AppTheme.textSecondary,
+                          color: colors.textSecondary,
                           height: 1.4,
                           fontWeight: FontWeight.w400,
                         ),
@@ -168,7 +172,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
         Expanded(
           flex: 5,
           child: Container(
-            color: AppTheme.backgroundColor,
+            color: colors.background,
             child: Center(
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 440),
@@ -185,6 +189,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   }
 
   Widget _buildMobileLayout() {
+    final colors = context.appColors;
     return SafeArea(
       child: Center(
         child: SingleChildScrollView(
@@ -196,9 +201,9 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
               Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: AppTheme.cardColor,
+                  color: colors.card,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppTheme.borderColor),
+                  border: Border.all(color: colors.border),
                 ),
                 child: _buildFormContent(),
               ),
@@ -210,6 +215,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   }
 
   Widget _buildLogo() {
+    final colors = context.appColors;
     return GestureDetector(
       onTap: () => context.go('/explore'), // Cho phép quay về trang chủ
       child: Row(
@@ -231,12 +237,12 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
             ),
           ),
           const SizedBox(width: 12),
-          const Text(
+          Text(
             'Gen Motion AI',
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
-              color: Colors.white,
+              color: colors.textPrimary,
             ),
           ),
         ],
@@ -245,6 +251,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   }
 
   Widget _buildFormContent() {
+    final colors = context.appColors;
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -252,7 +259,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
         Text(
           _isLogin ? 'Welcome back' : 'Create an account',
           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-            color: AppTheme.textPrimary,
+            color: colors.textPrimary,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -263,7 +270,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
               : 'Enter your details to get started with GenMotion.',
           style: Theme.of(
             context,
-          ).textTheme.bodyMedium?.copyWith(color: AppTheme.textSecondary),
+          ).textTheme.bodyMedium?.copyWith(color: colors.textSecondary),
         ),
         const SizedBox(height: 32),
 
@@ -272,12 +279,12 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
         const SizedBox(height: 8),
         TextField(
           controller: _emailController,
-          style: const TextStyle(color: AppTheme.textPrimary),
-          decoration: const InputDecoration(
+          style: TextStyle(color: colors.textPrimary),
+          decoration: InputDecoration(
             hintText: 'name@example.com',
             prefixIcon: Icon(
               Icons.email_outlined,
-              color: AppTheme.textSecondary,
+              color: colors.textSecondary,
               size: 20,
             ),
           ),
@@ -290,17 +297,17 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
         TextField(
           controller: _passwordController,
           obscureText: true,
-          style: const TextStyle(color: AppTheme.textPrimary),
-          decoration: const InputDecoration(
+          style: TextStyle(color: colors.textPrimary),
+          decoration: InputDecoration(
             hintText: '••••••••',
             prefixIcon: Icon(
               Icons.lock_outline,
-              color: AppTheme.textSecondary,
+              color: colors.textSecondary,
               size: 20,
             ),
             suffixIcon: Icon(
               Icons.visibility_off_outlined,
-              color: AppTheme.textSecondary,
+              color: colors.textSecondary,
               size: 20,
             ),
           ),
@@ -364,19 +371,19 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
         // Divider
         Row(
           children: [
-            const Expanded(child: Divider(color: AppTheme.borderColor)),
+            Expanded(child: Divider(color: colors.border)),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Text(
                 'OR',
                 style: TextStyle(
-                  color: AppTheme.textSecondary.withOpacity(0.5),
+                  color: colors.textSecondary.withOpacity(0.5),
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
                 ),
               ),
             ),
-            const Expanded(child: Divider(color: AppTheme.borderColor)),
+            Expanded(child: Divider(color: colors.border)),
           ],
         ),
 
@@ -399,7 +406,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
               _isLogin
                   ? "Don't have an account? "
                   : "Already have an account? ",
-              style: const TextStyle(color: AppTheme.textSecondary),
+              style: TextStyle(color: colors.textSecondary),
             ),
             GestureDetector(
               onTap: _toggleAuthMode,
@@ -418,10 +425,11 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   }
 
   Widget _buildLabel(String text) {
+    final colors = context.appColors;
     return Text(
       text,
-      style: const TextStyle(
-        color: AppTheme.textPrimary,
+      style: TextStyle(
+        color: colors.textPrimary,
         fontSize: 14,
         fontWeight: FontWeight.w500,
       ),
@@ -433,16 +441,16 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     required IconData icon,
     required VoidCallback onTap,
   }) {
+    final colors = context.appColors;
     return SizedBox(
       height: 48,
       child: OutlinedButton(
         onPressed: onTap,
         style: OutlinedButton.styleFrom(
-          side: const BorderSide(color: AppTheme.borderColor),
+          side: BorderSide(color: colors.border),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-          backgroundColor:
-              AppTheme.surfaceColor, // Màu nền tối hơn card một chút
-          foregroundColor: AppTheme.textPrimary,
+          backgroundColor: colors.surface,
+          foregroundColor: colors.textPrimary,
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -454,6 +462,34 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
               style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildThemeToggle(ThemeMode mode) {
+    final isDark = mode == ThemeMode.dark;
+    final colors = context.appColors;
+
+    return Material(
+      color: colors.card.withOpacity(0.9),
+      borderRadius: BorderRadius.circular(999),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(999),
+        onTap: () => ref.read(themeModeProvider.notifier).toggle(),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
+                size: 18,
+              ),
+              const SizedBox(width: 8),
+              Text(isDark ? 'Light mode' : 'Dark mode'),
+            ],
+          ),
         ),
       ),
     );

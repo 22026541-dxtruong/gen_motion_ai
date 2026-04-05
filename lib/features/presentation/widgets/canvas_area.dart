@@ -29,6 +29,7 @@ class _CanvasAreaState extends ConsumerState<CanvasArea> {
     final visibleSketches = ref.watch(visibleSketchesProvider);
     final visibleUserImages = ref.watch(visibleUserImagesProvider);
     final visibleUserVideos = ref.watch(visibleUserVideosProvider);
+    final colors = context.appColors;
     final logicalHeight = kLogicalWidth / canvasState.aspectRatio.ratio;
 
     return Column(
@@ -70,7 +71,7 @@ class _CanvasAreaState extends ConsumerState<CanvasArea> {
                           border: Border.all(
                             color: candidateData.isNotEmpty
                                 ? AppTheme.primaryColor
-                                : AppTheme.borderColor,
+                                : colors.border,
                             width: candidateData.isNotEmpty ? 2 : 1,
                           ),
                           boxShadow: [
@@ -94,7 +95,8 @@ class _CanvasAreaState extends ConsumerState<CanvasArea> {
                                     bool tappedOnElement = false;
 
                                     // Check user videos
-                                    for (final video in visibleUserVideos.reversed) {
+                                    for (final video
+                                        in visibleUserVideos.reversed) {
                                       if (_isPointOnUserVideo(
                                         video,
                                         details.localPosition,
@@ -109,7 +111,8 @@ class _CanvasAreaState extends ConsumerState<CanvasArea> {
                                     if (tappedOnElement) return;
 
                                     // Check user images (reversed for z-order)
-                                    for (final img in visibleUserImages.reversed) {
+                                    for (final img
+                                        in visibleUserImages.reversed) {
                                       if (_isPointOnUserImage(
                                         img,
                                         details.localPosition,
@@ -310,14 +313,15 @@ class _CanvasAreaState extends ConsumerState<CanvasArea> {
   }
 
   Widget _buildAspectRatioSelector(models.CanvasState state) {
+    final colors = context.appColors;
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: context.isMobile ? 8 : 12,
         vertical: context.isMobile ? 6 : 8,
       ),
-      decoration: const BoxDecoration(
-        color: AppTheme.surfaceColor,
-        border: Border(bottom: BorderSide(color: AppTheme.borderColor)),
+      decoration: BoxDecoration(
+        color: colors.surface,
+        border: Border(bottom: BorderSide(color: colors.border)),
       ),
       child: Row(
         children: [
@@ -326,7 +330,7 @@ class _CanvasAreaState extends ConsumerState<CanvasArea> {
             style: TextStyle(
               fontSize: context.isMobile ? 11 : 12,
               fontWeight: FontWeight.w600,
-              color: AppTheme.textSecondary,
+              color: colors.textSecondary,
             ),
           ),
           SizedBox(width: context.isMobile ? 8 : 12),
@@ -339,8 +343,9 @@ class _CanvasAreaState extends ConsumerState<CanvasArea> {
                   return Padding(
                     padding: EdgeInsets.only(right: context.isMobile ? 4 : 6),
                     child: InkWell(
-                      onTap: () =>
-                          ref.read(canvasProvider.notifier).setAspectRatio(ratio),
+                      onTap: () => ref
+                          .read(canvasProvider.notifier)
+                          .setAspectRatio(ratio),
                       borderRadius: BorderRadius.circular(4),
                       child: Container(
                         padding: EdgeInsets.symmetric(
@@ -350,12 +355,12 @@ class _CanvasAreaState extends ConsumerState<CanvasArea> {
                         decoration: BoxDecoration(
                           color: isSelected
                               ? AppTheme.primaryColor
-                              : AppTheme.cardColor,
+                              : colors.card,
                           borderRadius: BorderRadius.circular(4),
                           border: Border.all(
                             color: isSelected
                                 ? AppTheme.primaryColor
-                                : AppTheme.borderColor,
+                                : colors.border,
                           ),
                         ),
                         child: Text(
@@ -365,7 +370,9 @@ class _CanvasAreaState extends ConsumerState<CanvasArea> {
                             fontWeight: isSelected
                                 ? FontWeight.w600
                                 : FontWeight.w500,
-                            color: isSelected ? Colors.white : AppTheme.textPrimary,
+                            color: isSelected
+                                ? Colors.white
+                                : colors.textPrimary,
                           ),
                         ),
                       ),
@@ -574,10 +581,12 @@ class _CanvasUserVideoWidget extends ConsumerStatefulWidget {
   }) : super(key: key);
 
   @override
-  ConsumerState<_CanvasUserVideoWidget> createState() => _CanvasUserVideoWidgetState();
+  ConsumerState<_CanvasUserVideoWidget> createState() =>
+      _CanvasUserVideoWidgetState();
 }
 
-class _CanvasUserVideoWidgetState extends ConsumerState<_CanvasUserVideoWidget> {
+class _CanvasUserVideoWidgetState
+    extends ConsumerState<_CanvasUserVideoWidget> {
   Offset? _startPos;
   Offset _accumulatedDelta = Offset.zero;
   VideoPlayerController? _controller;
@@ -602,11 +611,13 @@ class _CanvasUserVideoWidgetState extends ConsumerState<_CanvasUserVideoWidget> 
   Future<void> _initializeController() async {
     try {
       if (kIsWeb || widget.video.path.startsWith('http')) {
-        _controller = VideoPlayerController.networkUrl(Uri.parse(widget.video.path));
+        _controller = VideoPlayerController.networkUrl(
+          Uri.parse(widget.video.path),
+        );
       } else {
         _controller = VideoPlayerController.file(File(widget.video.path));
       }
-      
+
       await _controller!.initialize();
       await _controller!.setVolume(widget.video.volume);
       setState(() {
@@ -626,7 +637,8 @@ class _CanvasUserVideoWidgetState extends ConsumerState<_CanvasUserVideoWidget> 
   @override
   Widget build(BuildContext context) {
     final canvasState = ref.watch(canvasProvider);
-    final isSelected = ref.watch(canvasProvider).selectedUserVideoId == widget.video.id;
+    final isSelected =
+        ref.watch(canvasProvider).selectedUserVideoId == widget.video.id;
 
     // Sync video player with canvas timeline
     if (_isInitialized && _controller != null) {
@@ -639,24 +651,31 @@ class _CanvasUserVideoWidgetState extends ConsumerState<_CanvasUserVideoWidget> 
 
       // Calculate target video time based on canvas time
       // Video Time = (CanvasTime - StartTime) * Speed + TrimStart
-      final double relativeTime = canvasState.currentTime - widget.video.startTime;
-      final double targetVideoTime = (relativeTime * widget.video.playbackSpeed) + widget.video.trimStart;
+      final double relativeTime =
+          canvasState.currentTime - widget.video.startTime;
+      final double targetVideoTime =
+          (relativeTime * widget.video.playbackSpeed) + widget.video.trimStart;
 
       if (canvasState.isPlaying) {
         if (!_controller!.value.isPlaying) {
           _controller!.play();
         }
         // Optional: Sync if drift is too large, but usually let it play
-        final currentVideoPos = _controller!.value.position.inMilliseconds / 1000.0;
+        final currentVideoPos =
+            _controller!.value.position.inMilliseconds / 1000.0;
         if ((currentVideoPos - targetVideoTime).abs() > 0.5) {
-           _controller!.seekTo(Duration(milliseconds: (targetVideoTime * 1000).toInt()));
+          _controller!.seekTo(
+            Duration(milliseconds: (targetVideoTime * 1000).toInt()),
+          );
         }
       } else {
         if (_controller!.value.isPlaying) {
           _controller!.pause();
         }
         // Seek to exact frame when paused
-        _controller!.seekTo(Duration(milliseconds: (targetVideoTime * 1000).toInt()));
+        _controller!.seekTo(
+          Duration(milliseconds: (targetVideoTime * 1000).toInt()),
+        );
       }
     }
 
@@ -672,10 +691,12 @@ class _CanvasUserVideoWidgetState extends ConsumerState<_CanvasUserVideoWidget> 
         onPanUpdate: (details) {
           if (_startPos == null) return;
           _accumulatedDelta += details.delta;
-          ref.read(canvasProvider.notifier).updateUserVideoPosition(
-            widget.video.id,
-            _startPos! + _accumulatedDelta,
-          );
+          ref
+              .read(canvasProvider.notifier)
+              .updateUserVideoPosition(
+                widget.video.id,
+                _startPos! + _accumulatedDelta,
+              );
         },
         onPanEnd: (_) {
           _startPos = null;
@@ -715,7 +736,9 @@ class _CanvasUserVideoWidgetState extends ConsumerState<_CanvasUserVideoWidget> 
                     right: -8,
                     child: GestureDetector(
                       onTap: () {
-                        ref.read(canvasProvider.notifier).deleteUserVideo(widget.video.id);
+                        ref
+                            .read(canvasProvider.notifier)
+                            .deleteUserVideo(widget.video.id);
                       },
                       child: Container(
                         padding: const EdgeInsets.all(4),
@@ -723,7 +746,11 @@ class _CanvasUserVideoWidgetState extends ConsumerState<_CanvasUserVideoWidget> 
                           color: Colors.red,
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(Icons.close, size: 14, color: Colors.white),
+                        child: const Icon(
+                          Icons.close,
+                          size: 14,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
                   ),
@@ -981,16 +1008,19 @@ class _CanvasUserImageWidget extends ConsumerStatefulWidget {
   }) : super(key: key);
 
   @override
-  ConsumerState<_CanvasUserImageWidget> createState() => _CanvasUserImageWidgetState();
+  ConsumerState<_CanvasUserImageWidget> createState() =>
+      _CanvasUserImageWidgetState();
 }
 
-class _CanvasUserImageWidgetState extends ConsumerState<_CanvasUserImageWidget> {
+class _CanvasUserImageWidgetState
+    extends ConsumerState<_CanvasUserImageWidget> {
   Offset? _startPos;
   Offset _accumulatedDelta = Offset.zero;
 
   @override
   Widget build(BuildContext context) {
-    final isSelected = ref.watch(canvasProvider).selectedUserImageId == widget.image.id;
+    final isSelected =
+        ref.watch(canvasProvider).selectedUserImageId == widget.image.id;
 
     return Positioned(
       left: widget.image.position.dx - widget.image.size.width / 2,
@@ -1004,10 +1034,12 @@ class _CanvasUserImageWidgetState extends ConsumerState<_CanvasUserImageWidget> 
         onPanUpdate: (details) {
           if (_startPos == null) return;
           _accumulatedDelta += details.delta;
-          ref.read(canvasProvider.notifier).updateUserImagePosition(
-            widget.image.id,
-            _startPos! + _accumulatedDelta,
-          );
+          ref
+              .read(canvasProvider.notifier)
+              .updateUserImagePosition(
+                widget.image.id,
+                _startPos! + _accumulatedDelta,
+              );
         },
         onPanEnd: (_) {
           _startPos = null;
@@ -1044,7 +1076,9 @@ class _CanvasUserImageWidgetState extends ConsumerState<_CanvasUserImageWidget> 
                     right: -8,
                     child: GestureDetector(
                       onTap: () {
-                        ref.read(canvasProvider.notifier).deleteUserImage(widget.image.id);
+                        ref
+                            .read(canvasProvider.notifier)
+                            .deleteUserImage(widget.image.id);
                       },
                       child: Container(
                         padding: const EdgeInsets.all(4),
@@ -1052,7 +1086,11 @@ class _CanvasUserImageWidgetState extends ConsumerState<_CanvasUserImageWidget> 
                           color: Colors.red,
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(Icons.close, size: 14, color: Colors.white),
+                        child: const Icon(
+                          Icons.close,
+                          size: 14,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
                   ),

@@ -7,10 +7,7 @@ class ExploreItem {
   final String id;
   final double score;
 
-  ExploreItem({
-    required this.id,
-    required this.score,
-  });
+  ExploreItem({required this.id, required this.score});
 
   factory ExploreItem.fromJson(Map<String, dynamic> json) =>
       _$ExploreItemFromJson(json);

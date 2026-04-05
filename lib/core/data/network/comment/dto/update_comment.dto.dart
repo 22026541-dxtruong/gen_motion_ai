@@ -6,9 +6,7 @@ part 'update_comment.dto.g.dart';
 class UpdateCommentDto {
   final String content;
 
-  UpdateCommentDto({
-    required this.content,
-  });
+  UpdateCommentDto({required this.content});
 
   factory UpdateCommentDto.fromJson(Map<String, dynamic> json) =>
       _$UpdateCommentDtoFromJson(json);

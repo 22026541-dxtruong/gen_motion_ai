@@ -28,10 +28,7 @@ class CommentUserDto {
   final String id;
   final String username;
 
-  CommentUserDto({
-    required this.id,
-    required this.username,
-  });
+  CommentUserDto({required this.id, required this.username});
 
   factory CommentUserDto.fromJson(Map<String, dynamic> json) =>
       _$CommentUserDtoFromJson(json);

@@ -6,9 +6,7 @@ part 'create_comment.dto.g.dart';
 class CreateCommentDto {
   final String content;
 
-  CreateCommentDto({
-    required this.content,
-  });
+  CreateCommentDto({required this.content});
 
   factory CreateCommentDto.fromJson(Map<String, dynamic> json) =>
       _$CreateCommentDtoFromJson(json);

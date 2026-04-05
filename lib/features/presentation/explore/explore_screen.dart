@@ -32,7 +32,7 @@ class _ExploreScreenState extends State<ExploreScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.backgroundColor,
+      backgroundColor: context.appColors.background,
       floatingActionButton: context.isMobile
           ? FloatingActionButton.extended(
               onPressed: () => _showPublishModal(context),
@@ -64,8 +64,8 @@ class _ExploreScreenState extends State<ExploreScreen>
                         TabBar(
                           controller: _tabController,
                           isScrollable: true,
-                          labelColor: AppTheme.textPrimary,
-                          unselectedLabelColor: AppTheme.textSecondary,
+                          labelColor: context.appColors.textPrimary,
+                          unselectedLabelColor: context.appColors.textSecondary,
                           indicatorColor: AppTheme.primaryColor,
                           indicatorSize: TabBarIndicatorSize.label,
                           dividerColor: Colors.transparent,
@@ -89,8 +89,8 @@ class _ExploreScreenState extends State<ExploreScreen>
                               Icons.add_photo_alternate_outlined,
                             ),
                             label: const Text('Publish'),
-                          )
-                        ]
+                          ),
+                        ],
                       ],
                     ),
                   ),
@@ -119,7 +119,7 @@ class _ExploreScreenState extends State<ExploreScreen>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppTheme.surfaceColor,
+      backgroundColor: context.appColors.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -142,12 +142,12 @@ class _ExploreScreenState extends State<ExploreScreen>
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
-                    color: AppTheme.textPrimary,
+                    color: context.appColors.textPrimary,
                   ),
                 ),
                 IconButton(
                   onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.close, color: AppTheme.textSecondary),
+                  icon: Icon(Icons.close, color: context.appColors.textSecondary),
                 ),
               ],
             ),
@@ -157,10 +157,10 @@ class _ExploreScreenState extends State<ExploreScreen>
               height: 150,
               width: double.infinity,
               decoration: BoxDecoration(
-                color: AppTheme.cardColor,
+                color: context.appColors.card,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: AppTheme.borderColor,
+                  color: context.appColors.border,
                   style: BorderStyle.solid,
                 ),
               ),
@@ -176,7 +176,7 @@ class _ExploreScreenState extends State<ExploreScreen>
                   Text(
                     'Select Video or Image generated',
                     style: TextStyle(
-                      color: AppTheme.textSecondary.withOpacity(0.8),
+                      color: context.appColors.textSecondary.withOpacity(0.8),
                       fontSize: 14,
                     ),
                   ),
@@ -188,9 +188,9 @@ class _ExploreScreenState extends State<ExploreScreen>
               maxLines: 3,
               decoration: InputDecoration(
                 hintText: 'Write a description or prompt used...',
-                hintStyle: TextStyle(color: AppTheme.textSecondary),
+                hintStyle: TextStyle(color: context.appColors.textSecondary),
                 filled: true,
-                fillColor: AppTheme.cardColor,
+                fillColor: context.appColors.card,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.all(Radius.circular(12)),
                   borderSide: BorderSide.none,
@@ -541,12 +541,12 @@ class _ExploreCardState extends State<_ExploreCard> {
             ? (Matrix4.identity()..translate(0, -4, 0))
             : Matrix4.identity(),
         decoration: BoxDecoration(
-          color: AppTheme.cardColor,
+          color: context.appColors.card,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: _isHovered && !isMobile
                 ? AppTheme.primaryColor.withOpacity(0.5)
-                : AppTheme.borderColor,
+                : context.appColors.border,
           ),
           boxShadow: _isHovered && !isMobile
               ? [
@@ -631,7 +631,7 @@ class _ExploreCardState extends State<_ExploreCard> {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      color: AppTheme.textPrimary,
+                      color: context.appColors.textPrimary,
                       fontSize: isMobile ? 12 : 13,
                       height: 1.4,
                       fontWeight: FontWeight.w500,
@@ -668,7 +668,7 @@ class _ExploreCardState extends State<_ExploreCard> {
                                   child: Text(
                                     'User ${widget.index}',
                                     style: const TextStyle(
-                                      color: AppTheme.textSecondary,
+                                      color: context.appColors.textSecondary,
                                       fontSize: 12,
                                     ),
                                     overflow: TextOverflow.ellipsis,
@@ -698,13 +698,13 @@ class _ExploreCardState extends State<_ExploreCard> {
                                 size: isMobile ? 14 : 16,
                                 color: _isHovered
                                     ? AppTheme.accentPink
-                                    : AppTheme.textSecondary,
+                                    : context.appColors.textSecondary,
                               ),
                               const SizedBox(width: 4),
                               Text(
                                 '${245 + widget.index}',
                                 style: const TextStyle(
-                                  color: AppTheme.textSecondary,
+                                  color: context.appColors.textSecondary,
                                   fontSize: 12,
                                 ),
                               ),
@@ -740,7 +740,7 @@ class _StickyTabBarDelegate extends SliverPersistentHeaderDelegate {
     double shrinkOffset,
     bool overlapsContent,
   ) {
-    return Container(color: AppTheme.backgroundColor, child: child);
+    return Container(color: context.appColors.background, child: child);
   }
 
   @override
@@ -762,20 +762,20 @@ class _SearchBar extends StatelessWidget {
         height: 36,
         margin: const EdgeInsets.only(right: 16),
         decoration: BoxDecoration(
-          color: AppTheme.cardColor,
+          color: context.appColors.card,
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: AppTheme.borderColor),
+          border: Border.all(color: context.appColors.border),
         ),
         padding: const EdgeInsets.symmetric(horizontal: 12),
         child: Row(
           children: [
-            const Icon(Icons.search, color: AppTheme.textSecondary, size: 18),
+            Icon(Icons.search, color: context.appColors.textSecondary, size: 18),
             const SizedBox(width: 8),
             Expanded(
               child: Text(
                 'Search...',
                 style: TextStyle(
-                  color: AppTheme.textSecondary.withOpacity(0.7),
+                  color: context.appColors.textSecondary.withOpacity(0.7),
                   fontSize: 13,
                 ),
               ),
@@ -790,20 +790,20 @@ class _SearchBar extends StatelessWidget {
       child: Container(
         height: 48,
         decoration: BoxDecoration(
-          color: AppTheme.cardColor,
+          color: context.appColors.card,
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: AppTheme.borderColor),
+          border: Border.all(color: context.appColors.border),
         ),
         padding: const EdgeInsets.symmetric(horizontal: 16),
         child: Row(
           children: [
-            const Icon(Icons.search, color: AppTheme.textSecondary),
+            Icon(Icons.search, color: context.appColors.textSecondary),
             const SizedBox(width: 12),
             Expanded(
               child: Text(
                 'Search prompts, styles, users...',
                 style: TextStyle(
-                  color: AppTheme.textSecondary.withOpacity(0.7),
+                  color: context.appColors.textSecondary.withOpacity(0.7),
                 ),
               ),
             ),
@@ -813,3 +813,4 @@ class _SearchBar extends StatelessWidget {
     );
   }
 }
+
