@@ -29,7 +29,7 @@ class _PostLikeApi implements PostLikeApi {
       Options(method: 'POST', headers: _headers, extra: _extra)
           .compose(
             _dio.options,
-            '/posts/${postId}/post-likes',
+            '/posts/${postId}/likes',
             queryParameters: queryParameters,
             data: _data,
           )
@@ -61,7 +61,7 @@ class _PostLikeApi implements PostLikeApi {
       Options(method: 'GET', headers: _headers, extra: _extra)
           .compose(
             _dio.options,
-            '/posts/${postId}/post-likes',
+            '/posts/${postId}/likes',
             queryParameters: queryParameters,
             data: _data,
           )
@@ -91,7 +91,7 @@ class _PostLikeApi implements PostLikeApi {
       Options(method: 'DELETE', headers: _headers, extra: _extra)
           .compose(
             _dio.options,
-            '/posts/${postId}/post-likes',
+            '/posts/${postId}/likes',
             queryParameters: queryParameters,
             data: _data,
           )

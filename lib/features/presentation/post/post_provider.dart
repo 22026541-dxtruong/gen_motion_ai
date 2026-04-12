@@ -31,9 +31,17 @@ class PostNotifier extends AsyncNotifier<GetPostDto?> {
     final newLiked = !current.isLiked;
 
     state = AsyncData(
-      current.copyWith(
-        isLiked: newLiked,
+      GetPostDto(
+        id: current.id,
+        caption: current.caption,
+        viewCount: current.viewCount,
+        commentCount: current.commentCount,
         likeCount: current.likeCount + (newLiked ? 1 : -1),
+        createdAt: current.createdAt,
+        isLiked: newLiked,
+        isFollowed: current.isFollowed,
+        user: current.user,
+        assetVersion: current.assetVersion,
       ),
     );
 

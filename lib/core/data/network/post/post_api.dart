@@ -18,13 +18,13 @@ abstract class PostApi {
   @GET(ApiEndpoints.posts)
   Future<List<GetPostDto>> getPosts();
 
-  @GET(ApiEndpoints.postById)
+  @GET('/posts/{id}')
   Future<GetPostDto> getPost(@Path('id') String id);
 
-  @PUT(ApiEndpoints.postById)
+  @PUT('/posts/{id}')
   Future<IdResponseDto> updatePost(@Path('id') String id, @Body() UpdatePostDto body);
 
-  @DELETE(ApiEndpoints.postById)
+  @DELETE('/posts/{id}')
   Future<IdResponseDto> deletePost(@Path('id') String id);
 
 }

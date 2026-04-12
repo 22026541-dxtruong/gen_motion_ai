@@ -85,9 +85,9 @@ class _UserScreenState extends ConsumerState<UserScreen>
             body: TabBarView(
               controller: _tabController,
               children: [
-                _buildGridContent(itemCount: 12),
-                _buildGridContent(itemCount: 5),
-                _buildGridContent(itemCount: 2),
+                _buildGalleryTab(widget.userId), // Chỉ hiển thị Public Posts
+                const Center(child: Text('Likes (Coming soon)', style: TextStyle(color: AppTheme.textSecondary))),
+                const Center(child: Text('Collections (Coming soon)', style: TextStyle(color: AppTheme.textSecondary))),
               ],
             ),
           ),
@@ -114,7 +114,7 @@ class _UserScreenState extends ConsumerState<UserScreen>
       return Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildAvatar(size: 120),
+          _buildAvatar(size: 120, avatarUrl: user?.avatarUrl, username: user?.username),
           const SizedBox(width: 32),
           Expanded(
             child: Column(
@@ -122,8 +122,8 @@ class _UserScreenState extends ConsumerState<UserScreen>
               children: [
                 Row(
                   children: [
-                    const Text(
-                      'Creative Artist',
+                    Text(
+                      user?.username ?? 'User',
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
@@ -145,10 +145,10 @@ class _UserScreenState extends ConsumerState<UserScreen>
                   ),
                 ),
                 const SizedBox(height: 16),
-                _buildStatsRow(),
+                _buildStatsRow(user?.counts),
                 const SizedBox(height: 16),
-                const Text(
-                  'Digital artist exploring the boundaries of AI generation. Creating motion from stillness.',
+                Text(
+                  user?.bio ?? 'No biography provided yet.',
                   style: TextStyle(
                     color: AppTheme.textSecondary,
                     fontSize: 14,
@@ -165,10 +165,10 @@ class _UserScreenState extends ConsumerState<UserScreen>
     // Mobile Layout
     return Column(
       children: [
-        _buildAvatar(size: 80),
+        _buildAvatar(size: 80, avatarUrl: user?.avatarUrl, username: user?.username),
         const SizedBox(height: 16),
-        const Text(
-          'Creative Artist',
+        Text(
+          user?.username ?? 'User',
           style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.bold,
@@ -181,7 +181,7 @@ class _UserScreenState extends ConsumerState<UserScreen>
           style: const TextStyle(color: AppTheme.textSecondary, fontSize: 12),
         ),
         const SizedBox(height: 16),
-        _buildStatsRow(),
+        _buildStatsRow(user?.counts),
         const SizedBox(height: 20),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -192,8 +192,8 @@ class _UserScreenState extends ConsumerState<UserScreen>
           ],
         ),
         const SizedBox(height: 16),
-        const Text(
-          'Digital artist exploring the boundaries of AI generation.',
+        Text(
+          user?.bio ?? 'No biography provided yet.',
           textAlign: TextAlign.center,
           style: TextStyle(
             color: AppTheme.textSecondary,
@@ -205,7 +205,7 @@ class _UserScreenState extends ConsumerState<UserScreen>
     );
   }
 
-  Widget _buildAvatar({required double size}) {
+  Widget _buildAvatar({required double size, String? avatarUrl, String? username}) {
     return Container(
       width: size,
       height: size,
@@ -217,40 +217,43 @@ class _UserScreenState extends ConsumerState<UserScreen>
           end: Alignment.bottomRight,
         ),
         border: Border.all(color: AppTheme.surfaceColor, width: 4),
+        image: avatarUrl != null
+            ? DecorationImage(image: NetworkImage(avatarUrl), fit: BoxFit.cover)
+            : null,
       ),
-      child: Center(
+      child: avatarUrl == null ? Center(
         child: Text(
-          'C',
+          (username != null && username.isNotEmpty) ? username[0].toUpperCase() : 'U',
           style: TextStyle(
             fontSize: size * 0.4,
             fontWeight: FontWeight.bold,
             color: Colors.white,
           ),
         ),
-      ),
+      ) : null,
     );
   }
 
-  Widget _buildStatsRow() {
+  Widget _buildStatsRow(dynamic counts) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        _buildStatItem('12', 'Following'),
+        _buildStatItem('${counts?.following ?? 0}', 'Following'),
         Container(
           height: 12,
           width: 1,
           color: AppTheme.borderColor,
           margin: const EdgeInsets.symmetric(horizontal: 16),
         ),
-        _buildStatItem('3.5k', 'Followers'),
+        _buildStatItem('${counts?.followers ?? 0}', 'Followers'),
         Container(
           height: 12,
           width: 1,
           color: AppTheme.borderColor,
           margin: const EdgeInsets.symmetric(horizontal: 16),
         ),
-        _buildStatItem('12.8k', 'Likes'),
+        _buildStatItem('${counts?.posts ?? 0}', 'Works'),
       ],
     );
   }
@@ -328,36 +331,55 @@ class _UserScreenState extends ConsumerState<UserScreen>
     );
   }
 
-  Widget _buildGridContent({required int itemCount}) {
-    return GridView.builder(
-      padding: const EdgeInsets.all(16),
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: Responsive.isMobile(context)
-            ? 2
-            : (Responsive.isTablet(context) ? 3 : 4),
-        mainAxisSpacing: 16,
-        crossAxisSpacing: 16,
-        childAspectRatio: 0.7,
-      ),
-      itemCount: itemCount,
-      itemBuilder: (context, index) {
-        return InkWell(
-          onTap: () => context.push('/post/$index'),
-          borderRadius: BorderRadius.circular(12),
-          child: Container(
-            decoration: BoxDecoration(
-              color: AppTheme.cardColor,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppTheme.borderColor),
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: Image.network(
-                'https://picsum.photos/seed/${index + 100}/400/600',
-                fit: BoxFit.cover,
+  Widget _buildGalleryTab(String userId) {
+    return Consumer(
+      builder: (context, ref, child) {
+        final postsAsync = ref.watch(userPublicPostsProvider(userId));
+
+        return postsAsync.when(
+          data: (posts) {
+            if (posts.isEmpty) {
+              return const Center(
+                child: Text('No public works yet.', style: TextStyle(color: AppTheme.textSecondary)),
+              );
+            }
+
+            return GridView.builder(
+              padding: const EdgeInsets.all(16),
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: Responsive.isMobile(context)
+                    ? 2
+                    : (Responsive.isTablet(context) ? 3 : 4),
+                mainAxisSpacing: 16,
+                crossAxisSpacing: 16,
+                childAspectRatio: 0.7,
               ),
-            ),
-          ),
+              itemCount: posts.length,
+              itemBuilder: (context, index) {
+                final post = posts[index];
+                // Lấy URL thực tế, fallback lại mock image nếu chưa có dữ liệu thật từ DTO
+                final imageUrl = post.assetUrl ?? 'https://picsum.photos/seed/${index + 100}/400/600';
+
+                return InkWell(
+                  onTap: () => context.push('/post/${post.id ?? index}'),
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: AppTheme.cardColor,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppTheme.borderColor),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Image.network(imageUrl, fit: BoxFit.cover),
+                    ),
+                  ),
+                );
+              },
+            );
+          },
+          loading: () => const Center(child: CircularProgressIndicator(color: AppTheme.primaryColor)),
+          error: (e, st) => Center(child: Text('Error loading works', style: const TextStyle(color: Colors.red))),
         );
       },
     );

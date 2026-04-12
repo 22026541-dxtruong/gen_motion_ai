@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gen_motion_ai/core/data/local/storage/secure_storage.dart';
 import 'package:gen_motion_ai/features/presentation/user/user_provider.dart';

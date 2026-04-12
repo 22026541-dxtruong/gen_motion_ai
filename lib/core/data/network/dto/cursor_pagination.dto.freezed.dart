@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$CursorPaginationDto<T> {
 
- List<T> get data;@JsonKey(name: 'next_cursor') String? get nextCursor;
+ List<T> get data; String? get nextCursor;
 /// Create a copy of CursorPaginationDto
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -48,7 +48,7 @@ abstract mixin class $CursorPaginationDtoCopyWith<T,$Res>  {
   factory $CursorPaginationDtoCopyWith(CursorPaginationDto<T> value, $Res Function(CursorPaginationDto<T>) _then) = _$CursorPaginationDtoCopyWithImpl;
 @useResult
 $Res call({
- List<T> data,@JsonKey(name: 'next_cursor') String? nextCursor
+ List<T> data, String? nextCursor
 });
 
 
@@ -154,7 +154,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<T> data, @JsonKey(name: 'next_cursor')  String? nextCursor)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<T> data,  String? nextCursor)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _CursorPaginationDto() when $default != null:
 return $default(_that.data,_that.nextCursor);case _:
@@ -175,7 +175,7 @@ return $default(_that.data,_that.nextCursor);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<T> data, @JsonKey(name: 'next_cursor')  String? nextCursor)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<T> data,  String? nextCursor)  $default,) {final _that = this;
 switch (_that) {
 case _CursorPaginationDto():
 return $default(_that.data,_that.nextCursor);case _:
@@ -195,7 +195,7 @@ return $default(_that.data,_that.nextCursor);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<T> data, @JsonKey(name: 'next_cursor')  String? nextCursor)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<T> data,  String? nextCursor)?  $default,) {final _that = this;
 switch (_that) {
 case _CursorPaginationDto() when $default != null:
 return $default(_that.data,_that.nextCursor);case _:
@@ -210,7 +210,7 @@ return $default(_that.data,_that.nextCursor);case _:
 @JsonSerializable(genericArgumentFactories: true)
 
 class _CursorPaginationDto<T> implements CursorPaginationDto<T> {
-  const _CursorPaginationDto({required final  List<T> data, @JsonKey(name: 'next_cursor') this.nextCursor}): _data = data;
+  const _CursorPaginationDto({required final  List<T> data, this.nextCursor}): _data = data;
   factory _CursorPaginationDto.fromJson(Map<String, dynamic> json,T Function(Object?) fromJsonT) => _$CursorPaginationDtoFromJson(json,fromJsonT);
 
  final  List<T> _data;
@@ -220,7 +220,7 @@ class _CursorPaginationDto<T> implements CursorPaginationDto<T> {
   return EqualUnmodifiableListView(_data);
 }
 
-@override@JsonKey(name: 'next_cursor') final  String? nextCursor;
+@override final  String? nextCursor;
 
 /// Create a copy of CursorPaginationDto
 /// with the given fields replaced by the non-null parameter values.
@@ -255,7 +255,7 @@ abstract mixin class _$CursorPaginationDtoCopyWith<T,$Res> implements $CursorPag
   factory _$CursorPaginationDtoCopyWith(_CursorPaginationDto<T> value, $Res Function(_CursorPaginationDto<T>) _then) = __$CursorPaginationDtoCopyWithImpl;
 @override @useResult
 $Res call({
- List<T> data,@JsonKey(name: 'next_cursor') String? nextCursor
+ List<T> data, String? nextCursor
 });
 
 

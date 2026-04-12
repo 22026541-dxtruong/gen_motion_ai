@@ -213,13 +213,6 @@ class __DesktopSidebarState extends ConsumerState<_DesktopSidebar> {
                   collapsed: !_expandedDone,
                 ),
                 _DesktopNavItem(
-                  icon: Icons.draw_outlined,
-                  label: 'Canvas',
-                  route: '/canvas',
-                  isActive: currentRoute == '/canvas',
-                  collapsed: !_expandedDone,
-                ),
-                _DesktopNavItem(
                   icon: Icons.add_circle_outline,
                   label: 'Create',
                   route: '/create',
@@ -553,11 +546,6 @@ class _MobileDrawer extends ConsumerWidget {
                     route: '/explore',
                   ),
                   _MobileNavItem(
-                    icon: Icons.draw_outlined,
-                    label: 'Canvas',
-                    route: '/canvas',
-                  ),
-                  _MobileNavItem(
                     icon: Icons.add_circle_outline,
                     label: 'Create',
                     route: '/create',
@@ -684,12 +672,6 @@ class _MobileBottomNav extends StatelessWidget {
             label: 'Explore',
             route: '/explore',
             isActive: currentRoute == '/explore',
-          ),
-          _BottomNavItem(
-            icon: Icons.draw_outlined,
-            label: 'Canvas',
-            route: '/canvas',
-            isActive: currentRoute == '/canvas',
           ),
           _BottomNavItem(
             icon: Icons.add_circle,

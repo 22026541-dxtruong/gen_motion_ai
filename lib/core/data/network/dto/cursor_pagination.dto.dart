@@ -7,7 +7,6 @@ part 'cursor_pagination.dto.g.dart';
 abstract class CursorPaginationDto<T> with _$CursorPaginationDto<T> {
   const factory CursorPaginationDto({
     required List<T> data,
-    @JsonKey(name: 'next_cursor')
     String? nextCursor,
   }) = _CursorPaginationDto<T>;
 

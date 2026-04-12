@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:gen_motion_ai/core/data/local/storage/secure_storage.dart';
+import 'package:dio/dio.dart';
 import 'package:gen_motion_ai/core/data/network/api_providers.dart';
 import 'package:gen_motion_ai/core/data/network/auth/dto/login.dto.dart';
 import 'package:gen_motion_ai/core/data/network/auth/dto/register.dto.dart';
+import 'package:gen_motion_ai/core/data/network/error/api_error.dart';
 import 'package:gen_motion_ai/core/theme/app_theme.dart';
 import 'package:gen_motion_ai/core/utils/responsive.dart';
 import 'package:gen_motion_ai/features/presentation/auth/auth_provider.dart';
-import 'package:gen_motion_ai/features/presentation/user/user_provider.dart';
 import 'package:go_router/go_router.dart';
 
 class AuthScreen extends ConsumerStatefulWidget {
@@ -56,21 +56,23 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
         final response = await authApi.login(
           LoginDto(email: email, password: password),
         );
-        await ref.read(authProvider.notifier).login(response.accessToken);
+        await ref.read(authProvider.notifier).login(response.token);
         if (mounted) context.go('/explore');
       } else {
         final response = await authApi.register(
           RegisterDto(email: email, password: password),
         );
-        await ref.read(authProvider.notifier).login(response.accessToken);
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Registration successful! Please sign in.'),
-            ),
-          );
-          setState(() => _isLogin = true);
-        }
+        await ref.read(authProvider.notifier).login(response.token);
+        if (mounted) context.go('/explore');
+      }
+    } on DioException catch (e) {
+      final apiError = parseApiError(e.response?.data);
+      final message = apiError?.displayMessage ?? e.message ?? e.toString();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Authentication failed: $message')),
+        );
       }
     } catch (e) {
       if (mounted) {

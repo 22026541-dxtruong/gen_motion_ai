@@ -1,14 +1,14 @@
-import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:json_annotation/json_annotation.dart';
 
-part 'id_response.dto.freezed.dart';
 part 'id_response.dto.g.dart';
 
-@freezed
-abstract class IdResponseDto with _$IdResponseDto {
-  const factory IdResponseDto({
-    required String id,
-  }) = _IdResponseDto;
+@JsonSerializable()
+class IdResponseDto {
+  final String id;
 
-  factory IdResponseDto.fromJson(Map<String, dynamic> json) =>
-      _$IdResponseDtoFromJson(json);
+  IdResponseDto({required this.id});
+
+  factory IdResponseDto.fromJson(Map<String, dynamic> json) => _$IdResponseDtoFromJson(json);
+
+  Map<String, dynamic> toJson() => _$IdResponseDtoToJson(this);
 }

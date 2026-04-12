@@ -11,7 +11,7 @@ _CursorPaginationDto<T> _$CursorPaginationDtoFromJson<T>(
   T Function(Object? json) fromJsonT,
 ) => _CursorPaginationDto<T>(
   data: (json['data'] as List<dynamic>).map(fromJsonT).toList(),
-  nextCursor: json['next_cursor'] as String?,
+  nextCursor: json['nextCursor'] as String?,
 );
 
 Map<String, dynamic> _$CursorPaginationDtoToJson<T>(
@@ -19,5 +19,5 @@ Map<String, dynamic> _$CursorPaginationDtoToJson<T>(
   Object? Function(T value) toJsonT,
 ) => <String, dynamic>{
   'data': instance.data.map(toJsonT).toList(),
-  'next_cursor': instance.nextCursor,
+  'nextCursor': instance.nextCursor,
 };

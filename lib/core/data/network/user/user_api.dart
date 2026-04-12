@@ -18,7 +18,7 @@ abstract class UserApi {
   @DELETE(ApiEndpoints.userMe)
   Future<void> deleteUser();
 
-  @GET(ApiEndpoints.userById)
+  @GET('/users/{userId}')
   Future<UserDto> getUserById(@Path('userId') String userId);
 
 }

@@ -8,7 +8,8 @@ class SecureStorage {
 
   // Keys
   static const String _accessTokenKey = 'access_token';
-  // static const String _refreshTokenKey = 'refresh_token';
+  static const String _refreshTokenKey = 'refresh_token';
+  static const String _userDataKey = 'user_data';
 
   // Token operations
   Future<void> saveAccessToken(String token) async {
@@ -23,18 +24,36 @@ class SecureStorage {
     await _storage.delete(key: _accessTokenKey);
   }
 
-  // Future<void> saveRefreshToken(String token) async {
-  //   await _storage.write(key: _refreshTokenKey, value: token);
-  // }
+  Future<void> saveRefreshToken(String token) async {
+    await _storage.write(key: _refreshTokenKey, value: token);
+  }
 
-  // Future<String?> getRefreshToken() async {
-  //   return await _storage.read(key: _refreshTokenKey);
-  // }
+  Future<String?> getRefreshToken() async {
+    return await _storage.read(key: _refreshTokenKey);
+  }
 
-  // Clear all tokens
+  Future<void> deleteRefreshToken() async {
+    await _storage.delete(key: _refreshTokenKey);
+  }
+
+  // User data operations
+  Future<void> saveUserData(String userData) async {
+    await _storage.write(key: _userDataKey, value: userData);
+  }
+
+  Future<String?> getUserData() async {
+    return await _storage.read(key: _userDataKey);
+  }
+
+  Future<void> deleteUserData() async {
+    await _storage.delete(key: _userDataKey);
+  }
+
+  // Clear all tokens and user data
   Future<void> clearAllTokens() async {
     await _storage.delete(key: _accessTokenKey);
-    // await _storage.delete(key: _refreshTokenKey);
+    await _storage.delete(key: _refreshTokenKey);
+    await _storage.delete(key: _userDataKey);
   }
 
   // Check if user is authenticated

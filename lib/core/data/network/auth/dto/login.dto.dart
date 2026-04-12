@@ -1,15 +1,15 @@
-import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:json_annotation/json_annotation.dart';
 
-part 'login.dto.freezed.dart';
 part 'login.dto.g.dart';
 
-@freezed
-abstract class LoginDto with _$LoginDto {
-  const factory LoginDto({
-    required String email,
-    required String password,
-  }) = _LoginDto;
+@JsonSerializable()
+class LoginDto {
+  final String email;
+  final String password;
 
-  factory LoginDto.fromJson(Map<String, dynamic> json) =>
-      _$LoginDtoFromJson(json);
+  LoginDto({required this.email, required this.password});
+
+  factory LoginDto.fromJson(Map<String, dynamic> json) => _$LoginDtoFromJson(json);
+
+  Map<String, dynamic> toJson() => _$LoginDtoToJson(this);
 }

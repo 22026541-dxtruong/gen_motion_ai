@@ -6,59 +6,63 @@ part of 'get_post.dto.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-_GetPostDto _$GetPostDtoFromJson(Map<String, dynamic> json) => _GetPostDto(
+GetPostDto _$GetPostDtoFromJson(Map<String, dynamic> json) => GetPostDto(
   id: json['id'] as String,
   caption: json['caption'] as String?,
-  viewCount: (json['view_count'] as num).toInt(),
-  commentCount: (json['comment_count'] as num).toInt(),
-  likeCount: (json['like_count'] as num).toInt(),
-  createdAt: DateTime.parse(json['created_at'] as String),
-  isLiked: json['is_liked'] as bool,
-  isFollowed: json['is_followed'] as bool,
-  user: PostUserDto.fromJson(json['user'] as Map<String, dynamic>),
-  assetVersion: PostAssetVersionDto.fromJson(
-    json['asset_version'] as Map<String, dynamic>,
-  ),
+  viewCount: (json['viewCount'] as num?)?.toInt() ?? 0,
+  commentCount: (json['commentCount'] as num?)?.toInt() ?? 0,
+  likeCount: (json['likeCount'] as num?)?.toInt() ?? 0,
+  createdAt: DateTime.parse(json['createdAt'] as String),
+  isLiked: json['isLiked'] as bool? ?? false,
+  isFollowed: json['isFollowed'] as bool? ?? false,
+  user: json['user'] == null
+      ? null
+      : PostUserDto.fromJson(json['user'] as Map<String, dynamic>),
+  assetVersion: json['assetVersion'] == null
+      ? null
+      : PostAssetVersionDto.fromJson(
+          json['assetVersion'] as Map<String, dynamic>,
+        ),
 );
 
-Map<String, dynamic> _$GetPostDtoToJson(_GetPostDto instance) =>
+Map<String, dynamic> _$GetPostDtoToJson(GetPostDto instance) =>
     <String, dynamic>{
       'id': instance.id,
       'caption': instance.caption,
-      'view_count': instance.viewCount,
-      'comment_count': instance.commentCount,
-      'like_count': instance.likeCount,
-      'created_at': instance.createdAt.toIso8601String(),
-      'is_liked': instance.isLiked,
-      'is_followed': instance.isFollowed,
+      'viewCount': instance.viewCount,
+      'commentCount': instance.commentCount,
+      'likeCount': instance.likeCount,
+      'createdAt': instance.createdAt.toIso8601String(),
+      'isLiked': instance.isLiked,
+      'isFollowed': instance.isFollowed,
       'user': instance.user,
-      'asset_version': instance.assetVersion,
+      'assetVersion': instance.assetVersion,
     };
 
-_PostUserDto _$PostUserDtoFromJson(Map<String, dynamic> json) => _PostUserDto(
+PostUserDto _$PostUserDtoFromJson(Map<String, dynamic> json) => PostUserDto(
   id: json['id'] as String,
   username: json['username'] as String,
-  avatarUrl: json['avatar_url'] as String?,
+  avatarUrl: json['avatarUrl'] as String?,
 );
 
-Map<String, dynamic> _$PostUserDtoToJson(_PostUserDto instance) =>
+Map<String, dynamic> _$PostUserDtoToJson(PostUserDto instance) =>
     <String, dynamic>{
       'id': instance.id,
       'username': instance.username,
-      'avatar_url': instance.avatarUrl,
+      'avatarUrl': instance.avatarUrl,
     };
 
-_PostAssetVersionDto _$PostAssetVersionDtoFromJson(Map<String, dynamic> json) =>
-    _PostAssetVersionDto(
+PostAssetVersionDto _$PostAssetVersionDtoFromJson(Map<String, dynamic> json) =>
+    PostAssetVersionDto(
       id: json['id'] as String,
-      fileUrl: json['file_url'] as String,
+      fileUrl: json['fileUrl'] as String?,
       metadata: json['metadata'] as Map<String, dynamic>?,
     );
 
 Map<String, dynamic> _$PostAssetVersionDtoToJson(
-  _PostAssetVersionDto instance,
+  PostAssetVersionDto instance,
 ) => <String, dynamic>{
   'id': instance.id,
-  'file_url': instance.fileUrl,
+  'fileUrl': instance.fileUrl,
   'metadata': instance.metadata,
 };
