@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$CursorPaginationDto<T> {
 
- List<T> get data; String? get nextCursor;
+ List<T> get data;
 /// Create a copy of CursorPaginationDto
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +28,16 @@ $CursorPaginationDtoCopyWith<T, CursorPaginationDto<T>> get copyWith => _$Cursor
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is CursorPaginationDto<T>&&const DeepCollectionEquality().equals(other.data, data)&&(identical(other.nextCursor, nextCursor) || other.nextCursor == nextCursor));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is CursorPaginationDto<T>&&const DeepCollectionEquality().equals(other.data, data));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(data),nextCursor);
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(data));
 
 @override
 String toString() {
-  return 'CursorPaginationDto<$T>(data: $data, nextCursor: $nextCursor)';
+  return 'CursorPaginationDto<$T>(data: $data)';
 }
 
 
@@ -48,7 +48,7 @@ abstract mixin class $CursorPaginationDtoCopyWith<T,$Res>  {
   factory $CursorPaginationDtoCopyWith(CursorPaginationDto<T> value, $Res Function(CursorPaginationDto<T>) _then) = _$CursorPaginationDtoCopyWithImpl;
 @useResult
 $Res call({
- List<T> data, String? nextCursor
+ List<T> data
 });
 
 
@@ -65,11 +65,10 @@ class _$CursorPaginationDtoCopyWithImpl<T,$Res>
 
 /// Create a copy of CursorPaginationDto
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? data = null,Object? nextCursor = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? data = null,}) {
   return _then(_self.copyWith(
 data: null == data ? _self.data : data // ignore: cast_nullable_to_non_nullable
-as List<T>,nextCursor: freezed == nextCursor ? _self.nextCursor : nextCursor // ignore: cast_nullable_to_non_nullable
-as String?,
+as List<T>,
   ));
 }
 
@@ -154,10 +153,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<T> data,  String? nextCursor)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<T> data)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _CursorPaginationDto() when $default != null:
-return $default(_that.data,_that.nextCursor);case _:
+return $default(_that.data);case _:
   return orElse();
 
 }
@@ -175,10 +174,10 @@ return $default(_that.data,_that.nextCursor);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<T> data,  String? nextCursor)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<T> data)  $default,) {final _that = this;
 switch (_that) {
 case _CursorPaginationDto():
-return $default(_that.data,_that.nextCursor);case _:
+return $default(_that.data);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -195,10 +194,10 @@ return $default(_that.data,_that.nextCursor);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<T> data,  String? nextCursor)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<T> data)?  $default,) {final _that = this;
 switch (_that) {
 case _CursorPaginationDto() when $default != null:
-return $default(_that.data,_that.nextCursor);case _:
+return $default(_that.data);case _:
   return null;
 
 }
@@ -210,7 +209,7 @@ return $default(_that.data,_that.nextCursor);case _:
 @JsonSerializable(genericArgumentFactories: true)
 
 class _CursorPaginationDto<T> implements CursorPaginationDto<T> {
-  const _CursorPaginationDto({required final  List<T> data, this.nextCursor}): _data = data;
+  const _CursorPaginationDto({required final  List<T> data}): _data = data;
   factory _CursorPaginationDto.fromJson(Map<String, dynamic> json,T Function(Object?) fromJsonT) => _$CursorPaginationDtoFromJson(json,fromJsonT);
 
  final  List<T> _data;
@@ -220,7 +219,6 @@ class _CursorPaginationDto<T> implements CursorPaginationDto<T> {
   return EqualUnmodifiableListView(_data);
 }
 
-@override final  String? nextCursor;
 
 /// Create a copy of CursorPaginationDto
 /// with the given fields replaced by the non-null parameter values.
@@ -235,16 +233,16 @@ Map<String, dynamic> toJson(Object? Function(T) toJsonT) {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _CursorPaginationDto<T>&&const DeepCollectionEquality().equals(other._data, _data)&&(identical(other.nextCursor, nextCursor) || other.nextCursor == nextCursor));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _CursorPaginationDto<T>&&const DeepCollectionEquality().equals(other._data, _data));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_data),nextCursor);
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_data));
 
 @override
 String toString() {
-  return 'CursorPaginationDto<$T>(data: $data, nextCursor: $nextCursor)';
+  return 'CursorPaginationDto<$T>(data: $data)';
 }
 
 
@@ -255,7 +253,7 @@ abstract mixin class _$CursorPaginationDtoCopyWith<T,$Res> implements $CursorPag
   factory _$CursorPaginationDtoCopyWith(_CursorPaginationDto<T> value, $Res Function(_CursorPaginationDto<T>) _then) = __$CursorPaginationDtoCopyWithImpl;
 @override @useResult
 $Res call({
- List<T> data, String? nextCursor
+ List<T> data
 });
 
 
@@ -272,11 +270,10 @@ class __$CursorPaginationDtoCopyWithImpl<T,$Res>
 
 /// Create a copy of CursorPaginationDto
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? data = null,Object? nextCursor = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? data = null,}) {
   return _then(_CursorPaginationDto<T>(
 data: null == data ? _self._data : data // ignore: cast_nullable_to_non_nullable
-as List<T>,nextCursor: freezed == nextCursor ? _self.nextCursor : nextCursor // ignore: cast_nullable_to_non_nullable
-as String?,
+as List<T>,
   ));
 }
 

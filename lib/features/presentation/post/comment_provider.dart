@@ -27,7 +27,9 @@ class CommentNotifier extends AsyncNotifier<List<CommentDto>> {
 
     state = const AsyncLoading();
 
-    final comment = await api.getComments(postId, null, 20).then((res) => res.data);
+    final comment = await api
+        .getComments(postId, null, 20)
+        .then((res) => res.data);
 
     state = AsyncData(comment);
   }

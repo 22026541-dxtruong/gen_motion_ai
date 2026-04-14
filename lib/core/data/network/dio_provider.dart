@@ -26,7 +26,7 @@ class DioClient {
     // Add interceptors in order
     _dio.interceptors.addAll([
       // Auth interceptor (attach token)
-      AuthInterceptor(secureStorage),
+      AuthInterceptor(_dio, secureStorage),
       // Retry interceptor (retry on failure)
       RetryInterceptor(_dio),
       // Error interceptor (format error messages)
@@ -35,8 +35,15 @@ class DioClient {
       InterceptorsWrapper(
         onResponse: (response, handler) {
           final data = response.data;
-          if (data is Map<String, dynamic> && data['success'] == true && data.containsKey('data')) {
-            response.data = data['data'];
+          if (data is Map<String, dynamic>) {
+            if (data['success'] == true && data.containsKey('data')) {
+              response.data = data['data'];
+            } else {
+              throw DioException(
+                requestOptions: response.requestOptions,
+                message: data['message'] ?? 'Unknown error',
+              );
+            }
           }
           handler.next(response);
         },

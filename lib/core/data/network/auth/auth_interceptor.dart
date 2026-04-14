@@ -1,14 +1,18 @@
 import 'package:dio/dio.dart';
 import 'package:gen_motion_ai/core/data/local/storage/secure_storage.dart';
+import 'package:gen_motion_ai/core/data/network/api_endpoints.dart';
+import 'package:gen_motion_ai/core/data/network/auth/dto/auth_response.dto.dart';
+import 'package:gen_motion_ai/core/data/network/auth/dto/refresh_token.dto.dart';
 
 class AuthInterceptor extends Interceptor {
-  final SecureStorage secureStorage;
-  bool _isRefreshing = false;
-  late final Dio _dio;
+  AuthInterceptor(this._dio, this.secureStorage);
 
-  AuthInterceptor(this.secureStorage) {
-    _dio = Dio();
-  }
+  static const _retryKey = 'auth_retry';
+  static const _skipRefreshKey = 'skip_auth_refresh';
+
+  final Dio _dio;
+  final SecureStorage secureStorage;
+  Future<String?>? _refreshFuture;
 
   @override
   Future<void> onRequest(
@@ -16,15 +20,12 @@ class AuthInterceptor extends Interceptor {
     RequestInterceptorHandler handler,
   ) async {
     try {
-      // Get access token from storage
       final token = await secureStorage.getAccessToken();
 
       if (token != null && token.isNotEmpty) {
         options.headers['Authorization'] = 'Bearer $token';
       }
-    } catch (e) {
-      // Continue with request even if token retrieval fails
-    }
+    } catch (_) {}
 
     return handler.next(options);
   }
@@ -34,66 +35,84 @@ class AuthInterceptor extends Interceptor {
     DioException err,
     ErrorInterceptorHandler handler,
   ) async {
-    if (err.response?.statusCode == 401) {
-      // Handle 401 Unauthorized
-      try {
-        // Try to refresh token
-        final refreshToken = await secureStorage.getRefreshToken();
+    final requestOptions = err.requestOptions;
+    final isUnauthorized = err.response?.statusCode == 401;
+    final alreadyRetried = requestOptions.extra[_retryKey] == true;
+    final skipRefresh = requestOptions.extra[_skipRefreshKey] == true;
 
-        if (refreshToken != null && refreshToken.isNotEmpty) {
-          if (!_isRefreshing) {
-            _isRefreshing = true;
-
-            try {
-              // Call refresh endpoint - adjust path as needed
-              final response = await _dio.post(
-                '${err.requestOptions.baseUrl}/auth/refresh',
-                data: {'refreshToken': refreshToken},
-              );
-
-              if (response.statusCode == 200 && response.data is Map) {
-                final newAccessToken = response.data['accessToken'] ?? response.data['access_token'];
-                
-                if (newAccessToken != null) {
-                  // Save new token
-                  await secureStorage.saveAccessToken(newAccessToken);
-
-                  // Update original request with new token
-                  err.requestOptions.headers['Authorization'] = 'Bearer $newAccessToken';
-
-                  // Retry original request
-                  _isRefreshing = false;
-                  return handler.resolve(await _dio.request(
-                    err.requestOptions.path,
-                    options: Options(
-                      method: err.requestOptions.method,
-                      headers: err.requestOptions.headers,
-                    ),
-                    data: err.requestOptions.data,
-                    queryParameters: err.requestOptions.queryParameters,
-                  ));
-                }
-              }
-            } catch (refreshErr) {
-              _isRefreshing = false;
-              // Refresh failed, clear tokens and return error
-              await secureStorage.deleteAccessToken();
-              await secureStorage.deleteRefreshToken();
-              return handler.next(err);
-            }
-          }
-        } else {
-          // No refresh token, clear auth and fail
-          await secureStorage.deleteAccessToken();
-          await secureStorage.deleteRefreshToken();
-        }
-      } catch (e) {
-        // Error during refresh process
+    if (!isUnauthorized ||
+        alreadyRetried ||
+        skipRefresh ||
+        _isAuthRoute(requestOptions.path)) {
+      if (isUnauthorized && _isAuthRoute(requestOptions.path)) {
+        await secureStorage.clearAllTokens();
       }
-
       return handler.next(err);
     }
 
+    try {
+      final accessToken = await _refreshAccessToken();
+      if (accessToken == null || accessToken.isEmpty) {
+        await secureStorage.clearAllTokens();
+        return handler.next(err);
+      }
+
+      final response = await _dio.fetch<dynamic>(
+        requestOptions.copyWith(
+          headers: {
+            ...requestOptions.headers,
+            'Authorization': 'Bearer $accessToken',
+          },
+          extra: {...requestOptions.extra, _retryKey: true},
+        ),
+      );
+
+      return handler.resolve(response);
+    } catch (_) {
+      await secureStorage.clearAllTokens();
+    }
+
     return handler.next(err);
+  }
+
+  bool _isAuthRoute(String path) {
+    return path.endsWith(ApiEndpoints.login) ||
+        path.endsWith(ApiEndpoints.register) ||
+        path.endsWith(ApiEndpoints.refresh) ||
+        path.endsWith(ApiEndpoints.logout) ||
+        path.endsWith(ApiEndpoints.logoutAll);
+  }
+
+  Future<String?> _refreshAccessToken() async {
+    _refreshFuture ??= _performRefresh();
+    try {
+      return await _refreshFuture;
+    } finally {
+      _refreshFuture = null;
+    }
+  }
+
+  Future<String?> _performRefresh() async {
+    final refreshToken = await secureStorage.getRefreshToken();
+    if (refreshToken == null || refreshToken.isEmpty) {
+      return null;
+    }
+
+    final response = await _dio.post<Map<String, dynamic>>(
+      ApiEndpoints.refresh,
+      data: RefreshTokenDto(refreshToken: refreshToken).toJson(),
+      options: Options(extra: {_skipRefreshKey: true}),
+    );
+
+    final data = response.data;
+    if (data == null) {
+      return null;
+    }
+
+    final authResponse = AuthResponse.fromJson(data);
+    await secureStorage.saveAccessToken(authResponse.accessToken!);
+    await secureStorage.saveRefreshToken(authResponse.refreshToken!);
+
+    return authResponse.accessToken;
   }
 }

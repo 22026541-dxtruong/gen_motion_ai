@@ -7,10 +7,7 @@ class FollowUserDto {
   final String id;
   final String username;
 
-  FollowUserDto({
-    required this.id,
-    required this.username,
-  });
+  FollowUserDto({required this.id, required this.username});
 
   factory FollowUserDto.fromJson(Map<String, dynamic> json) =>
       _$FollowUserDtoFromJson(json);

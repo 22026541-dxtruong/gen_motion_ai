@@ -8,14 +8,14 @@ part of 'create_post.dto.dart';
 
 CreatePostDto _$CreatePostDtoFromJson(Map<String, dynamic> json) =>
     CreatePostDto(
-      assetVersionId: json['asset_version_id'] as String,
+      assetVersionId: json['assetVersionId'] as String,
       caption: json['caption'] as String?,
-      isPublic: json['is_public'] as String,
+      isPublic: json['isPublic'] as String,
     );
 
 Map<String, dynamic> _$CreatePostDtoToJson(CreatePostDto instance) =>
     <String, dynamic>{
-      'asset_version_id': instance.assetVersionId,
+      'assetVersionId': instance.assetVersionId,
       'caption': instance.caption,
-      'is_public': instance.isPublic,
+      'isPublic': instance.isPublic,
     };

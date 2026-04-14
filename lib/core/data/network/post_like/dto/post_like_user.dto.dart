@@ -5,7 +5,6 @@ part 'post_like_user.dto.g.dart';
 @JsonSerializable()
 class PostLikeUserDto {
   final String id;
-  @JsonKey(name: 'created_at')
   final DateTime createdAt;
   final LikeUserDto user;
 
@@ -26,10 +25,7 @@ class LikeUserDto {
   final String id;
   final String username;
 
-  LikeUserDto({
-    required this.id,
-    required this.username,
-  });
+  LikeUserDto({required this.id, required this.username});
 
   factory LikeUserDto.fromJson(Map<String, dynamic> json) =>
       _$LikeUserDtoFromJson(json);

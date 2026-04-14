@@ -8,14 +8,14 @@ part of 'update_post.dto.dart';
 
 UpdatePostDto _$UpdatePostDtoFromJson(Map<String, dynamic> json) =>
     UpdatePostDto(
-      assetVersionId: json['asset_version_id'] as String?,
+      assetVersionId: json['assetVersionId'] as String?,
       caption: json['caption'] as String?,
-      isPublic: json['is_public'] as bool?,
+      isPublic: json['isPublic'] as bool?,
     );
 
 Map<String, dynamic> _$UpdatePostDtoToJson(UpdatePostDto instance) =>
     <String, dynamic>{
-      'asset_version_id': instance.assetVersionId,
+      'assetVersionId': instance.assetVersionId,
       'caption': instance.caption,
-      'is_public': instance.isPublic,
+      'isPublic': instance.isPublic,
     };

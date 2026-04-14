@@ -4,10 +4,10 @@ import 'package:gen_motion_ai/features/presentation/user/me_screen.dart';
 import 'package:go_router/go_router.dart';
 import 'package:gen_motion_ai/features/presentation/auth/auth_screen.dart';
 import 'package:gen_motion_ai/features/presentation/post/post_screen.dart';
-import 'package:gen_motion_ai/features/presentation/generate/generate_screen.dart';
+import 'package:gen_motion_ai/features/presentation/generate/generate_flow_screen.dart';
 import 'package:gen_motion_ai/features/presentation/explore/explore_screen.dart';
 import 'package:gen_motion_ai/features/presentation/gallery/gallery_screen.dart';
-import 'package:gen_motion_ai/features/presentation/queue/queue_screen.dart';
+import 'package:gen_motion_ai/features/presentation/queue/queue_jobs_screen.dart';
 import 'package:gen_motion_ai/features/presentation/user/user_screen.dart';
 import 'package:gen_motion_ai/features/presentation/widgets/main_layout.dart';
 
@@ -54,7 +54,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/create',
             name: 'create',
             pageBuilder: (context, state) =>
-                const NoTransitionPage(child: GenerateScreen()),
+                const NoTransitionPage(child: GenerateFlowScreen()),
           ),
           GoRoute(
             path: '/gallery',
@@ -66,7 +66,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/queue',
             name: 'queue',
             pageBuilder: (context, state) =>
-                const NoTransitionPage(child: QueueScreen()),
+                const NoTransitionPage(child: QueueJobsScreen()),
           ),
         ],
       ),

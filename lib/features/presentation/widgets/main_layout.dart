@@ -5,6 +5,7 @@ import 'package:gen_motion_ai/core/data/network/user/dto/user.dto.dart';
 import 'package:gen_motion_ai/core/theme/app_theme.dart';
 import 'package:gen_motion_ai/core/utils/responsive.dart';
 import 'package:gen_motion_ai/features/presentation/auth/auth_provider.dart';
+import 'package:gen_motion_ai/features/presentation/queue/queue_provider.dart';
 import 'package:gen_motion_ai/features/presentation/user/user_provider.dart';
 import 'package:go_router/go_router.dart';
 
@@ -24,17 +25,31 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
   @override
   Widget build(BuildContext context) {
     final userAsync = ref.watch(currentUserProvider);
+    final activeJobsCount = ref.watch(activeJobsCountProvider);
     return Scaffold(
       key: _scaffoldKey,
-      drawer: context.isMobile ? _MobileDrawer(userAsync: userAsync) : null,
+      drawer: context.isMobile
+          ? _MobileDrawer(
+              userAsync: userAsync,
+              activeJobsCount: activeJobsCount,
+            )
+          : null,
       body: Responsive(
-        mobile: _buildMobileLayout(widget.location, userAsync),
-        desktop: _buildDesktopLayout(widget.location, userAsync),
+        mobile: _buildMobileLayout(widget.location, userAsync, activeJobsCount),
+        desktop: _buildDesktopLayout(
+          widget.location,
+          userAsync,
+          activeJobsCount,
+        ),
       ),
     );
   }
 
-  Widget _buildMobileLayout(String location, AsyncValue<UserDto?> userAsync) {
+  Widget _buildMobileLayout(
+    String location,
+    AsyncValue<UserDto?> userAsync,
+    int activeJobsCount,
+  ) {
     return Column(
       children: [
         SafeArea(
@@ -56,15 +71,19 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
             child: KeyedSubtree(key: ValueKey(location), child: widget.child),
           ),
         ),
-        const _MobileBottomNav(),
+        _MobileBottomNav(activeJobsCount: activeJobsCount),
       ],
     );
   }
 
-  Widget _buildDesktopLayout(String location, AsyncValue<UserDto?> userAsync) {
+  Widget _buildDesktopLayout(
+    String location,
+    AsyncValue<UserDto?> userAsync,
+    int activeJobsCount,
+  ) {
     return Row(
       children: [
-        _DesktopSidebar(userAsync: userAsync),
+        _DesktopSidebar(userAsync: userAsync, activeJobsCount: activeJobsCount),
         Expanded(
           child: PageTransitionSwitcher(
             duration: const Duration(milliseconds: 500),
@@ -85,8 +104,12 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
 
 class _DesktopSidebar extends ConsumerStatefulWidget {
   final AsyncValue<UserDto?> userAsync;
+  final int activeJobsCount;
 
-  const _DesktopSidebar({required this.userAsync});
+  const _DesktopSidebar({
+    required this.userAsync,
+    required this.activeJobsCount,
+  });
 
   @override
   ConsumerState<_DesktopSidebar> createState() => __DesktopSidebarState();
@@ -101,6 +124,7 @@ class __DesktopSidebarState extends ConsumerState<_DesktopSidebar> {
   Widget build(BuildContext context) {
     final currentRoute = GoRouterState.of(context).matchedLocation;
     final width = _collapsed ? 72.0 : 240.0;
+    final colors = context.appColors;
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
@@ -174,17 +198,21 @@ class __DesktopSidebarState extends ConsumerState<_DesktopSidebar> {
                   ),
                   if (_expandedDone) ...[
                     const SizedBox(width: 12),
-                    const Text(
+                    Text(
                       'Gen Motion AI',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
+                        color: colors.textPrimary,
                       ),
                     ),
                     const Spacer(),
-
+                    _ThemeModeButton(compact: true),
                     IconButton(
-                      icon: Icon(Icons.chevron_left),
+                      icon: Icon(
+                        Icons.chevron_left,
+                        color: colors.textSecondary,
+                      ),
                       onPressed: () {
                         setState(() {
                           _collapsed = true;
@@ -198,7 +226,7 @@ class __DesktopSidebarState extends ConsumerState<_DesktopSidebar> {
             ),
           ),
 
-          const Divider(color: AppTheme.borderColor),
+          Divider(color: colors.border),
 
           // Navigation items
           Expanded(
@@ -232,23 +260,25 @@ class __DesktopSidebarState extends ConsumerState<_DesktopSidebar> {
                   route: '/queue',
                   isActive: currentRoute == '/queue',
                   collapsed: !_expandedDone,
-                  badge: '3',
+                  badge: widget.activeJobsCount > 0
+                      ? widget.activeJobsCount.toString()
+                      : null,
                 ),
               ],
             ),
           ),
 
           // User section
-          const Divider(color: AppTheme.borderColor),
+          Divider(color: colors.border),
           Padding(
             padding: const EdgeInsets.all(8),
             child: Container(
               height: 56,
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: AppTheme.cardColor,
+                color: colors.card,
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: AppTheme.borderColor),
+                border: Border.all(color: colors.border),
               ),
               child: Row(
                 children: [
@@ -275,6 +305,8 @@ class __DesktopSidebarState extends ConsumerState<_DesktopSidebar> {
                         children: [
                           Text(
                             widget.userAsync.value?.username ?? 'User',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
@@ -288,11 +320,15 @@ class __DesktopSidebarState extends ConsumerState<_DesktopSidebar> {
                                 color: AppTheme.accentGreen,
                               ),
                               const SizedBox(width: 4),
-                              const Text(
-                                '150 credits',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: AppTheme.textSecondary,
+                              Expanded(
+                                child: Text(
+                                  '${widget.userAsync.value?.credits?.balance ?? 0} credits',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: colors.textSecondary,
+                                  ),
                                 ),
                               ),
                             ],
@@ -300,16 +336,17 @@ class __DesktopSidebarState extends ConsumerState<_DesktopSidebar> {
                         ],
                       ),
                     ),
+                    _ThemeModeButton(compact: true),
                     IconButton(
                       onPressed: () async {
                         await ref.read(authProvider.notifier).logout();
                         if (!context.mounted) return;
                         context.go('/login');
                       },
-                      icon: const Icon(
+                      icon: Icon(
                         Icons.logout,
                         size: 20,
-                        color: AppTheme.textSecondary,
+                        color: colors.textSecondary,
                       ),
                       tooltip: 'Logout',
                     ),
@@ -343,6 +380,7 @@ class _DesktopNavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.appColors;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
       child: Material(
@@ -371,7 +409,7 @@ class _DesktopNavItem extends StatelessWidget {
                   size: 20,
                   color: isActive
                       ? AppTheme.primaryColor
-                      : AppTheme.textSecondary,
+                      : colors.textSecondary,
                 ),
 
                 if (!collapsed) ...[
@@ -385,8 +423,8 @@ class _DesktopNavItem extends StatelessWidget {
                             ? FontWeight.w600
                             : FontWeight.w500,
                         color: isActive
-                            ? AppTheme.textPrimary
-                            : AppTheme.textSecondary,
+                            ? colors.textPrimary
+                            : colors.textSecondary,
                       ),
                     ),
                   ),
@@ -426,11 +464,12 @@ class _MobileTopBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.appColors;
     return Container(
       height: 56,
-      decoration: const BoxDecoration(
-        color: AppTheme.surfaceColor,
-        border: Border(bottom: BorderSide(color: AppTheme.borderColor)),
+      decoration: BoxDecoration(
+        color: colors.surface,
+        border: Border(bottom: BorderSide(color: colors.border)),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
@@ -449,15 +488,15 @@ class _MobileTopBar extends StatelessWidget {
             child: const Icon(Icons.auto_awesome, size: 16),
           ),
           const SizedBox(width: 8),
-          const Text(
-            'Gen Motion AI',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          const Expanded(
+            child: Text(
+              'Gen Motion AI',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
           ),
-          const Spacer(),
-          IconButton(
-            icon: const Icon(Icons.notifications_outlined, size: 22),
-            onPressed: () {},
-          ),
+          const _ThemeModeButton(),
         ],
       ),
     );
@@ -466,12 +505,15 @@ class _MobileTopBar extends StatelessWidget {
 
 class _MobileDrawer extends ConsumerWidget {
   final AsyncValue<UserDto?> userAsync;
-  const _MobileDrawer({required this.userAsync});
+  final int activeJobsCount;
+
+  const _MobileDrawer({required this.userAsync, required this.activeJobsCount});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.appColors;
     return Drawer(
-      backgroundColor: AppTheme.surfaceColor,
+      backgroundColor: colors.surface,
       child: SafeArea(
         child: Column(
           children: [
@@ -499,8 +541,10 @@ class _MobileDrawer extends ConsumerWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'User Name',
+                        Text(
+                          userAsync.value?.username ?? 'User',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
@@ -514,11 +558,15 @@ class _MobileDrawer extends ConsumerWidget {
                               color: AppTheme.accentGreen,
                             ),
                             const SizedBox(width: 4),
-                            const Text(
-                              '150 credits',
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: AppTheme.textSecondary,
+                            Expanded(
+                              child: Text(
+                                '${userAsync.value?.credits?.balance ?? 0} credits',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: colors.textSecondary,
+                                ),
                               ),
                             ),
                           ],
@@ -530,7 +578,7 @@ class _MobileDrawer extends ConsumerWidget {
               ),
             ),
 
-            const Divider(color: AppTheme.borderColor),
+            Divider(color: colors.border),
 
             // Navigation items
             Expanded(
@@ -539,7 +587,7 @@ class _MobileDrawer extends ConsumerWidget {
                   horizontal: 12,
                   vertical: 8,
                 ),
-                children: const [
+                children: [
                   _MobileNavItem(
                     icon: Icons.explore_outlined,
                     label: 'Explore',
@@ -559,25 +607,31 @@ class _MobileDrawer extends ConsumerWidget {
                     icon: Icons.queue_outlined,
                     label: 'Queue',
                     route: '/queue',
-                    badge: '3',
+                    badge: activeJobsCount > 0
+                        ? activeJobsCount.toString()
+                        : null,
                   ),
                 ],
               ),
             ),
 
-            const Divider(color: AppTheme.borderColor),
+            Divider(color: colors.border),
 
             // Settings
             ListTile(
-              leading: const Icon(Icons.settings_outlined),
-              title: const Text('Settings'),
-              onTap: () {},
+              leading: Icon(
+                context.isDarkTheme
+                    ? Icons.light_mode_outlined
+                    : Icons.dark_mode_outlined,
+              ),
+              title: Text(context.isDarkTheme ? 'Light mode' : 'Dark mode'),
+              onTap: () => ref.read(themeModeProvider.notifier).toggle(),
             ),
             ListTile(
-              leading: const Icon(Icons.logout, color: AppTheme.textSecondary),
-              title: const Text(
+              leading: Icon(Icons.logout, color: colors.textSecondary),
+              title: Text(
                 'Logout',
-                style: TextStyle(color: AppTheme.textSecondary),
+                style: TextStyle(color: colors.textSecondary),
               ),
               onTap: () async {
                 await ref.read(authProvider.notifier).logout();
@@ -609,19 +663,20 @@ class _MobileNavItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final currentRoute = GoRouterState.of(context).matchedLocation;
     final isActive = currentRoute == route;
+    final colors = context.appColors;
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
       child: ListTile(
         leading: Icon(
           icon,
-          color: isActive ? AppTheme.primaryColor : AppTheme.textSecondary,
+          color: isActive ? AppTheme.primaryColor : colors.textSecondary,
         ),
         title: Text(
           label,
           style: TextStyle(
             fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
-            color: isActive ? AppTheme.textPrimary : AppTheme.textSecondary,
+            color: isActive ? colors.textPrimary : colors.textSecondary,
           ),
         ),
         trailing: badge != null
@@ -652,17 +707,20 @@ class _MobileNavItem extends StatelessWidget {
 }
 
 class _MobileBottomNav extends StatelessWidget {
-  const _MobileBottomNav();
+  final int activeJobsCount;
+
+  const _MobileBottomNav({required this.activeJobsCount});
 
   @override
   Widget build(BuildContext context) {
     final currentRoute = GoRouterState.of(context).matchedLocation;
+    final colors = context.appColors;
 
     return Container(
       height: 64,
-      decoration: const BoxDecoration(
-        color: AppTheme.surfaceColor,
-        border: Border(top: BorderSide(color: AppTheme.borderColor)),
+      decoration: BoxDecoration(
+        color: colors.surface,
+        border: Border(top: BorderSide(color: colors.border)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -691,7 +749,7 @@ class _MobileBottomNav extends StatelessWidget {
             label: 'Queue',
             route: '/queue',
             isActive: currentRoute == '/queue',
-            badge: '3',
+            badge: activeJobsCount > 0 ? activeJobsCount.toString() : null,
           ),
         ],
       ),
@@ -718,6 +776,7 @@ class _BottomNavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.appColors;
     return InkWell(
       onTap: () => context.go(route),
       child: Container(
@@ -732,7 +791,7 @@ class _BottomNavItem extends StatelessWidget {
                   icon,
                   color: isActive
                       ? AppTheme.primaryColor
-                      : AppTheme.textSecondary,
+                      : colors.textSecondary,
                   size: isCenter ? 32 : 24,
                 ),
                 const SizedBox(height: 4),
@@ -742,7 +801,7 @@ class _BottomNavItem extends StatelessWidget {
                     fontSize: 11,
                     color: isActive
                         ? AppTheme.primaryColor
-                        : AppTheme.textSecondary,
+                        : colors.textSecondary,
                     fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
                   ),
                 ),
@@ -775,6 +834,38 @@ class _BottomNavItem extends StatelessWidget {
               ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _ThemeModeButton extends ConsumerWidget {
+  const _ThemeModeButton({this.compact = false});
+
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final mode = ref.watch(themeModeProvider);
+    final colors = context.appColors;
+    final isDark = mode == ThemeMode.dark;
+    final icon = isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined;
+    final label = isDark ? 'Light' : 'Dark';
+
+    if (compact) {
+      return IconButton(
+        onPressed: () => ref.read(themeModeProvider.notifier).toggle(),
+        tooltip: isDark ? 'Switch to light mode' : 'Switch to dark mode',
+        icon: Icon(icon, color: colors.textSecondary),
+      );
+    }
+
+    return OutlinedButton.icon(
+      onPressed: () => ref.read(themeModeProvider.notifier).toggle(),
+      icon: Icon(icon, size: 18),
+      label: Text(label),
+      style: OutlinedButton.styleFrom(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       ),
     );
   }

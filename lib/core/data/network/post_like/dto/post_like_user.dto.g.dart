@@ -9,14 +9,14 @@ part of 'post_like_user.dto.dart';
 PostLikeUserDto _$PostLikeUserDtoFromJson(Map<String, dynamic> json) =>
     PostLikeUserDto(
       id: json['id'] as String,
-      createdAt: DateTime.parse(json['created_at'] as String),
+      createdAt: DateTime.parse(json['createdAt'] as String),
       user: LikeUserDto.fromJson(json['user'] as Map<String, dynamic>),
     );
 
 Map<String, dynamic> _$PostLikeUserDtoToJson(PostLikeUserDto instance) =>
     <String, dynamic>{
       'id': instance.id,
-      'created_at': instance.createdAt.toIso8601String(),
+      'createdAt': instance.createdAt.toIso8601String(),
       'user': instance.user,
     };
 

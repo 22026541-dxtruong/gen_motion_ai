@@ -1,34 +1,52 @@
 import 'package:dio/dio.dart';
-import 'package:gen_motion_ai/core/data/network/jobs/dto/create_video_job_dto.dart';
-import 'package:gen_motion_ai/core/data/network/jobs/dto/job_response_dto.dart';
-import 'package:retrofit/retrofit.dart';
+import 'package:gen_motion_ai/core/data/network/api_endpoints.dart';
+import 'package:gen_motion_ai/core/data/network/jobs/dto/job.dto.dart';
 
-part 'jobs_api.g.dart';
+class JobsApi {
+  JobsApi(this._dio);
 
-@RestApi()
-abstract class JobsApi {
-  factory JobsApi(Dio dio) = _JobsApi;
+  final Dio _dio;
 
-  @POST('/jobs/video')
-  Future<JobResponseDto> createVideoJob(
-    @Body() CreateVideoJobDto body,
-  );
+  Future<CreateVideoJobResponseDto> createVideoJob(
+    CreateVideoJobRequestDto body,
+  ) async {
+    final response = await _dio.post<Map<String, dynamic>>(
+      ApiEndpoints.createVideoJob,
+      data: body.toJson(),
+    );
 
-  @GET('/jobs')
-  Future<List<JobResponseDto>> listMyJobs();
+    return CreateVideoJobResponseDto.fromJson(response.data!);
+  }
 
-  @GET('/jobs/{id}')
-  Future<JobResponseDto> getJob(
-    @Path('id') String id,
-  );
+  Future<List<JobSummaryDto>> listMyJobs() async {
+    final response = await _dio.get<List<dynamic>>(ApiEndpoints.jobs);
+    return (response.data ?? const [])
+        .whereType<Map<String, dynamic>>()
+        .map(JobSummaryDto.fromJson)
+        .toList();
+  }
 
-  @GET('/jobs/{id}/result')
-  Future<JobResponseDto> getJobResult(
-    @Path('id') String id,
-  );
+  Future<JobDetailDto> getJobById(String jobId) async {
+    final response = await _dio.get<Map<String, dynamic>>(
+      ApiEndpoints.jobById(jobId),
+    );
 
-  @POST('/jobs/{id}/cancel')
-  Future<dynamic> cancelJob(
-    @Path('id') String id,
-  );
+    return JobDetailDto.fromJson(response.data!);
+  }
+
+  Future<JobResultDto> getJobResult(String jobId) async {
+    final response = await _dio.get<Map<String, dynamic>>(
+      ApiEndpoints.jobResult(jobId),
+    );
+
+    return JobResultDto.fromJson(response.data!);
+  }
+
+  Future<CancelJobResponseDto> cancelJob(String jobId) async {
+    final response = await _dio.post<Map<String, dynamic>>(
+      ApiEndpoints.jobCancel(jobId),
+    );
+
+    return CancelJobResponseDto.fromJson(response.data!);
+  }
 }

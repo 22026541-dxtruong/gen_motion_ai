@@ -8,11 +8,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env");
 
-  runApp(
-    const ProviderScope(
-      child: MyApp(),
-    ),
-  );
+  runApp(const ProviderScope(child: MyApp()));
 }
 
 class MyApp extends ConsumerWidget {
@@ -22,21 +18,25 @@ class MyApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(routerProvider);
     final key = ref.watch(appResetProvider);
+    final themeMode = ref.watch(themeModeProvider);
 
     return KeyedSubtree(
       key: key,
       child: MaterialApp.router(
         title: 'Gen Motion AI',
         debugShowCheckedModeBanner: false,
-        theme: AppTheme.darkTheme,
+        theme: AppTheme.lightTheme,
+        darkTheme: AppTheme.darkTheme,
+        themeMode: themeMode,
         routerConfig: router,
       ),
     );
   }
 }
 
-final appResetProvider =
-    NotifierProvider<AppResetNotifier, UniqueKey>(AppResetNotifier.new);
+final appResetProvider = NotifierProvider<AppResetNotifier, UniqueKey>(
+  AppResetNotifier.new,
+);
 
 class AppResetNotifier extends Notifier<UniqueKey> {
   @override

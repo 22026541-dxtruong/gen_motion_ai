@@ -6,7 +6,6 @@ part 'comment.dto.g.dart';
 class CommentDto {
   final String id;
   final String content;
-  @JsonKey(name: 'created_at')
   final DateTime createdAt;
   final CommentUserDto user;
 
@@ -28,10 +27,7 @@ class CommentUserDto {
   final String id;
   final String username;
 
-  CommentUserDto({
-    required this.id,
-    required this.username,
-  });
+  CommentUserDto({required this.id, required this.username});
 
   factory CommentUserDto.fromJson(Map<String, dynamic> json) =>
       _$CommentUserDtoFromJson(json);

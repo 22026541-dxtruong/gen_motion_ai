@@ -14,14 +14,16 @@ class CurrentUserNotifier extends AsyncNotifier<UserDto?> {
   }
 
   Future<void> fetchMe() async {
-    state = const AsyncLoading();
-    final api = ref.read(userApiProvider);
-    try {
-      final dto = await api.getMe();
-      state = AsyncData(dto);
-    } catch (_) {
-      state = const AsyncData(null);
+    final previous = state.asData?.value;
+    if (previous == null) {
+      state = const AsyncLoading();
     }
+
+    final api = ref.read(userApiProvider);
+
+    final dto = await api.getMe();
+
+    state = AsyncData(dto);
   }
 
   void logout() {
@@ -30,36 +32,43 @@ class CurrentUserNotifier extends AsyncNotifier<UserDto?> {
 }
 
 final userProvider =
-    FutureProvider.family<UserDto?, String>((ref, userId) async {
-  final currentUser = ref.read(currentUserProvider).maybeWhen(
-    data: (d) => d,
-    orElse: () => null,
-  );
-  if (currentUser != null && currentUser.id == userId) {
-    return currentUser;
-  }
-  final api = ref.read(userApiProvider);
-  try {
-    return await api.getUserById(userId);
-  } catch (_) {
-    return null;
-  }
-});
+    AsyncNotifierProvider.family<UserNotifier, UserDto?, String>(
+      UserNotifier.new,
+    );
 
-// Provider để lấy danh sách bài post của user và chỉ lọc những bài public
-final userPublicPostsProvider =
-    FutureProvider.family<List<dynamic>, String>((ref, userId) async {
-  try {
-    // TODO: Thay thế userApiProvider bằng Provider API tương ứng với Posts/Gallery của bạn
-    // Ví dụ: final api = ref.read(postApiProvider);
-    // final posts = await api.getPostsByUserId(userId);
-    
-    // Chỉ lấy và hiển thị những bài post được người dùng cho phép công khai
-    // return posts.where((post) => post.isPublic == true).toList();
+class UserNotifier extends AsyncNotifier<UserDto?> {
+  UserNotifier(this.userId);
 
-    // Trả về mảng rỗng tạm thời để giao diện không bị lỗi cho đến khi bạn nối API thật
-    return [];
-  } catch (e) {
-    return [];
+  final String userId;
+
+  @override
+  Future<UserDto?> build() async {
+    final api = ref.read(userApiProvider);
+
+    try {
+      if (userId == ref.read(currentUserProvider).value?.id) {
+        return ref.read(currentUserProvider).value;
+      }
+      return await api.getUserById(userId);
+    } catch (_) {
+      return null;
+    }
   }
-});
+
+  Future<void> refresh() async {
+    state = const AsyncLoading();
+
+    final api = ref.read(userApiProvider);
+
+    final currentUserId = ref.read(currentUserProvider).value?.id;
+    if (userId == currentUserId) {
+      await ref.read(currentUserProvider.notifier).fetchMe();
+      state = AsyncData(ref.read(currentUserProvider).value);
+      return;
+    }
+
+    final user = await api.getUserById(userId);
+
+    state = AsyncData(user);
+  }
+}

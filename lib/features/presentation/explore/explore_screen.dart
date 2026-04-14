@@ -56,6 +56,15 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen>
 
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
+      floatingActionButton: Responsive.isMobile(context)
+          ? FloatingActionButton.extended(
+              onPressed: () => _showPublishModal(context),
+              backgroundColor: AppTheme.primaryColor,
+              foregroundColor: Colors.white,
+              icon: const Icon(Icons.add_photo_alternate_outlined),
+              label: const Text('Publish'),
+            )
+          : null,
       body: Column(
         children: [
           // Header area
@@ -65,6 +74,118 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen>
           // Content
           Expanded(child: _buildContent(exploreState)),
         ],
+      ),
+    );
+  }
+
+  void _showPublishModal(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppTheme.surfaceColor,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+          left: 20,
+          right: 20,
+          top: 20,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Publish Creation',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.textPrimary,
+                  ),
+                ),
+                IconButton(
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.close, color: AppTheme.textSecondary),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            Container(
+              height: 150,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: AppTheme.cardColor,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: AppTheme.borderColor,
+                  style: BorderStyle.solid,
+                ),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(
+                    Icons.cloud_upload_outlined,
+                    size: 40,
+                    color: AppTheme.primaryColor,
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Select Video or Image generated',
+                    style: TextStyle(
+                      color: AppTheme.textSecondary.withValues(alpha: 0.8),
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+            const TextField(
+              maxLines: 3,
+              decoration: InputDecoration(
+                hintText: 'Write a description or prompt used...',
+                hintStyle: TextStyle(color: AppTheme.textSecondary),
+                filled: true,
+                fillColor: AppTheme.cardColor,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(12)),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Published successfully!'),
+                      backgroundColor: AppTheme.primaryColor,
+                    ),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primaryColor,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text('Post to Community'),
+              ),
+            ),
+            const SizedBox(height: 32),
+          ],
+        ),
       ),
     );
   }

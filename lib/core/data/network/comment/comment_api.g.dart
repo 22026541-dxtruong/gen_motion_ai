@@ -123,7 +123,7 @@ class _CommentApi implements CommentApi {
       Options(method: 'DELETE', headers: _headers, extra: _extra)
           .compose(
             _dio.options,
-            '/comments/${id}',
+            '/posts/{postId}/comments/{commentId}',
             queryParameters: queryParameters,
             data: _data,
           )

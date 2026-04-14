@@ -62,8 +62,7 @@ class SecureStorage {
     return token != null && token.isNotEmpty;
   }
 }
-
-final secureStorageProvider = Provider<SecureStorage>((ref) {
+final secureStorageProvider = Provider<SecureStorage>((ref) { 
   const storage = FlutterSecureStorage(
     aOptions: AndroidOptions(
       encryptedSharedPreferences: true,

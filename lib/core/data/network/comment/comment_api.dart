@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:gen_motion_ai/core/data/network/api_endpoints.dart';
 import 'package:gen_motion_ai/core/data/network/comment/dto/comment.dto.dart';
 import 'package:gen_motion_ai/core/data/network/comment/dto/create_comment.dto.dart';
 import 'package:gen_motion_ai/core/data/network/comment/dto/update_comment.dto.dart';
@@ -12,27 +13,25 @@ part 'comment_api.g.dart';
 abstract class CommentApi {
   factory CommentApi(Dio dio, {String baseUrl}) = _CommentApi;
 
-  @POST('/posts/{postId}/comments')
+  @POST(ApiEndpoints.postComments)
   Future<IdResponseDto> createComment(
     @Path('postId') String postId,
     @Body() CreateCommentDto dto,
   );
 
-  @GET('/posts/{postId}/comments')
+  @GET(ApiEndpoints.postComments)
   Future<CursorPaginationDto<CommentDto>> getComments(
     @Path('postId') String postId,
     @Query('cursor') String? cursor,
     @Query('take') int take,
   );
 
-  @PATCH('/comments/{id}')
+  @PATCH(ApiEndpoints.commentById)
   Future<IdResponseDto> updateComment(
     @Path('id') String id,
     @Body() UpdateCommentDto dto,
   );
 
-  @DELETE('/comments/{id}')
-  Future<IdResponseDto> deleteComment(
-    @Path('id') String id,
-  );
+  @DELETE(ApiEndpoints.postCommentById)
+  Future<IdResponseDto> deleteComment(@Path('id') String id);
 }

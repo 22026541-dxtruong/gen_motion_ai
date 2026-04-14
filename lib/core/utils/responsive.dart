@@ -1,10 +1,6 @@
 import 'package:flutter/material.dart';
 
-enum DeviceType {
-  mobile,
-  tablet,
-  desktop,
-}
+enum DeviceType { mobile, tablet, desktop }
 
 class Responsive extends StatelessWidget {
   final Widget mobile;
@@ -75,7 +71,7 @@ extension ResponsiveExt on BuildContext {
   bool get isTablet => Responsive.isTablet(this);
   bool get isDesktop => Responsive.isDesktop(this);
   DeviceType get deviceType => Responsive.getDeviceType(this);
-  
+
   double get width => MediaQuery.of(this).size.width;
   double get height => MediaQuery.of(this).size.height;
 }

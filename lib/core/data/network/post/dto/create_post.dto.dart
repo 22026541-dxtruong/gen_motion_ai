@@ -4,10 +4,8 @@ part 'create_post.dto.g.dart';
 
 @JsonSerializable()
 class CreatePostDto {
-  @JsonKey(name: 'asset_version_id')
   final String assetVersionId;
   final String? caption;
-  @JsonKey(name: 'is_public')
   final String isPublic;
 
   CreatePostDto({required this.assetVersionId, this.caption, required this.isPublic});
