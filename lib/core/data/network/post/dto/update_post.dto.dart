@@ -7,9 +7,9 @@ part 'update_post.dto.g.dart';
 abstract class UpdatePostDto with _$UpdatePostDto {
   @JsonSerializable(includeIfNull: false)
   const factory UpdatePostDto({
-    @JsonKey(name: 'asset_version_id') String? assetVersionId,
+    String? assetVersionId,
     String? caption,
-    @JsonKey(name: 'is_public') bool? isPublic,
+    bool? isPublic,
   }) = _UpdatePostDto;
 
   factory UpdatePostDto.fromJson(Map<String, dynamic> json) =>

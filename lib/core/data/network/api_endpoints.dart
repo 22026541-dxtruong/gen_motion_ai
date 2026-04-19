@@ -21,10 +21,13 @@ class ApiEndpoints {
   // Authentication
   static const String register = '/auth/register';
   static const String login = '/auth/login';
+  static const String googleAuth = '/auth/google';
   static const String refresh = '/auth/refresh';
   static const String logout = '/auth/logout';
   static const String logoutAll = '/auth/logout-all';
   static const String changePassword = '/auth/change-password';
+  static const String forgotPassword = '/auth/forgot-password';
+  static const String resetPassword = '/auth/reset-password';
 
   // User
   static const String userMe = '/users/me';
@@ -63,11 +66,15 @@ class ApiEndpoints {
 
   // Explore
   static const String explore = '/explore';
+  static const String exploreForYou = '/explore/for-you';
+  static const String exploreEvents = '/explore/events';
+  static const String exploreEventsBatch = '/explore/events/batch';
 
   // Follow
-  static const String userFollow = '/users/{userId}/follows';
+  static const String follows = '/follows';
+  static const String followByUserId = '/follows/{userId}';
   static const String userFollowers = '/users/{userId}/followers';
-  static const String userFollowing = '/users/{userId}/following';
+  static const String userFollowings = '/users/{userId}/followings';
 
   // Canvas
   static const String canvasSessions = '/canvas/sessions';
@@ -76,6 +83,8 @@ class ApiEndpoints {
 
   // Smart Icons
   static const String smartIcons = '/smart-icons';
+
+  static String absoluteUrl(String path) => '$baseUrl$path';
 
   static String _normalizeBaseUrl(String url) {
     if (url.endsWith('/')) {

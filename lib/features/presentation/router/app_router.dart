@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gen_motion_ai/features/presentation/auth/auth_provider.dart';
+import 'package:gen_motion_ai/features/presentation/auth/reset_password_screen.dart';
 import 'package:gen_motion_ai/features/presentation/user/user_provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:gen_motion_ai/features/presentation/auth/auth_screen.dart';
@@ -18,10 +19,13 @@ final routerProvider = Provider<GoRouter>((ref) {
     initialLocation: '/explore',
     redirect: (context, state) => auth.when(
       data: (isAuthenticated) {
-        final loggingIn =
-            state.uri.path == '/login' || state.uri.path == '/register';
-        if (!isAuthenticated && !loggingIn) return '/login';
-        if (isAuthenticated && loggingIn) return '/explore';
+        final isPublicAuthPath =
+            state.uri.path == '/login' ||
+            state.uri.path == '/register' ||
+            state.uri.path == '/reset-password';
+
+        if (!isAuthenticated && !isPublicAuthPath) return '/login';
+        if (isAuthenticated && isPublicAuthPath) return '/explore';
         return null;
       },
       loading: () => null,
@@ -31,14 +35,26 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/login',
         name: 'login',
-        pageBuilder: (context, state) =>
-            const NoTransitionPage(child: AuthScreen()),
+        pageBuilder: (context, state) => const NoTransitionPage(
+          child: AuthScreen(initialMode: AuthScreenMode.login),
+        ),
       ),
       GoRoute(
         path: '/register',
         name: 'register',
-        pageBuilder: (context, state) =>
-            const NoTransitionPage(child: AuthScreen()),
+        pageBuilder: (context, state) => const NoTransitionPage(
+          child: AuthScreen(initialMode: AuthScreenMode.register),
+        ),
+      ),
+      GoRoute(
+        path: '/reset-password',
+        name: 'resetPassword',
+        pageBuilder: (context, state) {
+          final token = state.uri.queryParameters['token'];
+          return NoTransitionPage(
+            child: ResetPasswordScreen(initialToken: token),
+          );
+        },
       ),
       ShellRoute(
         builder: (context, state, child) {

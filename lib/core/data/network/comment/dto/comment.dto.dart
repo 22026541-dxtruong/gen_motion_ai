@@ -6,7 +6,6 @@ part 'comment.dto.g.dart';
 class CommentDto {
   final String id;
   final String content;
-  @JsonKey(name: 'created_at')
   final DateTime createdAt;
   final CommentUserDto user;
 

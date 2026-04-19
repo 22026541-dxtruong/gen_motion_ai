@@ -13,6 +13,9 @@ UserDto _$UserDtoFromJson(Map<String, dynamic> json) => UserDto(
   avatarUrl: json['avatarUrl'] as String?,
   bio: json['bio'] as String?,
   role: json['role'] as String?,
+  proExpiresAt: json['proExpiresAt'] == null
+      ? null
+      : DateTime.parse(json['proExpiresAt'] as String),
   createdAt: json['createdAt'] == null
       ? null
       : DateTime.parse(json['createdAt'] as String),
@@ -34,6 +37,7 @@ Map<String, dynamic> _$UserDtoToJson(UserDto instance) => <String, dynamic>{
   'avatarUrl': instance.avatarUrl,
   'bio': instance.bio,
   'role': instance.role,
+  'proExpiresAt': instance.proExpiresAt?.toIso8601String(),
   'createdAt': instance.createdAt?.toIso8601String(),
   'credits': instance.credits?.toJson(),
   'counts': instance.counts?.toJson(),

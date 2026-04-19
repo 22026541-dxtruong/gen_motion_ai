@@ -20,25 +20,26 @@ class _FollowApi implements FollowApi {
   final ParseErrorLogger? errorLogger;
 
   @override
-  Future<IdResponseDto> follow(String userId) async {
+  Future<FollowRecordDto> follow(CreateFollowDto dto) async {
     final _extra = <String, dynamic>{};
     final queryParameters = <String, dynamic>{};
     final _headers = <String, dynamic>{};
-    const Map<String, dynamic>? _data = null;
-    final _options = _setStreamType<IdResponseDto>(
+    final _data = <String, dynamic>{};
+    _data.addAll(dto.toJson());
+    final _options = _setStreamType<FollowRecordDto>(
       Options(method: 'POST', headers: _headers, extra: _extra)
           .compose(
             _dio.options,
-            '/users/${userId}/follows',
+            '/follows',
             queryParameters: queryParameters,
             data: _data,
           )
           .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
     );
     final _result = await _dio.fetch<Map<String, dynamic>>(_options);
-    late IdResponseDto _value;
+    late FollowRecordDto _value;
     try {
-      _value = IdResponseDto.fromJson(_result.data!);
+      _value = FollowRecordDto.fromJson(_result.data!);
     } on Object catch (e, s) {
       errorLogger?.logError(e, s, _options, response: _result);
       rethrow;
@@ -47,25 +48,25 @@ class _FollowApi implements FollowApi {
   }
 
   @override
-  Future<IdResponseDto> unfollow(String userId) async {
+  Future<FollowRecordDto> unfollow(String userId) async {
     final _extra = <String, dynamic>{};
     final queryParameters = <String, dynamic>{};
     final _headers = <String, dynamic>{};
     const Map<String, dynamic>? _data = null;
-    final _options = _setStreamType<IdResponseDto>(
+    final _options = _setStreamType<FollowRecordDto>(
       Options(method: 'DELETE', headers: _headers, extra: _extra)
           .compose(
             _dio.options,
-            '/users/${userId}/follows',
+            '/follows/${userId}',
             queryParameters: queryParameters,
             data: _data,
           )
           .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
     );
     final _result = await _dio.fetch<Map<String, dynamic>>(_options);
-    late IdResponseDto _value;
+    late FollowRecordDto _value;
     try {
-      _value = IdResponseDto.fromJson(_result.data!);
+      _value = FollowRecordDto.fromJson(_result.data!);
     } on Object catch (e, s) {
       errorLogger?.logError(e, s, _options, response: _result);
       rethrow;
@@ -123,7 +124,7 @@ class _FollowApi implements FollowApi {
       Options(method: 'GET', headers: _headers, extra: _extra)
           .compose(
             _dio.options,
-            '/users/${userId}/following',
+            '/users/${userId}/followings',
             queryParameters: queryParameters,
             data: _data,
           )

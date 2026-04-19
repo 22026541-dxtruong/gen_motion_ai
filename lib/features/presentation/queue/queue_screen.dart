@@ -35,7 +35,9 @@ class QueueScreen extends StatelessWidget {
           SizedBox(height: context.isMobile ? 16 : 24),
 
           // Queue stats
-          context.isMobile ? _buildMobileStats() : _buildDesktopStats(),
+          context.isMobile
+              ? _buildMobileStats(context)
+              : _buildDesktopStats(context),
 
           SizedBox(height: context.isMobile ? 20 : 24),
 
@@ -104,7 +106,7 @@ class QueueScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildMobileStats() {
+  Widget _buildMobileStats(BuildContext context) {
     return Column(
       children: [
         Row(
@@ -130,8 +132,8 @@ class QueueScreen extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         Row(
-          children: const [
-            Expanded(
+          children: [
+            const Expanded(
               child: _StatCard(
                 label: 'Completed',
                 value: '12',
@@ -139,7 +141,7 @@ class QueueScreen extends StatelessWidget {
                 color: AppTheme.accentPurple,
               ),
             ),
-            SizedBox(width: 12),
+            const SizedBox(width: 12),
             Expanded(
               child: _StatCard(
                 label: 'Est. Time',
@@ -154,10 +156,10 @@ class QueueScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildDesktopStats() {
+  Widget _buildDesktopStats(BuildContext context) {
     return Row(
-      children: const [
-        Expanded(
+      children: [
+        const Expanded(
           child: _StatCard(
             label: 'In Queue',
             value: '3',
@@ -165,8 +167,8 @@ class QueueScreen extends StatelessWidget {
             color: AppTheme.primaryColor,
           ),
         ),
-        SizedBox(width: 16),
-        Expanded(
+        const SizedBox(width: 16),
+        const Expanded(
           child: _StatCard(
             label: 'Processing',
             value: '1',
@@ -174,8 +176,8 @@ class QueueScreen extends StatelessWidget {
             color: AppTheme.accentGreen,
           ),
         ),
-        SizedBox(width: 16),
-        Expanded(
+        const SizedBox(width: 16),
+        const Expanded(
           child: _StatCard(
             label: 'Completed Today',
             value: '12',
@@ -183,7 +185,7 @@ class QueueScreen extends StatelessWidget {
             color: AppTheme.accentPurple,
           ),
         ),
-        SizedBox(width: 16),
+        const SizedBox(width: 16),
         Expanded(
           child: _StatCard(
             label: 'Estimated Time',
@@ -277,7 +279,7 @@ class _QueueItem extends StatelessWidget {
             Row(
               children: [
                 // Status icon
-                _buildStatusIcon(),
+                _buildStatusIcon(context),
                 SizedBox(width: isMobile ? 12 : 16),
 
                 // Info
@@ -356,7 +358,7 @@ class _QueueItem extends StatelessWidget {
               SizedBox(height: isMobile ? 6 : 8),
               Row(
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.schedule,
                     size: 14,
                     color: context.appColors.textSecondary,
@@ -418,7 +420,7 @@ class _QueueItem extends StatelessWidget {
     );
   }
 
-  Widget _buildStatusIcon() {
+  Widget _buildStatusIcon(BuildContext context) {
     IconData icon;
     Color color;
 
@@ -451,4 +453,3 @@ class _QueueItem extends StatelessWidget {
     );
   }
 }
-

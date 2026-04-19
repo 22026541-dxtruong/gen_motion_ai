@@ -23,8 +23,7 @@ class _PostScreenState extends State<PostScreen> {
   @override
   void initState() {
     super.initState();
-    final initialIndex = int.tryParse(widget.id) ?? 0;
-    _pageController = PageController(initialPage: initialIndex);
+    _pageController = PageController(initialPage: 0);
   }
 
   @override
@@ -42,11 +41,12 @@ class _PostScreenState extends State<PostScreen> {
           PageView.builder(
             scrollDirection: Axis.vertical,
             controller: _pageController,
+            itemCount: 1,
             physics: Responsive.isDesktop(context)
                 ? const NeverScrollableScrollPhysics()
                 : const BouncingScrollPhysics(),
             itemBuilder: (context, index) {
-              return _PostItem(id: index.toString());
+              return _PostItem(id: widget.id);
             },
           ),
           if (Responsive.isDesktop(context))
@@ -159,6 +159,7 @@ class _PostItemState extends ConsumerState<_PostItem> {
   void initState() {
     super.initState();
     _isVideo = (int.tryParse(widget.id) ?? 0) % 2 == 0;
+    _isFollowing = false;
   }
 
   @override
@@ -292,7 +293,7 @@ class _PostItemState extends ConsumerState<_PostItem> {
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 16,
                               ),
-                              side: const BorderSide(
+                              side: BorderSide(
                                 color: context.appColors.border,
                               ),
                               backgroundColor: context.appColors.card,
@@ -300,7 +301,7 @@ class _PostItemState extends ConsumerState<_PostItem> {
                                 borderRadius: BorderRadius.circular(16),
                               ),
                             ),
-                            child: const Text(
+                            child: Text(
                               'Following',
                               style: TextStyle(
                                 fontSize: 12,
@@ -426,7 +427,7 @@ class _PostItemState extends ConsumerState<_PostItem> {
                       const SizedBox(height: 16),
                       Text(
                         post.caption ?? '',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 14,
                           height: 1.5,
                           color: context.appColors.textPrimary,
@@ -524,7 +525,7 @@ class _PostItemState extends ConsumerState<_PostItem> {
                       borderRadius: BorderRadius.circular(16),
                     ),
                   ),
-                  child: const Text(
+                  child: Text(
                     'Following',
                     style: TextStyle(
                       fontSize: 12,
@@ -599,7 +600,7 @@ class _PostItemState extends ConsumerState<_PostItem> {
       children: [
         Row(
           children: [
-            const Text(
+            Text(
               'Comments',
               style: TextStyle(
                 fontSize: 16,
@@ -615,7 +616,7 @@ class _PostItemState extends ConsumerState<_PostItem> {
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: context.appColors.border),
               ),
-              child: const Text(
+              child: Text(
                 '42',
                 style: TextStyle(
                   fontSize: 12,
@@ -657,7 +658,7 @@ class _PostItemState extends ConsumerState<_PostItem> {
   Widget _buildCommentInput() {
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: context.appColors.surface,
         border: Border(top: BorderSide(color: context.appColors.border)),
       ),
@@ -676,7 +677,7 @@ class _PostItemState extends ConsumerState<_PostItem> {
                 color: context.appColors.card,
                 borderRadius: BorderRadius.circular(20),
               ),
-              child: const Text(
+              child: Text(
                 'Add a comment...',
                 style: TextStyle(color: context.appColors.textSecondary, fontSize: 13),
               ),
@@ -719,7 +720,7 @@ class _CommentsBottomSheet extends StatelessWidget {
       ),
       child: Container(
         height: MediaQuery.of(context).size.height * 0.7,
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           color: context.appColors.surface,
           borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
         ),
@@ -735,7 +736,7 @@ class _CommentsBottomSheet extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            const Text(
+            Text(
               'Comments',
               style: TextStyle(
                 fontSize: 16,
@@ -787,7 +788,7 @@ class _CommentsBottomSheet extends StatelessWidget {
                         color: context.appColors.card,
                         borderRadius: BorderRadius.circular(20),
                       ),
-                      child: const Text(
+                      child: Text(
                         'Add a comment...',
                         style: TextStyle(
                           color: context.appColors.textSecondary,
@@ -896,7 +897,7 @@ class _CommentItem extends StatelessWidget {
                   children: [
                     Text(
                       user,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
                         color: context.appColors.textPrimary,

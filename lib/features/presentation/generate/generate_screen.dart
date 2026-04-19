@@ -34,7 +34,7 @@ class _GenerateScreenState extends State<GenerateScreen> {
         // Mode selector at top on mobile
         Container(
           padding: const EdgeInsets.all(16),
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             color: context.appColors.surface,
             border: Border(bottom: BorderSide(color: context.appColors.border)),
           ),
@@ -127,7 +127,7 @@ class _GenerateScreenState extends State<GenerateScreen> {
               color: context.appColors.textSecondary.withOpacity(0.3),
             ),
             const SizedBox(height: 12),
-            const Text(
+            Text(
               'Preview',
               style: TextStyle(color: context.appColors.textSecondary, fontSize: 14),
             ),
@@ -152,7 +152,7 @@ class _GenerateScreenState extends State<GenerateScreen> {
 
   Widget _buildDesktopSettingsPanel() {
     return Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         border: Border(right: BorderSide(color: context.appColors.border)),
       ),
       child: SingleChildScrollView(
@@ -248,7 +248,7 @@ class _GenerateScreenState extends State<GenerateScreen> {
                       color: context.appColors.textSecondary.withOpacity(0.3),
                     ),
                     const SizedBox(height: 16),
-                    const Text(
+                    Text(
                       'Your generated image will appear here',
                       style: TextStyle(color: context.appColors.textSecondary),
                     ),

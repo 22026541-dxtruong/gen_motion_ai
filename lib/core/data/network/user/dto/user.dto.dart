@@ -10,6 +10,7 @@ class UserDto {
   final String? avatarUrl;
   final String? bio;
   final String? role;
+  final DateTime? proExpiresAt;
   final DateTime? createdAt;
   final UserCreditsDto? credits;
   final UserCountsDto? counts;
@@ -22,6 +23,7 @@ class UserDto {
     this.avatarUrl,
     this.bio,
     this.role,
+    this.proExpiresAt,
     this.createdAt,
     this.credits,
     this.counts,

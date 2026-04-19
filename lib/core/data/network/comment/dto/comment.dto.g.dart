@@ -9,7 +9,7 @@ part of 'comment.dto.dart';
 CommentDto _$CommentDtoFromJson(Map<String, dynamic> json) => CommentDto(
   id: json['id'] as String,
   content: json['content'] as String,
-  createdAt: DateTime.parse(json['created_at'] as String),
+  createdAt: DateTime.parse(json['createdAt'] as String),
   user: CommentUserDto.fromJson(json['user'] as Map<String, dynamic>),
 );
 
@@ -17,7 +17,7 @@ Map<String, dynamic> _$CommentDtoToJson(CommentDto instance) =>
     <String, dynamic>{
       'id': instance.id,
       'content': instance.content,
-      'created_at': instance.createdAt.toIso8601String(),
+      'createdAt': instance.createdAt.toIso8601String(),
       'user': instance.user,
     };
 

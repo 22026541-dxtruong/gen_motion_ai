@@ -20,7 +20,8 @@ class _ExploreApi implements ExploreApi {
   final ParseErrorLogger? errorLogger;
 
   @override
-  Future<List<ExploreItem>> getExplore({
+  Future<ExploreFeedDto> getExplore({
+    String? mode,
     String? topic,
     String? trending,
     String? sort,
@@ -29,6 +30,7 @@ class _ExploreApi implements ExploreApi {
   }) async {
     final _extra = <String, dynamic>{};
     final queryParameters = <String, dynamic>{
+      r'mode': mode,
       r'topic': topic,
       r'trending': trending,
       r'sort': sort,
@@ -38,7 +40,7 @@ class _ExploreApi implements ExploreApi {
     queryParameters.removeWhere((k, v) => v == null);
     final _headers = <String, dynamic>{};
     const Map<String, dynamic>? _data = null;
-    final _options = _setStreamType<List<ExploreItem>>(
+    final _options = _setStreamType<ExploreFeedDto>(
       Options(method: 'GET', headers: _headers, extra: _extra)
           .compose(
             _dio.options,
@@ -48,12 +50,112 @@ class _ExploreApi implements ExploreApi {
           )
           .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
     );
-    final _result = await _dio.fetch<List<dynamic>>(_options);
-    late List<ExploreItem> _value;
+    final _result = await _dio.fetch<Map<String, dynamic>>(_options);
+    late ExploreFeedDto _value;
     try {
-      _value = _result.data!
-          .map((dynamic i) => ExploreItem.fromJson(i as Map<String, dynamic>))
-          .toList();
+      _value = ExploreFeedDto.fromJson(_result.data!);
+    } on Object catch (e, s) {
+      errorLogger?.logError(e, s, _options, response: _result);
+      rethrow;
+    }
+    return _value;
+  }
+
+  @override
+  Future<ExploreFeedDto> getForYou({
+    String? mode,
+    String? topic,
+    String? trending,
+    String? sort,
+    int? limit,
+    String? cursor,
+  }) async {
+    final _extra = <String, dynamic>{};
+    final queryParameters = <String, dynamic>{
+      r'mode': mode,
+      r'topic': topic,
+      r'trending': trending,
+      r'sort': sort,
+      r'limit': limit,
+      r'cursor': cursor,
+    };
+    queryParameters.removeWhere((k, v) => v == null);
+    final _headers = <String, dynamic>{};
+    const Map<String, dynamic>? _data = null;
+    final _options = _setStreamType<ExploreFeedDto>(
+      Options(method: 'GET', headers: _headers, extra: _extra)
+          .compose(
+            _dio.options,
+            '/explore/for-you',
+            queryParameters: queryParameters,
+            data: _data,
+          )
+          .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
+    );
+    final _result = await _dio.fetch<Map<String, dynamic>>(_options);
+    late ExploreFeedDto _value;
+    try {
+      _value = ExploreFeedDto.fromJson(_result.data!);
+    } on Object catch (e, s) {
+      errorLogger?.logError(e, s, _options, response: _result);
+      rethrow;
+    }
+    return _value;
+  }
+
+  @override
+  Future<RecordExploreEventResponseDto> recordEvent(
+    RecordExploreEventDto dto,
+  ) async {
+    final _extra = <String, dynamic>{};
+    final queryParameters = <String, dynamic>{};
+    final _headers = <String, dynamic>{};
+    final _data = <String, dynamic>{};
+    _data.addAll(dto.toJson());
+    final _options = _setStreamType<RecordExploreEventResponseDto>(
+      Options(method: 'POST', headers: _headers, extra: _extra)
+          .compose(
+            _dio.options,
+            '/explore/events',
+            queryParameters: queryParameters,
+            data: _data,
+          )
+          .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
+    );
+    final _result = await _dio.fetch<Map<String, dynamic>>(_options);
+    late RecordExploreEventResponseDto _value;
+    try {
+      _value = RecordExploreEventResponseDto.fromJson(_result.data!);
+    } on Object catch (e, s) {
+      errorLogger?.logError(e, s, _options, response: _result);
+      rethrow;
+    }
+    return _value;
+  }
+
+  @override
+  Future<BatchRecordExploreEventsResponseDto> recordEventsBatch(
+    BatchRecordExploreEventsDto dto,
+  ) async {
+    final _extra = <String, dynamic>{};
+    final queryParameters = <String, dynamic>{};
+    final _headers = <String, dynamic>{};
+    final _data = <String, dynamic>{};
+    _data.addAll(dto.toJson());
+    final _options = _setStreamType<BatchRecordExploreEventsResponseDto>(
+      Options(method: 'POST', headers: _headers, extra: _extra)
+          .compose(
+            _dio.options,
+            '/explore/events/batch',
+            queryParameters: queryParameters,
+            data: _data,
+          )
+          .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
+    );
+    final _result = await _dio.fetch<Map<String, dynamic>>(_options);
+    late BatchRecordExploreEventsResponseDto _value;
+    try {
+      _value = BatchRecordExploreEventsResponseDto.fromJson(_result.data!);
     } on Object catch (e, s) {
       errorLogger?.logError(e, s, _options, response: _result);
       rethrow;

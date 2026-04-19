@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$UpdatePostDto {
 
-@JsonKey(name: 'asset_version_id') String? get assetVersionId; String? get caption;@JsonKey(name: 'is_public') bool? get isPublic;
+ String? get assetVersionId; String? get caption; bool? get isPublic;
 /// Create a copy of UpdatePostDto
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -48,7 +48,7 @@ abstract mixin class $UpdatePostDtoCopyWith<$Res>  {
   factory $UpdatePostDtoCopyWith(UpdatePostDto value, $Res Function(UpdatePostDto) _then) = _$UpdatePostDtoCopyWithImpl;
 @useResult
 $Res call({
-@JsonKey(name: 'asset_version_id') String? assetVersionId, String? caption,@JsonKey(name: 'is_public') bool? isPublic
+ String? assetVersionId, String? caption, bool? isPublic
 });
 
 
@@ -155,7 +155,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(name: 'asset_version_id')  String? assetVersionId,  String? caption, @JsonKey(name: 'is_public')  bool? isPublic)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String? assetVersionId,  String? caption,  bool? isPublic)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _UpdatePostDto() when $default != null:
 return $default(_that.assetVersionId,_that.caption,_that.isPublic);case _:
@@ -176,7 +176,7 @@ return $default(_that.assetVersionId,_that.caption,_that.isPublic);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(name: 'asset_version_id')  String? assetVersionId,  String? caption, @JsonKey(name: 'is_public')  bool? isPublic)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String? assetVersionId,  String? caption,  bool? isPublic)  $default,) {final _that = this;
 switch (_that) {
 case _UpdatePostDto():
 return $default(_that.assetVersionId,_that.caption,_that.isPublic);case _:
@@ -196,7 +196,7 @@ return $default(_that.assetVersionId,_that.caption,_that.isPublic);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(name: 'asset_version_id')  String? assetVersionId,  String? caption, @JsonKey(name: 'is_public')  bool? isPublic)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String? assetVersionId,  String? caption,  bool? isPublic)?  $default,) {final _that = this;
 switch (_that) {
 case _UpdatePostDto() when $default != null:
 return $default(_that.assetVersionId,_that.caption,_that.isPublic);case _:
@@ -211,12 +211,12 @@ return $default(_that.assetVersionId,_that.caption,_that.isPublic);case _:
 
 @JsonSerializable(includeIfNull: false)
 class _UpdatePostDto implements UpdatePostDto {
-  const _UpdatePostDto({@JsonKey(name: 'asset_version_id') this.assetVersionId, this.caption, @JsonKey(name: 'is_public') this.isPublic});
+  const _UpdatePostDto({this.assetVersionId, this.caption, this.isPublic});
   factory _UpdatePostDto.fromJson(Map<String, dynamic> json) => _$UpdatePostDtoFromJson(json);
 
-@override@JsonKey(name: 'asset_version_id') final  String? assetVersionId;
+@override final  String? assetVersionId;
 @override final  String? caption;
-@override@JsonKey(name: 'is_public') final  bool? isPublic;
+@override final  bool? isPublic;
 
 /// Create a copy of UpdatePostDto
 /// with the given fields replaced by the non-null parameter values.
@@ -251,7 +251,7 @@ abstract mixin class _$UpdatePostDtoCopyWith<$Res> implements $UpdatePostDtoCopy
   factory _$UpdatePostDtoCopyWith(_UpdatePostDto value, $Res Function(_UpdatePostDto) _then) = __$UpdatePostDtoCopyWithImpl;
 @override @useResult
 $Res call({
-@JsonKey(name: 'asset_version_id') String? assetVersionId, String? caption,@JsonKey(name: 'is_public') bool? isPublic
+ String? assetVersionId, String? caption, bool? isPublic
 });
 
 

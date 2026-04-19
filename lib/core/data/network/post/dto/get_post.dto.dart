@@ -8,14 +8,14 @@ abstract class GetPostDto with _$GetPostDto {
   const factory GetPostDto({
     required String id,
     String? caption,
-    @JsonKey(name: 'view_count') required int viewCount,
-    @JsonKey(name: 'comment_count') required int commentCount,
-    @JsonKey(name: 'like_count') required int likeCount,
-    @JsonKey(name: 'created_at') required DateTime createdAt,
-    @JsonKey(name: 'is_liked') required bool isLiked,
-    @JsonKey(name: 'is_followed') required bool isFollowed,
+    required int viewCount,
+    required int commentCount,
+    required int likeCount,
+    required DateTime createdAt,
+    @Default(false) bool isLiked,
+    @Default(false) bool isFollowed,
     required PostUserDto user,
-    @JsonKey(name: 'asset_version') required PostAssetVersionDto assetVersion,
+    required PostAssetVersionDto assetVersion,
   }) = _GetPostDto;
 
   factory GetPostDto.fromJson(Map<String, dynamic> json) =>
@@ -27,7 +27,7 @@ abstract class PostUserDto with _$PostUserDto {
   const factory PostUserDto({
     required String id,
     required String username,
-    @JsonKey(name: 'avatar_url') String? avatarUrl,
+    String? avatarUrl,
   }) = _PostUserDto;
 
   factory PostUserDto.fromJson(Map<String, dynamic> json) =>
@@ -38,7 +38,7 @@ abstract class PostUserDto with _$PostUserDto {
 abstract class PostAssetVersionDto with _$PostAssetVersionDto {
   const factory PostAssetVersionDto({
     required String id,
-    @JsonKey(name: 'file_url') required String fileUrl,
+    String? fileUrl,
     Map<String, dynamic>? metadata,
   }) = _PostAssetVersionDto;
 

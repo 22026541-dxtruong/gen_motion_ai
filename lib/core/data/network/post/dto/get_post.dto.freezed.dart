@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$GetPostDto {
 
- String get id; String? get caption;@JsonKey(name: 'view_count') int get viewCount;@JsonKey(name: 'comment_count') int get commentCount;@JsonKey(name: 'like_count') int get likeCount;@JsonKey(name: 'created_at') DateTime get createdAt;@JsonKey(name: 'is_liked') bool get isLiked;@JsonKey(name: 'is_followed') bool get isFollowed; PostUserDto get user;@JsonKey(name: 'asset_version') PostAssetVersionDto get assetVersion;
+ String get id; String? get caption; int get viewCount; int get commentCount; int get likeCount; DateTime get createdAt; bool get isLiked; bool get isFollowed; PostUserDto get user; PostAssetVersionDto get assetVersion;
 /// Create a copy of GetPostDto
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -48,7 +48,7 @@ abstract mixin class $GetPostDtoCopyWith<$Res>  {
   factory $GetPostDtoCopyWith(GetPostDto value, $Res Function(GetPostDto) _then) = _$GetPostDtoCopyWithImpl;
 @useResult
 $Res call({
- String id, String? caption,@JsonKey(name: 'view_count') int viewCount,@JsonKey(name: 'comment_count') int commentCount,@JsonKey(name: 'like_count') int likeCount,@JsonKey(name: 'created_at') DateTime createdAt,@JsonKey(name: 'is_liked') bool isLiked,@JsonKey(name: 'is_followed') bool isFollowed, PostUserDto user,@JsonKey(name: 'asset_version') PostAssetVersionDto assetVersion
+ String id, String? caption, int viewCount, int commentCount, int likeCount, DateTime createdAt, bool isLiked, bool isFollowed, PostUserDto user, PostAssetVersionDto assetVersion
 });
 
 
@@ -180,7 +180,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String? caption, @JsonKey(name: 'view_count')  int viewCount, @JsonKey(name: 'comment_count')  int commentCount, @JsonKey(name: 'like_count')  int likeCount, @JsonKey(name: 'created_at')  DateTime createdAt, @JsonKey(name: 'is_liked')  bool isLiked, @JsonKey(name: 'is_followed')  bool isFollowed,  PostUserDto user, @JsonKey(name: 'asset_version')  PostAssetVersionDto assetVersion)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String? caption,  int viewCount,  int commentCount,  int likeCount,  DateTime createdAt,  bool isLiked,  bool isFollowed,  PostUserDto user,  PostAssetVersionDto assetVersion)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _GetPostDto() when $default != null:
 return $default(_that.id,_that.caption,_that.viewCount,_that.commentCount,_that.likeCount,_that.createdAt,_that.isLiked,_that.isFollowed,_that.user,_that.assetVersion);case _:
@@ -201,7 +201,7 @@ return $default(_that.id,_that.caption,_that.viewCount,_that.commentCount,_that.
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String? caption, @JsonKey(name: 'view_count')  int viewCount, @JsonKey(name: 'comment_count')  int commentCount, @JsonKey(name: 'like_count')  int likeCount, @JsonKey(name: 'created_at')  DateTime createdAt, @JsonKey(name: 'is_liked')  bool isLiked, @JsonKey(name: 'is_followed')  bool isFollowed,  PostUserDto user, @JsonKey(name: 'asset_version')  PostAssetVersionDto assetVersion)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String? caption,  int viewCount,  int commentCount,  int likeCount,  DateTime createdAt,  bool isLiked,  bool isFollowed,  PostUserDto user,  PostAssetVersionDto assetVersion)  $default,) {final _that = this;
 switch (_that) {
 case _GetPostDto():
 return $default(_that.id,_that.caption,_that.viewCount,_that.commentCount,_that.likeCount,_that.createdAt,_that.isLiked,_that.isFollowed,_that.user,_that.assetVersion);case _:
@@ -221,7 +221,7 @@ return $default(_that.id,_that.caption,_that.viewCount,_that.commentCount,_that.
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String? caption, @JsonKey(name: 'view_count')  int viewCount, @JsonKey(name: 'comment_count')  int commentCount, @JsonKey(name: 'like_count')  int likeCount, @JsonKey(name: 'created_at')  DateTime createdAt, @JsonKey(name: 'is_liked')  bool isLiked, @JsonKey(name: 'is_followed')  bool isFollowed,  PostUserDto user, @JsonKey(name: 'asset_version')  PostAssetVersionDto assetVersion)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String? caption,  int viewCount,  int commentCount,  int likeCount,  DateTime createdAt,  bool isLiked,  bool isFollowed,  PostUserDto user,  PostAssetVersionDto assetVersion)?  $default,) {final _that = this;
 switch (_that) {
 case _GetPostDto() when $default != null:
 return $default(_that.id,_that.caption,_that.viewCount,_that.commentCount,_that.likeCount,_that.createdAt,_that.isLiked,_that.isFollowed,_that.user,_that.assetVersion);case _:
@@ -236,19 +236,19 @@ return $default(_that.id,_that.caption,_that.viewCount,_that.commentCount,_that.
 @JsonSerializable()
 
 class _GetPostDto implements GetPostDto {
-  const _GetPostDto({required this.id, this.caption, @JsonKey(name: 'view_count') required this.viewCount, @JsonKey(name: 'comment_count') required this.commentCount, @JsonKey(name: 'like_count') required this.likeCount, @JsonKey(name: 'created_at') required this.createdAt, @JsonKey(name: 'is_liked') required this.isLiked, @JsonKey(name: 'is_followed') required this.isFollowed, required this.user, @JsonKey(name: 'asset_version') required this.assetVersion});
+  const _GetPostDto({required this.id, this.caption, required this.viewCount, required this.commentCount, required this.likeCount, required this.createdAt, this.isLiked = false, this.isFollowed = false, required this.user, required this.assetVersion});
   factory _GetPostDto.fromJson(Map<String, dynamic> json) => _$GetPostDtoFromJson(json);
 
 @override final  String id;
 @override final  String? caption;
-@override@JsonKey(name: 'view_count') final  int viewCount;
-@override@JsonKey(name: 'comment_count') final  int commentCount;
-@override@JsonKey(name: 'like_count') final  int likeCount;
-@override@JsonKey(name: 'created_at') final  DateTime createdAt;
-@override@JsonKey(name: 'is_liked') final  bool isLiked;
-@override@JsonKey(name: 'is_followed') final  bool isFollowed;
+@override final  int viewCount;
+@override final  int commentCount;
+@override final  int likeCount;
+@override final  DateTime createdAt;
+@override@JsonKey() final  bool isLiked;
+@override@JsonKey() final  bool isFollowed;
 @override final  PostUserDto user;
-@override@JsonKey(name: 'asset_version') final  PostAssetVersionDto assetVersion;
+@override final  PostAssetVersionDto assetVersion;
 
 /// Create a copy of GetPostDto
 /// with the given fields replaced by the non-null parameter values.
@@ -283,7 +283,7 @@ abstract mixin class _$GetPostDtoCopyWith<$Res> implements $GetPostDtoCopyWith<$
   factory _$GetPostDtoCopyWith(_GetPostDto value, $Res Function(_GetPostDto) _then) = __$GetPostDtoCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String? caption,@JsonKey(name: 'view_count') int viewCount,@JsonKey(name: 'comment_count') int commentCount,@JsonKey(name: 'like_count') int likeCount,@JsonKey(name: 'created_at') DateTime createdAt,@JsonKey(name: 'is_liked') bool isLiked,@JsonKey(name: 'is_followed') bool isFollowed, PostUserDto user,@JsonKey(name: 'asset_version') PostAssetVersionDto assetVersion
+ String id, String? caption, int viewCount, int commentCount, int likeCount, DateTime createdAt, bool isLiked, bool isFollowed, PostUserDto user, PostAssetVersionDto assetVersion
 });
 
 
@@ -341,7 +341,7 @@ $PostAssetVersionDtoCopyWith<$Res> get assetVersion {
 /// @nodoc
 mixin _$PostUserDto {
 
- String get id; String get username;@JsonKey(name: 'avatar_url') String? get avatarUrl;
+ String get id; String get username; String? get avatarUrl;
 /// Create a copy of PostUserDto
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -374,7 +374,7 @@ abstract mixin class $PostUserDtoCopyWith<$Res>  {
   factory $PostUserDtoCopyWith(PostUserDto value, $Res Function(PostUserDto) _then) = _$PostUserDtoCopyWithImpl;
 @useResult
 $Res call({
- String id, String username,@JsonKey(name: 'avatar_url') String? avatarUrl
+ String id, String username, String? avatarUrl
 });
 
 
@@ -481,7 +481,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String username, @JsonKey(name: 'avatar_url')  String? avatarUrl)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String username,  String? avatarUrl)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _PostUserDto() when $default != null:
 return $default(_that.id,_that.username,_that.avatarUrl);case _:
@@ -502,7 +502,7 @@ return $default(_that.id,_that.username,_that.avatarUrl);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String username, @JsonKey(name: 'avatar_url')  String? avatarUrl)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String username,  String? avatarUrl)  $default,) {final _that = this;
 switch (_that) {
 case _PostUserDto():
 return $default(_that.id,_that.username,_that.avatarUrl);case _:
@@ -522,7 +522,7 @@ return $default(_that.id,_that.username,_that.avatarUrl);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String username, @JsonKey(name: 'avatar_url')  String? avatarUrl)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String username,  String? avatarUrl)?  $default,) {final _that = this;
 switch (_that) {
 case _PostUserDto() when $default != null:
 return $default(_that.id,_that.username,_that.avatarUrl);case _:
@@ -537,12 +537,12 @@ return $default(_that.id,_that.username,_that.avatarUrl);case _:
 @JsonSerializable()
 
 class _PostUserDto implements PostUserDto {
-  const _PostUserDto({required this.id, required this.username, @JsonKey(name: 'avatar_url') this.avatarUrl});
+  const _PostUserDto({required this.id, required this.username, this.avatarUrl});
   factory _PostUserDto.fromJson(Map<String, dynamic> json) => _$PostUserDtoFromJson(json);
 
 @override final  String id;
 @override final  String username;
-@override@JsonKey(name: 'avatar_url') final  String? avatarUrl;
+@override final  String? avatarUrl;
 
 /// Create a copy of PostUserDto
 /// with the given fields replaced by the non-null parameter values.
@@ -577,7 +577,7 @@ abstract mixin class _$PostUserDtoCopyWith<$Res> implements $PostUserDtoCopyWith
   factory _$PostUserDtoCopyWith(_PostUserDto value, $Res Function(_PostUserDto) _then) = __$PostUserDtoCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String username,@JsonKey(name: 'avatar_url') String? avatarUrl
+ String id, String username, String? avatarUrl
 });
 
 
@@ -610,7 +610,7 @@ as String?,
 /// @nodoc
 mixin _$PostAssetVersionDto {
 
- String get id;@JsonKey(name: 'file_url') String get fileUrl; Map<String, dynamic>? get metadata;
+ String get id; String? get fileUrl; Map<String, dynamic>? get metadata;
 /// Create a copy of PostAssetVersionDto
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -643,7 +643,7 @@ abstract mixin class $PostAssetVersionDtoCopyWith<$Res>  {
   factory $PostAssetVersionDtoCopyWith(PostAssetVersionDto value, $Res Function(PostAssetVersionDto) _then) = _$PostAssetVersionDtoCopyWithImpl;
 @useResult
 $Res call({
- String id,@JsonKey(name: 'file_url') String fileUrl, Map<String, dynamic>? metadata
+ String id, String? fileUrl, Map<String, dynamic>? metadata
 });
 
 
@@ -660,11 +660,11 @@ class _$PostAssetVersionDtoCopyWithImpl<$Res>
 
 /// Create a copy of PostAssetVersionDto
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? fileUrl = null,Object? metadata = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? fileUrl = freezed,Object? metadata = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
-as String,fileUrl: null == fileUrl ? _self.fileUrl : fileUrl // ignore: cast_nullable_to_non_nullable
-as String,metadata: freezed == metadata ? _self.metadata : metadata // ignore: cast_nullable_to_non_nullable
+as String,fileUrl: freezed == fileUrl ? _self.fileUrl : fileUrl // ignore: cast_nullable_to_non_nullable
+as String?,metadata: freezed == metadata ? _self.metadata : metadata // ignore: cast_nullable_to_non_nullable
 as Map<String, dynamic>?,
   ));
 }
@@ -750,7 +750,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'file_url')  String fileUrl,  Map<String, dynamic>? metadata)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String? fileUrl,  Map<String, dynamic>? metadata)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _PostAssetVersionDto() when $default != null:
 return $default(_that.id,_that.fileUrl,_that.metadata);case _:
@@ -771,7 +771,7 @@ return $default(_that.id,_that.fileUrl,_that.metadata);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'file_url')  String fileUrl,  Map<String, dynamic>? metadata)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String? fileUrl,  Map<String, dynamic>? metadata)  $default,) {final _that = this;
 switch (_that) {
 case _PostAssetVersionDto():
 return $default(_that.id,_that.fileUrl,_that.metadata);case _:
@@ -791,7 +791,7 @@ return $default(_that.id,_that.fileUrl,_that.metadata);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id, @JsonKey(name: 'file_url')  String fileUrl,  Map<String, dynamic>? metadata)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String? fileUrl,  Map<String, dynamic>? metadata)?  $default,) {final _that = this;
 switch (_that) {
 case _PostAssetVersionDto() when $default != null:
 return $default(_that.id,_that.fileUrl,_that.metadata);case _:
@@ -806,11 +806,11 @@ return $default(_that.id,_that.fileUrl,_that.metadata);case _:
 @JsonSerializable()
 
 class _PostAssetVersionDto implements PostAssetVersionDto {
-  const _PostAssetVersionDto({required this.id, @JsonKey(name: 'file_url') required this.fileUrl, final  Map<String, dynamic>? metadata}): _metadata = metadata;
+  const _PostAssetVersionDto({required this.id, this.fileUrl, final  Map<String, dynamic>? metadata}): _metadata = metadata;
   factory _PostAssetVersionDto.fromJson(Map<String, dynamic> json) => _$PostAssetVersionDtoFromJson(json);
 
 @override final  String id;
-@override@JsonKey(name: 'file_url') final  String fileUrl;
+@override final  String? fileUrl;
  final  Map<String, dynamic>? _metadata;
 @override Map<String, dynamic>? get metadata {
   final value = _metadata;
@@ -854,7 +854,7 @@ abstract mixin class _$PostAssetVersionDtoCopyWith<$Res> implements $PostAssetVe
   factory _$PostAssetVersionDtoCopyWith(_PostAssetVersionDto value, $Res Function(_PostAssetVersionDto) _then) = __$PostAssetVersionDtoCopyWithImpl;
 @override @useResult
 $Res call({
- String id,@JsonKey(name: 'file_url') String fileUrl, Map<String, dynamic>? metadata
+ String id, String? fileUrl, Map<String, dynamic>? metadata
 });
 
 
@@ -871,11 +871,11 @@ class __$PostAssetVersionDtoCopyWithImpl<$Res>
 
 /// Create a copy of PostAssetVersionDto
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? fileUrl = null,Object? metadata = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? fileUrl = freezed,Object? metadata = freezed,}) {
   return _then(_PostAssetVersionDto(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
-as String,fileUrl: null == fileUrl ? _self.fileUrl : fileUrl // ignore: cast_nullable_to_non_nullable
-as String,metadata: freezed == metadata ? _self._metadata : metadata // ignore: cast_nullable_to_non_nullable
+as String,fileUrl: freezed == fileUrl ? _self.fileUrl : fileUrl // ignore: cast_nullable_to_non_nullable
+as String?,metadata: freezed == metadata ? _self._metadata : metadata // ignore: cast_nullable_to_non_nullable
 as Map<String, dynamic>?,
   ));
 }

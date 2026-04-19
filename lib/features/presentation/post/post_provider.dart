@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gen_motion_ai/core/data/network/api_providers.dart';
 import 'package:gen_motion_ai/core/data/network/post/dto/get_post.dto.dart';
+import 'package:gen_motion_ai/core/data/network/post_like/dto/create_post_like.dto.dart';
 
 final postProvider =
     AsyncNotifierProvider.family<PostNotifier, GetPostDto?, String>(
@@ -39,7 +40,9 @@ class PostNotifier extends AsyncNotifier<GetPostDto?> {
 
     try {
       if (newLiked) {
-        await ref.read(postLikeApiProvider).likePost(postId);
+        await ref
+            .read(postLikeApiProvider)
+            .likePost(postId, CreatePostLikeDto(postId: postId));
       } else {
         await ref.read(postLikeApiProvider).unlikePost(postId);
       }

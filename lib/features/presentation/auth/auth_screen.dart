@@ -1,25 +1,39 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:gen_motion_ai/core/data/network/api_endpoints.dart';
 import 'package:gen_motion_ai/core/data/network/api_providers.dart';
+import 'package:gen_motion_ai/core/data/network/auth/dto/forgot_password.dto.dart';
 import 'package:gen_motion_ai/core/data/network/auth/dto/login.dto.dart';
 import 'package:gen_motion_ai/core/data/network/auth/dto/register.dto.dart';
+import 'package:gen_motion_ai/core/data/network/network_error.dart';
 import 'package:gen_motion_ai/core/theme/app_theme.dart';
 import 'package:gen_motion_ai/core/utils/responsive.dart';
 import 'package:gen_motion_ai/features/presentation/auth/auth_provider.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
+
+enum AuthScreenMode { login, register }
 
 class AuthScreen extends ConsumerStatefulWidget {
-  const AuthScreen({super.key});
+  const AuthScreen({super.key, this.initialMode = AuthScreenMode.login});
+
+  final AuthScreenMode initialMode;
 
   @override
   ConsumerState<AuthScreen> createState() => _AuthScreenState();
 }
 
 class _AuthScreenState extends ConsumerState<AuthScreen> {
-  bool _isLogin = true; // Trạng thái chuyển đổi giữa Login/Register
+  late bool _isLogin;
   bool _isLoading = false;
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _isLogin = widget.initialMode == AuthScreenMode.login;
+  }
 
   @override
   void dispose() {
@@ -39,9 +53,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     final password = _passwordController.text.trim();
 
     if (email.isEmpty || password.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fill in all fields')),
-      );
+      _showSnack('Please fill in all fields');
       return;
     }
 
@@ -55,23 +67,126 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
           LoginDto(email: email, password: password),
         );
         await ref.read(authProvider.notifier).login(response);
-        if (mounted) context.go('/explore');
       } else {
         final response = await authApi.register(
           RegisterDto(email: email, password: password),
         );
         await ref.read(authProvider.notifier).login(response);
-        if (mounted) context.go('/explore');
+      }
+
+      if (mounted) {
+        context.go('/explore');
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Authentication failed: ${e.toString()}')),
-        );
-      }
+      _showSnack(networkErrorMessage(e));
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  Future<void> _handleForgotPassword() async {
+    final controller = TextEditingController(text: _emailController.text.trim());
+    bool submitting = false;
+
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text('Forgot Password'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    'Enter your email. If it exists, we will send a reset link.',
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: controller,
+                    keyboardType: TextInputType.emailAddress,
+                    decoration: const InputDecoration(
+                      hintText: 'name@example.com',
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: submitting
+                      ? null
+                      : () => Navigator.of(dialogContext).pop(),
+                  child: const Text('Cancel'),
+                ),
+                FilledButton(
+                  onPressed: submitting
+                      ? null
+                      : () async {
+                          final email = controller.text.trim();
+                          if (email.isEmpty) {
+                            _showSnack('Email is required');
+                            return;
+                          }
+
+                          setDialogState(() => submitting = true);
+
+                          try {
+                            final response = await ref
+                                .read(authApiProvider)
+                                .forgotPassword(ForgotPasswordDto(email: email));
+
+                            if (dialogContext.mounted) {
+                              Navigator.of(dialogContext).pop();
+                            }
+                            if (mounted) {
+                              _showSnack(response.message);
+                            }
+                          } catch (e) {
+                            _showSnack(networkErrorMessage(e));
+                          } finally {
+                            if (dialogContext.mounted) {
+                              setDialogState(() => submitting = false);
+                            }
+                          }
+                        },
+                  child: submitting
+                      ? const SizedBox(
+                          height: 16,
+                          width: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Text('Send Link'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    controller.dispose();
+  }
+
+  Future<void> _handleGoogleAuth() async {
+    final uri = Uri.parse(ApiEndpoints.absoluteUrl(ApiEndpoints.googleAuth));
+    final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+
+    if (!launched) {
+      _showSnack('Could not open Google sign-in');
+      return;
+    }
+
+    _showSnack(
+      'Google sign-in opened in browser. Return to the app after completing login.',
+    );
+  }
+
+  void _showSnack(String message) {
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
   }
 
   @override
@@ -101,7 +216,6 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     final colors = context.appColors;
     return Row(
       children: [
-        // Left Panel - Branding & Showcase
         Expanded(
           flex: 6,
           child: Container(
@@ -115,7 +229,6 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
             ),
             child: Stack(
               children: [
-                // Decorative elements
                 Positioned(
                   top: -100,
                   left: -100,
@@ -168,7 +281,6 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
             ),
           ),
         ),
-        // Right Panel - Auth Form
         Expanded(
           flex: 5,
           child: Container(
@@ -217,7 +329,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   Widget _buildLogo() {
     final colors = context.appColors;
     return GestureDetector(
-      onTap: () => context.go('/explore'), // Cho phép quay về trang chủ
+      onTap: () => context.go('/explore'),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -274,11 +386,11 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
         ),
         const SizedBox(height: 32),
 
-        // Email Field
         _buildLabel('Email address'),
         const SizedBox(height: 8),
         TextField(
           controller: _emailController,
+          keyboardType: TextInputType.emailAddress,
           style: TextStyle(color: colors.textPrimary),
           decoration: InputDecoration(
             hintText: 'name@example.com',
@@ -291,7 +403,6 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
         ),
         const SizedBox(height: 20),
 
-        // Password Field
         _buildLabel('Password'),
         const SizedBox(height: 8),
         TextField(
@@ -313,28 +424,42 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
           ),
         ),
 
-        // Forgot Password (Login only)
         if (_isLogin) ...[
           const SizedBox(height: 12),
           Align(
             alignment: Alignment.centerRight,
-            child: GestureDetector(
-              onTap: () {},
-              child: const Text(
-                'Forgot password?',
-                style: TextStyle(
-                  color: AppTheme.primaryColor,
-                  fontWeight: FontWeight.w500,
-                  fontSize: 14,
+            child: Wrap(
+              spacing: 12,
+              children: [
+                GestureDetector(
+                  onTap: _handleForgotPassword,
+                  child: const Text(
+                    'Forgot password?',
+                    style: TextStyle(
+                      color: AppTheme.primaryColor,
+                      fontWeight: FontWeight.w500,
+                      fontSize: 14,
+                    ),
+                  ),
                 ),
-              ),
+                GestureDetector(
+                  onTap: () => context.go('/reset-password'),
+                  child: const Text(
+                    'Have reset token?',
+                    style: TextStyle(
+                      color: AppTheme.primaryColor,
+                      fontWeight: FontWeight.w500,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
 
         const SizedBox(height: 32),
 
-        // Main Action Button
         SizedBox(
           height: 50,
           child: ElevatedButton(
@@ -368,7 +493,6 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
 
         const SizedBox(height: 24),
 
-        // Divider
         Row(
           children: [
             Expanded(child: Divider(color: colors.border)),
@@ -389,23 +513,21 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
 
         const SizedBox(height: 24),
 
-        // Social Login Button
         _buildSocialButton(
           label: 'Continue with Google',
           icon: Icons.g_mobiledata,
-          onTap: () {},
+          onTap: _isLoading ? null : _handleGoogleAuth,
         ),
 
         const SizedBox(height: 32),
 
-        // Toggle Login/Register
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
               _isLogin
                   ? "Don't have an account? "
-                  : "Already have an account? ",
+                  : 'Already have an account? ',
               style: TextStyle(color: colors.textSecondary),
             ),
             GestureDetector(
@@ -439,7 +561,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   Widget _buildSocialButton({
     required String label,
     required IconData icon,
-    required VoidCallback onTap,
+    required VoidCallback? onTap,
   }) {
     final colors = context.appColors;
     return SizedBox(

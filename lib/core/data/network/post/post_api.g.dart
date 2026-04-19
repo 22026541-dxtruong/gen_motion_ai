@@ -20,12 +20,12 @@ class _PostApi implements PostApi {
   final ParseErrorLogger? errorLogger;
 
   @override
-  Future<IdResponseDto> createPost(CreatePostDto body) async {
+  Future<PostDto> createPost(CreatePostDto body) async {
     final _extra = <String, dynamic>{};
     final queryParameters = <String, dynamic>{};
     final _headers = <String, dynamic>{};
     final _data = body;
-    final _options = _setStreamType<IdResponseDto>(
+    final _options = _setStreamType<PostDto>(
       Options(method: 'POST', headers: _headers, extra: _extra)
           .compose(
             _dio.options,
@@ -36,9 +36,9 @@ class _PostApi implements PostApi {
           .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
     );
     final _result = await _dio.fetch<Map<String, dynamic>>(_options);
-    late IdResponseDto _value;
+    late PostDto _value;
     try {
-      _value = IdResponseDto.fromJson(_result.data!);
+      _value = PostDto.fromJson(_result.data!);
     } on Object catch (e, s) {
       errorLogger?.logError(e, s, _options, response: _result);
       rethrow;
@@ -47,12 +47,12 @@ class _PostApi implements PostApi {
   }
 
   @override
-  Future<List<GetPostDto>> getPosts() async {
+  Future<List<PostDto>> getPosts() async {
     final _extra = <String, dynamic>{};
     final queryParameters = <String, dynamic>{};
     final _headers = <String, dynamic>{};
     const Map<String, dynamic>? _data = null;
-    final _options = _setStreamType<List<GetPostDto>>(
+    final _options = _setStreamType<List<PostDto>>(
       Options(method: 'GET', headers: _headers, extra: _extra)
           .compose(
             _dio.options,
@@ -63,10 +63,10 @@ class _PostApi implements PostApi {
           .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
     );
     final _result = await _dio.fetch<List<dynamic>>(_options);
-    late List<GetPostDto> _value;
+    late List<PostDto> _value;
     try {
       _value = _result.data!
-          .map((dynamic i) => GetPostDto.fromJson(i as Map<String, dynamic>))
+          .map((dynamic i) => PostDto.fromJson(i as Map<String, dynamic>))
           .toList();
     } on Object catch (e, s) {
       errorLogger?.logError(e, s, _options, response: _result);
@@ -103,13 +103,13 @@ class _PostApi implements PostApi {
   }
 
   @override
-  Future<IdResponseDto> updatePost(String id, UpdatePostDto body) async {
+  Future<PostDto> updatePost(String id, UpdatePostDto body) async {
     final _extra = <String, dynamic>{};
     final queryParameters = <String, dynamic>{};
     final _headers = <String, dynamic>{};
     final _data = body;
-    final _options = _setStreamType<IdResponseDto>(
-      Options(method: 'PUT', headers: _headers, extra: _extra)
+    final _options = _setStreamType<PostDto>(
+      Options(method: 'PATCH', headers: _headers, extra: _extra)
           .compose(
             _dio.options,
             '/posts/${id}',
@@ -119,9 +119,9 @@ class _PostApi implements PostApi {
           .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
     );
     final _result = await _dio.fetch<Map<String, dynamic>>(_options);
-    late IdResponseDto _value;
+    late PostDto _value;
     try {
-      _value = IdResponseDto.fromJson(_result.data!);
+      _value = PostDto.fromJson(_result.data!);
     } on Object catch (e, s) {
       errorLogger?.logError(e, s, _options, response: _result);
       rethrow;
@@ -130,12 +130,12 @@ class _PostApi implements PostApi {
   }
 
   @override
-  Future<IdResponseDto> deletePost(String id) async {
+  Future<PostDto> deletePost(String id) async {
     final _extra = <String, dynamic>{};
     final queryParameters = <String, dynamic>{};
     final _headers = <String, dynamic>{};
     const Map<String, dynamic>? _data = null;
-    final _options = _setStreamType<IdResponseDto>(
+    final _options = _setStreamType<PostDto>(
       Options(method: 'DELETE', headers: _headers, extra: _extra)
           .compose(
             _dio.options,
@@ -146,9 +146,9 @@ class _PostApi implements PostApi {
           .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
     );
     final _result = await _dio.fetch<Map<String, dynamic>>(_options);
-    late IdResponseDto _value;
+    late PostDto _value;
     try {
-      _value = IdResponseDto.fromJson(_result.data!);
+      _value = PostDto.fromJson(_result.data!);
     } on Object catch (e, s) {
       errorLogger?.logError(e, s, _options, response: _result);
       rethrow;

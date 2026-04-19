@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$CreatePostDto {
 
-@JsonKey(name: 'asset_version_id') String get assetVersionId; String? get caption;@JsonKey(name: 'is_public') String get isPublic;
+ String get assetVersionId; String? get caption; bool get isPublic;
 /// Create a copy of CreatePostDto
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -48,7 +48,7 @@ abstract mixin class $CreatePostDtoCopyWith<$Res>  {
   factory $CreatePostDtoCopyWith(CreatePostDto value, $Res Function(CreatePostDto) _then) = _$CreatePostDtoCopyWithImpl;
 @useResult
 $Res call({
-@JsonKey(name: 'asset_version_id') String assetVersionId, String? caption,@JsonKey(name: 'is_public') String isPublic
+ String assetVersionId, String? caption, bool isPublic
 });
 
 
@@ -70,7 +70,7 @@ class _$CreatePostDtoCopyWithImpl<$Res>
 assetVersionId: null == assetVersionId ? _self.assetVersionId : assetVersionId // ignore: cast_nullable_to_non_nullable
 as String,caption: freezed == caption ? _self.caption : caption // ignore: cast_nullable_to_non_nullable
 as String?,isPublic: null == isPublic ? _self.isPublic : isPublic // ignore: cast_nullable_to_non_nullable
-as String,
+as bool,
   ));
 }
 
@@ -155,7 +155,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(name: 'asset_version_id')  String assetVersionId,  String? caption, @JsonKey(name: 'is_public')  String isPublic)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String assetVersionId,  String? caption,  bool isPublic)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _CreatePostDto() when $default != null:
 return $default(_that.assetVersionId,_that.caption,_that.isPublic);case _:
@@ -176,7 +176,7 @@ return $default(_that.assetVersionId,_that.caption,_that.isPublic);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(name: 'asset_version_id')  String assetVersionId,  String? caption, @JsonKey(name: 'is_public')  String isPublic)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String assetVersionId,  String? caption,  bool isPublic)  $default,) {final _that = this;
 switch (_that) {
 case _CreatePostDto():
 return $default(_that.assetVersionId,_that.caption,_that.isPublic);case _:
@@ -196,7 +196,7 @@ return $default(_that.assetVersionId,_that.caption,_that.isPublic);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(name: 'asset_version_id')  String assetVersionId,  String? caption, @JsonKey(name: 'is_public')  String isPublic)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String assetVersionId,  String? caption,  bool isPublic)?  $default,) {final _that = this;
 switch (_that) {
 case _CreatePostDto() when $default != null:
 return $default(_that.assetVersionId,_that.caption,_that.isPublic);case _:
@@ -211,12 +211,12 @@ return $default(_that.assetVersionId,_that.caption,_that.isPublic);case _:
 @JsonSerializable()
 
 class _CreatePostDto implements CreatePostDto {
-  const _CreatePostDto({@JsonKey(name: 'asset_version_id') required this.assetVersionId, this.caption, @JsonKey(name: 'is_public') required this.isPublic});
+  const _CreatePostDto({required this.assetVersionId, this.caption, required this.isPublic});
   factory _CreatePostDto.fromJson(Map<String, dynamic> json) => _$CreatePostDtoFromJson(json);
 
-@override@JsonKey(name: 'asset_version_id') final  String assetVersionId;
+@override final  String assetVersionId;
 @override final  String? caption;
-@override@JsonKey(name: 'is_public') final  String isPublic;
+@override final  bool isPublic;
 
 /// Create a copy of CreatePostDto
 /// with the given fields replaced by the non-null parameter values.
@@ -251,7 +251,7 @@ abstract mixin class _$CreatePostDtoCopyWith<$Res> implements $CreatePostDtoCopy
   factory _$CreatePostDtoCopyWith(_CreatePostDto value, $Res Function(_CreatePostDto) _then) = __$CreatePostDtoCopyWithImpl;
 @override @useResult
 $Res call({
-@JsonKey(name: 'asset_version_id') String assetVersionId, String? caption,@JsonKey(name: 'is_public') String isPublic
+ String assetVersionId, String? caption, bool isPublic
 });
 
 
@@ -273,7 +273,7 @@ class __$CreatePostDtoCopyWithImpl<$Res>
 assetVersionId: null == assetVersionId ? _self.assetVersionId : assetVersionId // ignore: cast_nullable_to_non_nullable
 as String,caption: freezed == caption ? _self.caption : caption // ignore: cast_nullable_to_non_nullable
 as String?,isPublic: null == isPublic ? _self.isPublic : isPublic // ignore: cast_nullable_to_non_nullable
-as String,
+as bool,
   ));
 }
 

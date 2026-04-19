@@ -5,7 +5,6 @@ part 'post_like_user.dto.g.dart';
 @JsonSerializable()
 class PostLikeUserDto {
   final String id;
-  @JsonKey(name: 'created_at')
   final DateTime createdAt;
   final LikeUserDto user;
 

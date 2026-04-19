@@ -78,6 +78,8 @@ class AuthInterceptor extends Interceptor {
   bool _isAuthRoute(String path) {
     return path.endsWith(ApiEndpoints.login) ||
         path.endsWith(ApiEndpoints.register) ||
+        path.endsWith(ApiEndpoints.forgotPassword) ||
+        path.endsWith(ApiEndpoints.resetPassword) ||
         path.endsWith(ApiEndpoints.refresh) ||
         path.endsWith(ApiEndpoints.logout) ||
         path.endsWith(ApiEndpoints.logoutAll);

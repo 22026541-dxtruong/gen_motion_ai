@@ -20,7 +20,7 @@ class _CommentApi implements CommentApi {
   final ParseErrorLogger? errorLogger;
 
   @override
-  Future<IdResponseDto> createComment(
+  Future<CommentRecordDto> createComment(
     String postId,
     CreateCommentDto dto,
   ) async {
@@ -29,7 +29,7 @@ class _CommentApi implements CommentApi {
     final _headers = <String, dynamic>{};
     final _data = <String, dynamic>{};
     _data.addAll(dto.toJson());
-    final _options = _setStreamType<IdResponseDto>(
+    final _options = _setStreamType<CommentRecordDto>(
       Options(method: 'POST', headers: _headers, extra: _extra)
           .compose(
             _dio.options,
@@ -40,9 +40,9 @@ class _CommentApi implements CommentApi {
           .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
     );
     final _result = await _dio.fetch<Map<String, dynamic>>(_options);
-    late IdResponseDto _value;
+    late CommentRecordDto _value;
     try {
-      _value = IdResponseDto.fromJson(_result.data!);
+      _value = CommentRecordDto.fromJson(_result.data!);
     } on Object catch (e, s) {
       errorLogger?.logError(e, s, _options, response: _result);
       rethrow;
@@ -86,26 +86,30 @@ class _CommentApi implements CommentApi {
   }
 
   @override
-  Future<IdResponseDto> updateComment(String id, UpdateCommentDto dto) async {
+  Future<CommentRecordDto> updateComment(
+    String postId,
+    String id,
+    UpdateCommentDto dto,
+  ) async {
     final _extra = <String, dynamic>{};
     final queryParameters = <String, dynamic>{};
     final _headers = <String, dynamic>{};
     final _data = <String, dynamic>{};
     _data.addAll(dto.toJson());
-    final _options = _setStreamType<IdResponseDto>(
+    final _options = _setStreamType<CommentRecordDto>(
       Options(method: 'PATCH', headers: _headers, extra: _extra)
           .compose(
             _dio.options,
-            '/posts/{postId}/comments/${id}',
+            '/posts/${postId}/comments/${id}',
             queryParameters: queryParameters,
             data: _data,
           )
           .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
     );
     final _result = await _dio.fetch<Map<String, dynamic>>(_options);
-    late IdResponseDto _value;
+    late CommentRecordDto _value;
     try {
-      _value = IdResponseDto.fromJson(_result.data!);
+      _value = CommentRecordDto.fromJson(_result.data!);
     } on Object catch (e, s) {
       errorLogger?.logError(e, s, _options, response: _result);
       rethrow;
@@ -114,25 +118,25 @@ class _CommentApi implements CommentApi {
   }
 
   @override
-  Future<IdResponseDto> deleteComment(String id) async {
+  Future<CommentRecordDto> deleteComment(String postId, String id) async {
     final _extra = <String, dynamic>{};
     final queryParameters = <String, dynamic>{};
     final _headers = <String, dynamic>{};
     const Map<String, dynamic>? _data = null;
-    final _options = _setStreamType<IdResponseDto>(
+    final _options = _setStreamType<CommentRecordDto>(
       Options(method: 'DELETE', headers: _headers, extra: _extra)
           .compose(
             _dio.options,
-            '/posts/{postId}/comments/${id}',
+            '/posts/${postId}/comments/${id}',
             queryParameters: queryParameters,
             data: _data,
           )
           .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
     );
     final _result = await _dio.fetch<Map<String, dynamic>>(_options);
-    late IdResponseDto _value;
+    late CommentRecordDto _value;
     try {
-      _value = IdResponseDto.fromJson(_result.data!);
+      _value = CommentRecordDto.fromJson(_result.data!);
     } on Object catch (e, s) {
       errorLogger?.logError(e, s, _options, response: _result);
       rethrow;

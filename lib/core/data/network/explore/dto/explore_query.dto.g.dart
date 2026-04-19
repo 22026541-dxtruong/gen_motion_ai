@@ -7,6 +7,7 @@ part of 'explore_query.dto.dart';
 // **************************************************************************
 
 ExploreQuery _$ExploreQueryFromJson(Map<String, dynamic> json) => ExploreQuery(
+  mode: json['mode'] as String?,
   topic: json['topic'] as String?,
   trending: json['trending'] as String?,
   sort: json['sort'] as String?,
@@ -16,6 +17,7 @@ ExploreQuery _$ExploreQueryFromJson(Map<String, dynamic> json) => ExploreQuery(
 
 Map<String, dynamic> _$ExploreQueryToJson(ExploreQuery instance) =>
     <String, dynamic>{
+      'mode': instance.mode,
       'topic': instance.topic,
       'trending': instance.trending,
       'sort': instance.sort,

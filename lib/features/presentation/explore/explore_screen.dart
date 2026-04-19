@@ -1,5 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:gen_motion_ai/core/data/network/api_providers.dart';
+import 'package:gen_motion_ai/core/data/network/explore/dto/explore_item.dto.dart';
 import 'package:gen_motion_ai/core/theme/app_theme.dart';
 import 'package:gen_motion_ai/core/utils/responsive.dart';
 import 'package:go_router/go_router.dart';
@@ -137,7 +140,7 @@ class _ExploreScreenState extends State<ExploreScreen>
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
+                Text(
                   'Publish Creation',
                   style: TextStyle(
                     fontSize: 20,
@@ -184,7 +187,7 @@ class _ExploreScreenState extends State<ExploreScreen>
               ),
             ),
             const SizedBox(height: 20),
-            const TextField(
+            TextField(
               maxLines: 3,
               decoration: InputDecoration(
                 hintText: 'Write a description or prompt used...',
@@ -463,17 +466,78 @@ class _BannerCarouselState extends State<_BannerCarousel> {
   }
 }
 
-class _ExploreTabContent extends StatefulWidget {
+class _ExploreTabContent extends ConsumerStatefulWidget {
   final String tabKey;
 
   const _ExploreTabContent({required this.tabKey});
 
   @override
-  State<_ExploreTabContent> createState() => _ExploreTabContentState();
+  ConsumerState<_ExploreTabContent> createState() => _ExploreTabContentState();
 }
 
-class _ExploreTabContentState extends State<_ExploreTabContent>
+class _ExploreTabContentState extends ConsumerState<_ExploreTabContent>
     with AutomaticKeepAliveClientMixin {
+  bool _isLoading = true;
+  String? _error;
+  List<ExploreItem> _items = const [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadFeed();
+  }
+
+  Future<void> _loadFeed() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+
+    final exploreApi = ref.read(exploreApiProvider);
+
+    try {
+      final tab = widget.tabKey.toLowerCase();
+
+      final feed = switch (tab) {
+        'recommended' => await exploreApi.getForYou(limit: 20),
+        'trending' => await exploreApi.getExplore(mode: 'trending', limit: 20),
+        'new arrivals' => await exploreApi.getExplore(mode: 'new', limit: 20),
+        'anime' => await exploreApi.getExplore(
+          mode: 'top',
+          topic: 'anime',
+          limit: 20,
+        ),
+        'realistic' => await exploreApi.getExplore(
+          mode: 'top',
+          topic: 'portrait',
+          limit: 20,
+        ),
+        '3d animation' => await exploreApi.getExplore(
+          mode: 'top',
+          topic: 'scifi',
+          limit: 20,
+        ),
+        _ => await exploreApi.getExplore(mode: 'trending', limit: 20),
+      };
+
+      if (!mounted) return;
+      setState(() {
+        _items = feed.data;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _error = 'Cannot load explore feed';
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
   @override
   bool get wantKeepAlive => true;
 
@@ -488,38 +552,74 @@ class _ExploreTabContentState extends State<_ExploreTabContent>
         SliverOverlapInjector(
           handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
         ),
-        SliverPadding(
-          padding: EdgeInsets.all(isMobile ? 10 : 16),
-          sliver: SliverGrid(
-            gridDelegate: isMobile
-                ? const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    childAspectRatio: 0.7,
-                    crossAxisSpacing: 10,
-                    mainAxisSpacing: 10,
-                  )
-                : const SliverGridDelegateWithMaxCrossAxisExtent(
-                    maxCrossAxisExtent: 300,
-                    childAspectRatio: 0.7,
-                    crossAxisSpacing: 16,
-                    mainAxisSpacing: 16,
+        if (_isLoading)
+          const SliverFillRemaining(
+            hasScrollBody: false,
+            child: Center(child: CircularProgressIndicator()),
+          )
+        else if (_error != null)
+          SliverFillRemaining(
+            hasScrollBody: false,
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    _error!,
+                    style: TextStyle(color: context.appColors.textSecondary),
                   ),
-            delegate: SliverChildBuilderDelegate((
-              BuildContext context,
-              int index,
-            ) {
-              return _ExploreCard(index: index);
-            }, childCount: 20),
+                  const SizedBox(height: 12),
+                  OutlinedButton(
+                    onPressed: _loadFeed,
+                    child: const Text('Retry'),
+                  ),
+                ],
+              ),
+            ),
+          )
+        else if (_items.isEmpty)
+          SliverFillRemaining(
+            hasScrollBody: false,
+            child: Center(
+              child: Text(
+                'No posts found',
+                style: TextStyle(color: context.appColors.textSecondary),
+              ),
+            ),
+          )
+        else
+          SliverPadding(
+            padding: EdgeInsets.all(isMobile ? 10 : 16),
+            sliver: SliverGrid(
+              gridDelegate: isMobile
+                  ? const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      childAspectRatio: 0.7,
+                      crossAxisSpacing: 10,
+                      mainAxisSpacing: 10,
+                    )
+                  : const SliverGridDelegateWithMaxCrossAxisExtent(
+                      maxCrossAxisExtent: 300,
+                      childAspectRatio: 0.7,
+                      crossAxisSpacing: 16,
+                      mainAxisSpacing: 16,
+                    ),
+              delegate: SliverChildBuilderDelegate((
+                BuildContext context,
+                int index,
+              ) {
+                return _ExploreCard(item: _items[index]);
+              }, childCount: _items.length),
+            ),
           ),
-        ),
       ],
     );
   }
 }
 
 class _ExploreCard extends StatefulWidget {
-  final int index;
-  const _ExploreCard({required this.index});
+  final ExploreItem item;
+  const _ExploreCard({required this.item});
 
   @override
   State<_ExploreCard> createState() => _ExploreCardState();
@@ -568,15 +668,26 @@ class _ExploreCardState extends State<_ExploreCard> {
                 cursor: SystemMouseCursors.click,
                 child: GestureDetector(
                   onTap: () {
-                    context.push('/post/${widget.index}');
+                    context.push('/post/${widget.item.post.id}');
                   },
                   child: Stack(
                     fit: StackFit.expand,
                     children: [
-                      Image.network(
-                        'https://picsum.photos/seed/${widget.index + 50}/400/600',
-                        fit: BoxFit.cover,
-                      ),
+                      widget.item.assetVersion.fileUrl != null
+                          ? Image.network(
+                              widget.item.assetVersion.fileUrl!,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Container(
+                                  color: context.appColors.card,
+                                  child: const Icon(Icons.broken_image_outlined),
+                                );
+                              },
+                            )
+                          : Container(
+                              color: context.appColors.card,
+                              child: const Icon(Icons.image_outlined),
+                            ),
                       if (_isHovered || isMobile)
                         Container(
                           color: isMobile
@@ -605,7 +716,7 @@ class _ExploreCardState extends State<_ExploreCard> {
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: const Text(
-                            '00:05',
+                            'Explore',
                             style: TextStyle(
                               color: Colors.white,
                               fontSize: 10,
@@ -627,7 +738,7 @@ class _ExploreCardState extends State<_ExploreCard> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Cinematic shot of a futuristic city with neon lights...',
+                    widget.item.post.caption ?? widget.item.title,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
@@ -647,7 +758,7 @@ class _ExploreCardState extends State<_ExploreCard> {
                           cursor: SystemMouseCursors.click,
                           child: GestureDetector(
                             onTap: () {
-                              context.push('/user/user_${widget.index}');
+                              context.push('/user/${widget.item.post.user.id}');
                             },
                             behavior: HitTestBehavior.opaque,
                             child: Row(
@@ -656,7 +767,10 @@ class _ExploreCardState extends State<_ExploreCard> {
                                   radius: isMobile ? 8 : 10,
                                   backgroundColor: AppTheme.accentPurple,
                                   child: Text(
-                                    'U${widget.index}',
+                                    widget.item.post.user.username.isNotEmpty
+                                        ? widget.item.post.user.username[0]
+                                              .toUpperCase()
+                                        : 'U',
                                     style: TextStyle(
                                       fontSize: isMobile ? 7 : 8,
                                       color: Colors.white,
@@ -666,8 +780,8 @@ class _ExploreCardState extends State<_ExploreCard> {
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: Text(
-                                    'User ${widget.index}',
-                                    style: const TextStyle(
+                                    widget.item.post.user.username,
+                                    style: TextStyle(
                                       color: context.appColors.textSecondary,
                                       fontSize: 12,
                                     ),
@@ -702,8 +816,8 @@ class _ExploreCardState extends State<_ExploreCard> {
                               ),
                               const SizedBox(width: 4),
                               Text(
-                                '${245 + widget.index}',
-                                style: const TextStyle(
+                                widget.item.score.toStringAsFixed(1),
+                                style: TextStyle(
                                   color: context.appColors.textSecondary,
                                   fontSize: 12,
                                 ),

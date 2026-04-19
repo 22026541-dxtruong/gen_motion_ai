@@ -4,9 +4,10 @@ part 'create_comment.dto.g.dart';
 
 @JsonSerializable()
 class CreateCommentDto {
+  final String postId;
   final String content;
 
-  CreateCommentDto({required this.content});
+  CreateCommentDto({required this.postId, required this.content});
 
   factory CreateCommentDto.fromJson(Map<String, dynamic> json) =>
       _$CreateCommentDtoFromJson(json);
