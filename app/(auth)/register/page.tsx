@@ -2,8 +2,30 @@
 import React from 'react';
 import { Mail, Lock, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
+import { useState } from 'react';
+import { registerAction } from '@/app/actions/auth';
 
 export default function RegisterPage() {
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError(null);
+    const formData = new FormData(e.currentTarget);
+    try {
+      const result = await registerAction(formData);
+      if (result?.error) {
+        setError(result.error);
+      }
+    } catch (err) {
+      setError('An unexpected error occurred');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#F8F9FE] flex items-center justify-center p-4 sm:p-8">
       {/* Main Container */}
@@ -26,7 +48,12 @@ export default function RegisterPage() {
 
           {/* Form Card */}
           <div className="w-full bg-white rounded-xl p-8 shadow-[0_4px_40px_-12px_rgba(0,0,0,0.05)] border border-gray-100">
-            <form className="w-full space-y-5" onSubmit={(e) => e.preventDefault()}>
+            {error && (
+              <div className="mb-4 p-3 bg-red-50 text-red-600 text-sm rounded-lg border border-red-100">
+                {error}
+              </div>
+            )}
+            <form className="w-full space-y-5" onSubmit={handleSubmit}>
             
             {/* Email Input */}
             <div>
@@ -39,6 +66,7 @@ export default function RegisterPage() {
                 </div>
                 <input
                   type="email"
+                  name="email"
                   placeholder="you@example.com"
                   className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors placeholder:text-gray-300 text-slate-900"
                   required
@@ -57,6 +85,7 @@ export default function RegisterPage() {
                 </div>
                 <input
                   type="password"
+                  name="password"
                   placeholder="••••••••"
                   className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors placeholder:text-gray-300 text-slate-900"
                   required
@@ -67,9 +96,10 @@ export default function RegisterPage() {
             {/* Submit Button */}
             <button
               type="submit"
-              className="w-full bg-gradient-to-r from-[#5946D2] to-[#8C3FE8] hover:from-[#4b3abc] hover:to-[#7635c4] text-white font-medium py-3 rounded-lg flex items-center justify-center gap-2 transition-all mt-4 shadow-md shadow-purple-500/20"
+              disabled={isLoading}
+              className="w-full bg-gradient-to-r from-[#5946D2] to-[#8C3FE8] hover:from-[#4b3abc] hover:to-[#7635c4] text-white font-medium py-3 rounded-lg flex items-center justify-center gap-2 transition-all mt-4 shadow-md shadow-purple-500/20 disabled:opacity-70 disabled:cursor-not-allowed"
             >
-              Create Account <ArrowRight className="h-4 w-4" />
+              {isLoading ? 'Creating Account...' : <>Create Account <ArrowRight className="h-4 w-4" /></>}
             </button>
 
             {/* Divider */}

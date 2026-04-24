@@ -1,8 +1,30 @@
 'use client';
 import { Mail, Lock, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
+import { useState } from 'react';
+import { loginAction } from '@/app/actions/auth';
 
 export default function LoginPage() {
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError(null);
+    const formData = new FormData(e.currentTarget);
+    try {
+      const result = await loginAction(formData);
+      if (result?.error) {
+        setError(result.error);
+      }
+    } catch (err) {
+      setError('An unexpected error occurred');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#F8F9FE] flex items-center justify-center p-4 sm:p-8">
       {/* Main Container */}
@@ -21,7 +43,12 @@ export default function LoginPage() {
 
           {/* Form Card */}
           <div className="w-full bg-white rounded-xl p-8 shadow-[0_4px_40px_-12px_rgba(0,0,0,0.05)] border border-gray-100">
-            <form className="space-y-5" onSubmit={(e) => e.preventDefault()}>
+            {error && (
+              <div className="mb-4 p-3 bg-red-50 text-red-600 text-sm rounded-lg border border-red-100">
+                {error}
+              </div>
+            )}
+            <form className="space-y-5" onSubmit={handleSubmit}>
               
               {/* Email Input */}
               <div>
@@ -34,6 +61,7 @@ export default function LoginPage() {
                   </div>
                   <input
                     type="email"
+                    name="email"
                     placeholder="name@company.com"
                     className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors placeholder:text-gray-400 text-slate-900"
                     required
@@ -57,6 +85,7 @@ export default function LoginPage() {
                   </div>
                   <input
                     type="password"
+                    name="password"
                     placeholder="••••••••"
                     className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors placeholder:text-gray-400 text-slate-900"
                     required
@@ -67,9 +96,10 @@ export default function LoginPage() {
               {/* Log In Button */}
               <button
                 type="submit"
-                className="w-full bg-[#4F46E5] hover:bg-[#4338CA] text-white font-medium py-2.5 rounded-lg flex items-center justify-center gap-2 transition-colors mt-2"
+                disabled={isLoading}
+                className="w-full bg-[#4F46E5] hover:bg-[#4338CA] text-white font-medium py-2.5 rounded-lg flex items-center justify-center gap-2 transition-colors mt-2 disabled:opacity-70 disabled:cursor-not-allowed"
               >
-                Log In <ArrowRight className="h-4 w-4" />
+                {isLoading ? 'Logging In...' : <>Log In <ArrowRight className="h-4 w-4" /></>}
               </button>
 
               {/* Divider */}

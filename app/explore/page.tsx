@@ -11,8 +11,47 @@ import {
   Timer,
 } from "lucide-react";
 import MainLayout from "../../component/MainLayout";
+import { fetchApi } from "@/lib/api";
+import ExploreFeed from "./ExploreFeed";
 
-export default function ExplorePage() {
+export default async function ExplorePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
+  const params = await searchParams;
+  const mode = (params.mode as string) || 'trending';
+
+  let forYouData: any = { data: [] };
+  let exploreData: any = { data: [] };
+  
+  let isAuthenticated = false;
+  try {
+    const me = await fetchApi('/users/me');
+    isAuthenticated = !!me;
+  } catch (e) {
+    // Guest user
+  }
+
+  try {
+    if (isAuthenticated) {
+      forYouData = await fetchApi('/explore/for-you?limit=2');
+    } else {
+      forYouData = await fetchApi('/explore?mode=trending&limit=2');
+    }
+    
+    exploreData = await fetchApi(`/explore?limit=10&mode=${mode}`);
+  } catch (error) {
+    console.error("Failed to fetch explore data:", error);
+  }
+
+  const items = exploreData?.data || [];
+  const nextCursor = exploreData?.nextCursor || null;
+  const featuredItems = forYouData?.data || [];
+
+  const displayFeatured1 = featuredItems[0];
+  const displayFeatured2 = featuredItems[1];
+
   return (
     <MainLayout activePage="explore">
       <div className="max-w-6xl mx-auto">
@@ -28,12 +67,18 @@ export default function ExplorePage() {
 
           {/* Trending/New Toggle */}
           <div className="flex bg-slate-50 p-1 rounded-full border border-slate-100">
-            <button className="px-6 py-2 bg-white text-indigo-600 text-sm font-medium rounded-full shadow-sm">
+            <Link 
+              href="?mode=trending"
+              className={`px-6 py-2 text-sm font-medium rounded-full transition-colors ${mode === 'trending' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+            >
               Trending
-            </button>
-            <button className="px-6 py-2 text-slate-500 text-sm font-medium rounded-full hover:text-slate-700">
+            </Link>
+            <Link 
+              href="?mode=new"
+              className={`px-6 py-2 text-sm font-medium rounded-full transition-colors ${mode === 'new' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+            >
               New
-            </button>
+            </Link>
           </div>
         </div>
 
@@ -49,58 +94,68 @@ export default function ExplorePage() {
             </button>
           </div>
 
-          <div className="grid grid-cols-12 gap-6 h-[400px]">
-            {/* Featured Card Left */}
-            <div className="col-span-8 relative rounded-2xl overflow-hidden group cursor-pointer shadow-sm block">
-              <Link href="/post/featured-1" className="absolute inset-0 z-10" />
-              <img
-                src="https://images.unsplash.com/photo-1605806616949-1e87b487cb2a?auto=format&fit=crop&q=80&w=1200"
-                alt="Neon Nights: Tokyo 2099"
-                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent p-6 flex flex-col justify-end pointer-events-none">
-                <div className="mb-auto mt-2 pointer-events-auto relative z-20 w-fit">
-                  <span className="bg-indigo-600 text-white text-xs font-bold px-3 py-1 rounded-full tracking-wide">
-                    FEATURED POST
-                  </span>
-                </div>
-                <div className="flex justify-between items-end pointer-events-auto relative z-20">
-                  <div>
-                    <h4 className="text-3xl font-bold text-white mb-3">
-                      Neon Nights: Tokyo 2099
-                    </h4>
-                    <Link href="/user/cyber_craft" className="flex items-center gap-2 text-white/80 text-sm hover:text-white transition-colors w-fit">
-                      <img
-                        src="https://images.unsplash.com/photo-1599566150163-29194dcaad36?auto=format&fit=crop&q=80&w=100"
-                        alt="avatar"
-                        className="h-6 w-6 rounded-full border border-white/30"
-                      />
-                      <span>@cyber_craft</span>
-                    </Link>
+          {displayFeatured1 || displayFeatured2 ? (
+            <div className="grid grid-cols-12 gap-6 h-[400px]">
+              {/* Featured Card Left */}
+              {displayFeatured1 && (
+                <div className="col-span-8 relative rounded-2xl overflow-hidden group cursor-pointer shadow-sm block">
+                  <Link href={`/post/${displayFeatured1.postId || displayFeatured1.id}`} className="absolute inset-0 z-10" />
+                  <img
+                    src={displayFeatured1.assetVersion?.fileUrl || "https://images.unsplash.com/photo-1605806616949-1e87b487cb2a?auto=format&fit=crop&q=80&w=1200"}
+                    alt={displayFeatured1.title || "Featured Video"}
+                    className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent p-6 flex flex-col justify-end pointer-events-none">
+                    <div className="mb-auto mt-2 pointer-events-auto relative z-20 w-fit">
+                      <span className="bg-indigo-600 text-white text-xs font-bold px-3 py-1 rounded-full tracking-wide">
+                        {isAuthenticated ? 'FOR YOU' : 'TRENDING'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-end pointer-events-auto relative z-20">
+                      <div>
+                        <h4 className="text-3xl font-bold text-white mb-3">
+                          {displayFeatured1.title || "Untitled Video"}
+                        </h4>
+                        <Link href={`/user/${displayFeatured1.post?.user?.username || 'unknown'}`} className="flex items-center gap-2 text-white/80 text-sm hover:text-white transition-colors w-fit">
+                          <img
+                            src={displayFeatured1.post?.user?.avatarUrl || "https://images.unsplash.com/photo-1599566150163-29194dcaad36?auto=format&fit=crop&q=80&w=100"}
+                            alt="avatar"
+                            className="h-6 w-6 rounded-full border border-white/30"
+                          />
+                          <span>@{displayFeatured1.post?.user?.username || "unknown"}</span>
+                        </Link>
+                      </div>
+                      <button className="bg-white/20 backdrop-blur-md hover:bg-white/30 text-white rounded-full p-4 transition-colors">
+                        <Play className="h-6 w-6 fill-current" />
+                      </button>
+                    </div>
                   </div>
-                  <button className="bg-white/20 backdrop-blur-md hover:bg-white/30 text-white rounded-full p-4 transition-colors">
-                    <Play className="h-6 w-6 fill-current" />
-                  </button>
                 </div>
-              </div>
-            </div>
+              )}
 
-            {/* Secondary Card Right */}
-            <div className="col-span-4 relative rounded-2xl overflow-hidden group cursor-pointer shadow-sm block">
-              <Link href="/post/featured-2" className="absolute inset-0 z-10" />
-              <img
-                src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=800"
-                alt="Liquid Dreams"
-                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent p-6 flex flex-col justify-end pointer-events-none">
-                <h4 className="text-xl font-bold text-white mb-2 relative z-20">
-                  Liquid Dreams
-                </h4>
-                <Link href="/user/dream_weaver" className="text-white/80 text-sm hover:text-white transition-colors relative z-20 w-fit pointer-events-auto">@dream_weaver</Link>
-              </div>
+              {/* Secondary Card Right */}
+              {displayFeatured2 && (
+                <div className="col-span-4 relative rounded-2xl overflow-hidden group cursor-pointer shadow-sm block">
+                  <Link href={`/post/${displayFeatured2.postId || displayFeatured2.id}`} className="absolute inset-0 z-10" />
+                  <img
+                    src={displayFeatured2.assetVersion?.fileUrl || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=800"}
+                    alt={displayFeatured2.title || "Featured Video"}
+                    className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent p-6 flex flex-col justify-end pointer-events-none">
+                    <h4 className="text-xl font-bold text-white mb-2 relative z-20">
+                      {displayFeatured2.title || "Untitled Video"}
+                    </h4>
+                    <Link href={`/user/${displayFeatured2.post?.user?.username || 'unknown'}`} className="text-white/80 text-sm hover:text-white transition-colors relative z-20 w-fit pointer-events-auto">@{displayFeatured2.post?.user?.username || "unknown"}</Link>
+                  </div>
+                </div>
+              )}
             </div>
-          </div>
+          ) : (
+            <div className="w-full h-32 flex items-center justify-center border border-slate-100 rounded-2xl bg-slate-50 text-slate-400 font-medium">
+              Check back later for personalized recommendations.
+            </div>
+          )}
         </div>
 
         {/* Recent Discoveries Section */}
@@ -112,67 +167,7 @@ export default function ExplorePage() {
             </h3>
           </div>
 
-          <div className="grid grid-cols-4 gap-6">
-            {/* Discovery Cards */}
-            {recentDiscoveries.map((item, idx) => (
-              <div
-                key={idx}
-                className="relative bg-white border border-slate-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col block group"
-              >
-                <Link href={`/post/discovery-${idx}`} className="absolute inset-0 z-10" />
-                <div className="relative aspect-[4/3]">
-                  <img
-                    src={item.image}
-                    alt={item.title}
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm text-slate-700 text-xs font-semibold px-2 py-1 rounded-full flex items-center gap-1 z-20">
-                    <Timer className="h-3 w-3" />
-                    {item.time}
-                  </div>
-                </div>
-                <div className="p-4 flex flex-col flex-1 pointer-events-none">
-                  <Link href={`/user/${item.author}`} className="flex items-center gap-2 mb-3 pointer-events-auto relative z-20 w-fit hover:opacity-80 transition-opacity">
-                    <img
-                      src={item.avatar}
-                      alt={item.author}
-                      className="h-6 w-6 rounded-full object-cover"
-                    />
-                    <span className="text-sm font-medium text-slate-700">
-                      {item.author}
-                    </span>
-                  </Link>
-                  <p className="text-sm text-slate-500 line-clamp-2 mb-4 flex-1">
-                    {item.title}
-                  </p>
-                  <div className="flex items-center justify-between text-slate-400 text-sm mt-auto border-t border-slate-50 pt-3 pointer-events-auto relative z-20">
-                    <button className="flex items-center gap-1.5 hover:text-indigo-600 transition-colors">
-                      <Heart
-                        className={`h-4 w-4 ${
-                          item.liked ? "fill-red-500 text-red-500" : ""
-                        }`}
-                      />
-                      <span>{item.likes}</span>
-                    </button>
-                    <button className="flex items-center gap-1.5 hover:text-indigo-600 transition-colors">
-                      <MessageSquare className="h-4 w-4" />
-                      <span>{item.comments}</span>
-                    </button>
-                    <button className="hover:text-indigo-600 transition-colors">
-                      <Share2 className="h-4 w-4" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Load More Button */}
-        <div className="mt-10 mb-8 flex justify-center">
-          <button className="bg-indigo-50 text-indigo-600 px-8 py-3 rounded-xl font-medium hover:bg-indigo-100 transition-colors">
-            Load More Content
-          </button>
+          <ExploreFeed initialItems={items} initialCursor={nextCursor} mode={mode} />
         </div>
       </div>
       <button className="fixed bottom-10 right-10 bg-indigo-500 hover:bg-indigo-600 text-white p-4 rounded-full shadow-xl shadow-indigo-200 transition-transform hover:scale-105 z-20">
@@ -181,54 +176,3 @@ export default function ExplorePage() {
     </MainLayout>
   );
 }
-
-const recentDiscoveries = [
-  {
-    author: "nature_pro",
-    title: "Misty mornings in the Alps are something else....",
-    image:
-      "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&q=80&w=800",
-    avatar:
-      "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&q=80&w=100",
-    time: "0:15",
-    likes: "1.2k",
-    comments: "48",
-    liked: false,
-  },
-  {
-    author: "tech_vision",
-    title: "Visualizing the global neural network of...",
-    image:
-      "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&q=80&w=800",
-    avatar:
-      "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=100",
-    time: "0:24",
-    likes: "3.8k",
-    comments: "126",
-    liked: true,
-  },
-  {
-    author: "pixel_soul",
-    title: "The detail Neura Gen can hit with v2.5 is insane....",
-    image:
-      "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&q=80&w=800",
-    avatar:
-      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=100",
-    time: "0:10",
-    likes: "954",
-    comments: "32",
-    liked: false,
-  },
-  {
-    author: "glitch_queen",
-    title: "Satisfying liquid gold loop for my latest NFT project.",
-    image:
-      "https://images.unsplash.com/photo-1550684848-fac1c5b4e853?auto=format&fit=crop&q=80&w=800",
-    avatar:
-      "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=100",
-    time: "0:30",
-    likes: "2.1k",
-    comments: "18",
-    liked: false,
-  },
-];
