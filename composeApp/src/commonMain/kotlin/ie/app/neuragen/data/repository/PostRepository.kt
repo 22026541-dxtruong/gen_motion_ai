@@ -1,0 +1,100 @@
+package ie.app.neuragen.data.repository
+
+import ie.app.neuragen.data.network.NeuraGenApi
+import ie.app.neuragen.data.network.model.*
+import org.koin.core.annotation.Factory
+import org.koin.core.annotation.Provided
+import org.koin.core.annotation.Single
+
+interface PostRepository {
+    suspend fun getPosts(): Result<List<PostDto>>
+    suspend fun getPost(id: String): Result<PostDto>
+    suspend fun createPost(assetVersionId: String, caption: String?, isPublic: Boolean): Result<PostDto>
+    suspend fun updatePost(id: String, request: UpdatePostRequest): Result<PostDto>
+    suspend fun deletePost(id: String): Result<PostDto>
+
+    suspend fun getComments(postId: String, cursor: String? = null, take: Int? = null): Result<CommentsPaginationDto>
+    suspend fun createComment(postId: String, content: String): Result<CommentDto>
+    suspend fun updateComment(id: String, content: String, postId: String): Result<CommentDto>
+    suspend fun deleteComment(id: String): Result<CommentDto>
+
+    suspend fun getPostLikes(postId: String, cursor: String? = null, take: Int? = null): Result<PostLikesPaginationDto>
+    suspend fun likePost(postId: String): Result<PostLikeDto>
+    suspend fun unlikePost(postId: String): Result<PostLikeDto>
+
+    suspend fun getFollowers(userId: String, cursor: String? = null, take: Int? = null): Result<FollowsPaginationDto>
+    suspend fun getFollowings(userId: String, cursor: String? = null, take: Int? = null): Result<FollowsPaginationDto>
+    suspend fun followUser(followingId: String): Result<FollowDto>
+    suspend fun unfollowUser(userId: String): Result<FollowDto>
+}
+
+@Single([PostRepository::class])
+class PostRepositoryImpl(
+    @Provided
+    private val api: NeuraGenApi
+) : PostRepository {
+
+    override suspend fun getPosts(): Result<List<PostDto>> = runCatching {
+        api.getPosts()
+    }
+
+    override suspend fun getPost(id: String): Result<PostDto> = runCatching {
+        api.getPost(id)
+    }
+
+    override suspend fun createPost(assetVersionId: String, caption: String?, isPublic: Boolean): Result<PostDto> = runCatching {
+        api.createPost(CreatePostRequest(assetVersionId, caption, isPublic))
+    }
+
+    override suspend fun updatePost(id: String, request: UpdatePostRequest): Result<PostDto> = runCatching {
+        api.updatePost(id, request)
+    }
+
+    override suspend fun deletePost(id: String): Result<PostDto> = runCatching {
+        api.deletePost(id)
+    }
+
+    override suspend fun getComments(postId: String, cursor: String?, take: Int?): Result<CommentsPaginationDto> = runCatching {
+        api.getComments(postId, cursor, take)
+    }
+
+    override suspend fun createComment(postId: String, content: String): Result<CommentDto> = runCatching {
+        api.createComment(CreateCommentRequest(postId, content))
+    }
+
+    override suspend fun updateComment(id: String, content: String, postId: String): Result<CommentDto> = runCatching {
+        api.updateComment(id, CreateCommentRequest(postId, content))
+    }
+
+    override suspend fun deleteComment(id: String): Result<CommentDto> = runCatching {
+        api.deleteComment(id)
+    }
+
+    override suspend fun getPostLikes(postId: String, cursor: String?, take: Int?): Result<PostLikesPaginationDto> = runCatching {
+        api.getPostLikes(postId, cursor, take)
+    }
+
+    override suspend fun likePost(postId: String): Result<PostLikeDto> = runCatching {
+        api.likePost(CreatePostLikeRequest(postId))
+    }
+
+    override suspend fun unlikePost(postId: String): Result<PostLikeDto> = runCatching {
+        api.unlikePost(postId)
+    }
+
+    override suspend fun getFollowers(userId: String, cursor: String?, take: Int?): Result<FollowsPaginationDto> = runCatching {
+        api.getFollowers(userId, cursor, take)
+    }
+
+    override suspend fun getFollowings(userId: String, cursor: String?, take: Int?): Result<FollowsPaginationDto> = runCatching {
+        api.getFollowings(userId, cursor, take)
+    }
+
+    override suspend fun followUser(followingId: String): Result<FollowDto> = runCatching {
+        api.followUser(CreateFollowRequest(followingId))
+    }
+
+    override suspend fun unfollowUser(userId: String): Result<FollowDto> = runCatching {
+        api.unfollowUser(userId)
+    }
+}
