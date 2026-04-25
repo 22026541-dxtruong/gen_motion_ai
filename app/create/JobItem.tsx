@@ -72,9 +72,8 @@ export default function JobItem({ job }: { job: any }) {
               {job.prompt || "Completed Video"}
             </h4>
             <div
-              className={`flex items-center gap-1.5 text-xs font-medium ${
-                job.status === "FAILED" ? "text-red-600" : "text-emerald-600"
-              }`}
+              className={`flex items-center gap-1.5 text-xs font-medium ${job.status === "FAILED" ? "text-red-600" : "text-emerald-600"
+                }`}
             >
               <CheckCircle2 className="h-3.5 w-3.5" /> {job.status}
             </div>
@@ -109,7 +108,7 @@ export default function JobItem({ job }: { job: any }) {
           >
             <Play className="h-4 w-4" /> Watch
           </button>
-          
+
           <button
             onClick={() => setIsPublishOpen(true)}
             disabled={!job.output?.downloadUrl}

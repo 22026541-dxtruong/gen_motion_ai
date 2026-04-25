@@ -24,9 +24,9 @@ export default function PublishDialog({
   const handlePublish = async () => {
     setIsLoading(true);
     setError(null);
-    
+
     const res = await publishVideoAction(assetId || null, assetVersionId || null, caption);
-    
+
     if (res.success) {
       setIsLoading(false);
       onClose();
@@ -42,7 +42,7 @@ export default function PublishDialog({
         <p className="text-sm text-slate-500">
           Share your masterpiece with the community. It will be posted to the Explore feed and your Public Gallery.
         </p>
-        
+
         {error && (
           <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm border border-red-100">
             {error}

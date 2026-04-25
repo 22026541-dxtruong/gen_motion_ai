@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import Link from "next/link";
 import {
   Share2,
@@ -11,46 +11,159 @@ import {
   Eye,
   Heart,
   MoreVertical,
-  Send
+  Send,
 } from "lucide-react";
 import Dialog from "../../component/Dialog";
 import PublishDialog from "../../component/PublishDialog";
 import { updateUserProfileAction } from "@/app/actions/user";
 
-export default function ProfileView({ userProfile, galleryItems, jobs }: { userProfile: any; galleryItems: any[]; jobs?: any[] }) {
+// ─── GalleryCard — video plays on hover ──────────────────────────────────────
+function GalleryCard({
+  item,
+  idx,
+  mediaUrl,
+  isVideo,
+  formatDuration,
+  onPublish,
+}: {
+  item: any;
+  idx: number;
+  mediaUrl: string;
+  isVideo: boolean;
+  formatDuration: (ms: number) => string;
+  onPublish: (item: any) => void;
+}) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  const assetVersion = item.assetVersion || {};
+
+  const handleMouseEnter = () => {
+    if (isVideo && videoRef.current) {
+      videoRef.current.play().catch(() => {});
+    }
+  };
+
+  const handleMouseLeave = () => {
+    if (isVideo && videoRef.current) {
+      videoRef.current.pause();
+      videoRef.current.currentTime = 0;
+    }
+  };
+
+  return (
+    <div
+      className="bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-md transition group block relative"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
+      <Link
+        href={item.isJob ? "#" : `/post/${item.id || idx}`}
+        className="absolute inset-0 z-10"
+      />
+      <div className="relative h-48 bg-slate-900 overflow-hidden">
+        {isVideo ? (
+          <video
+            ref={videoRef}
+            src={mediaUrl}
+            className="w-full h-full object-cover"
+            loop
+            muted
+            playsInline
+            preload="metadata"
+          />
+        ) : (
+          <img
+            src={mediaUrl}
+            alt={item.title || "Thumbnail"}
+            className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
+          />
+        )}
+        <span className="absolute bottom-3 right-3 bg-black/60 backdrop-blur-md text-white text-xs font-semibold px-2.5 py-1 rounded-lg z-20">
+          {formatDuration(assetVersion.durationMs || 0)}
+        </span>
+      </div>
+      <div className="p-5">
+        <div className="flex justify-between items-start">
+          <h3 className="font-semibold text-gray-900 truncate pr-4 text-lg">
+            {item.title || "Untitled Video"}
+          </h3>
+          <button className="text-gray-400 hover:text-gray-700 mt-1">
+            <MoreVertical size={18} />
+          </button>
+        </div>
+        <div className="flex items-center justify-between mt-4">
+          <div className="flex items-center gap-4 text-sm font-medium text-gray-500">
+            <span className="flex items-center gap-1.5">
+              <Eye size={16} /> {item.post?.viewCount || 0}
+            </span>
+            <span className="flex items-center gap-1.5">
+              <Heart size={16} /> {item.post?.likeCount || 0}
+            </span>
+          </div>
+          {(!item.isPublic || item.isJob) && (
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onPublish(item);
+              }}
+              className="relative z-20 flex items-center gap-1.5 text-xs font-semibold bg-indigo-50 text-indigo-600 px-3 py-1.5 rounded-lg hover:bg-indigo-100 transition-colors ml-auto"
+            >
+              <Send size={14} /> Publish
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── ProfileView ──────────────────────────────────────────────────────────────
+export default function ProfileView({
+  userProfile,
+  galleryItems,
+  jobs,
+}: {
+  userProfile: any;
+  galleryItems: any[];
+  jobs?: any[];
+}) {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isFollowersDialogOpen, setIsFollowersDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"public" | "private">("public");
-  
+
   // Publish Dialog State
   const [publishingItem, setPublishingItem] = useState<any>(null);
-  
+
   const [isUpdating, setIsUpdating] = useState(false);
   const [updateError, setUpdateError] = useState<string | null>(null);
 
-  const displayedGallery = activeTab === "public" 
-    ? galleryItems.filter(item => item.isPublic) 
-    : [
-        // Include actual jobs in private workspace
-        ...(jobs?.filter((j: any) => j.status === 'COMPLETED').map((job: any) => ({
-          id: job.id,
-          title: job.prompt || "Video Generation",
-          isJob: true,
-          assetVersion: {
-            fileUrl: job.thumbnail?.downloadUrl || job.output?.downloadUrl,
-            durationMs: job.estimatedDurationSeconds ? job.estimatedDurationSeconds * 1000 : 0
-          },
-          post: { viewCount: 0, likeCount: 0 }
-        })) || []),
-        ...galleryItems
-      ];
+  const displayedGallery =
+    activeTab === "public"
+      ? galleryItems.filter((item) => item.isPublic)
+      : (
+          jobs
+            ?.filter((j: any) => j.status === "COMPLETED")
+            .map((job: any) => ({
+              id: job.id,
+              title: job.prompt || "Video Generation",
+              isJob: true,
+              assetVersion: {
+                fileUrl: job.thumbnail?.downloadUrl || job.output?.downloadUrl,
+                durationMs: job.estimatedDurationSeconds
+                  ? job.estimatedDurationSeconds * 1000
+                  : 0,
+              },
+              post: { viewCount: 0, likeCount: 0 },
+            })) || []
+        );
 
   const handleUpdateProfile = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsUpdating(true);
     setUpdateError(null);
     const formData = new FormData(e.currentTarget);
-    
+
     try {
       const res = await updateUserProfileAction({
         username: formData.get("username") as string,
@@ -70,7 +183,7 @@ export default function ProfileView({ userProfile, galleryItems, jobs }: { userP
     const totalSeconds = Math.floor(ms / 1000);
     const m = Math.floor(totalSeconds / 60);
     const s = totalSeconds % 60;
-    return `${m}:${s.toString().padStart(2, '0')}`;
+    return `${m}:${s.toString().padStart(2, "0")}`;
   };
 
   return (
@@ -90,7 +203,10 @@ export default function ProfileView({ userProfile, galleryItems, jobs }: { userP
           <div className="flex gap-6">
             <div className="-mt-14 relative z-10">
               <img
-                src={userProfile?.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200&auto=format&fit=crop"}
+                src={
+                  userProfile?.avatarUrl ||
+                  "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200&auto=format&fit=crop"
+                }
                 alt={userProfile?.username || "User"}
                 className="w-32 h-32 rounded-2xl border-4 border-white shadow-sm object-cover bg-gray-100"
               />
@@ -105,7 +221,7 @@ export default function ProfileView({ userProfile, galleryItems, jobs }: { userP
             </div>
           </div>
           <div className="pt-4 flex gap-3">
-            <button 
+            <button
               onClick={() => setIsEditDialogOpen(true)}
               className="bg-indigo-600 text-white px-6 py-2.5 rounded-full font-medium hover:bg-indigo-700 transition shadow-sm"
             >
@@ -121,15 +237,34 @@ export default function ProfileView({ userProfile, galleryItems, jobs }: { userP
       {/* Stats Grid */}
       <div className="grid grid-cols-4 gap-4 pt-4">
         {[
-          { label: "FOLLOWERS", value: userProfile?.counts?.followers || 0, color: "text-indigo-600", onClick: () => setIsFollowersDialogOpen(true) },
-          { label: "FOLLOWING", value: userProfile?.counts?.following || 0, color: "text-gray-900" },
-          { label: "POSTS", value: userProfile?.counts?.posts || 0, color: "text-gray-900" },
-          { label: "JOBS", value: userProfile?.counts?.jobs || 0, color: "text-purple-600" },
+          {
+            label: "FOLLOWERS",
+            value: userProfile?.counts?.followers || 0,
+            color: "text-indigo-600",
+            onClick: () => setIsFollowersDialogOpen(true),
+          },
+          {
+            label: "FOLLOWING",
+            value: userProfile?.counts?.following || 0,
+            color: "text-gray-900",
+          },
+          {
+            label: "POSTS",
+            value: userProfile?.counts?.posts || 0,
+            color: "text-gray-900",
+          },
+          {
+            label: "JOBS",
+            value: userProfile?.counts?.jobs || 0,
+            color: "text-purple-600",
+          },
         ].map((stat) => (
           <div
             key={stat.label}
             onClick={stat.onClick}
-            className={`bg-white p-6 rounded-2xl shadow-sm flex flex-col justify-center ${stat.onClick ? "cursor-pointer hover:shadow-md transition" : ""}`}
+            className={`bg-white p-6 rounded-2xl shadow-sm flex flex-col justify-center ${
+              stat.onClick ? "cursor-pointer hover:shadow-md transition" : ""
+            }`}
           >
             <span className="text-xs font-semibold text-gray-500 tracking-wider">
               {stat.label}
@@ -157,7 +292,9 @@ export default function ProfileView({ userProfile, galleryItems, jobs }: { userP
               CREDIT BALANCE
             </p>
             <div className="flex items-baseline gap-2 mt-1">
-              <span className="text-3xl font-bold text-gray-900">{userProfile?.credits?.balance || 0}</span>
+              <span className="text-3xl font-bold text-gray-900">
+                {userProfile?.credits?.balance || 0}
+              </span>
               <span className="text-sm text-gray-500 font-medium">
                 Available Credits
               </span>
@@ -172,15 +309,23 @@ export default function ProfileView({ userProfile, galleryItems, jobs }: { userP
       {/* Tabs & Filters */}
       <div className="flex items-center justify-between border-b border-gray-200 pt-4">
         <div className="flex gap-8">
-          <button 
+          <button
             onClick={() => setActiveTab("public")}
-            className={`flex items-center gap-2 pb-4 font-medium px-1 transition ${activeTab === 'public' ? 'text-indigo-600 border-b-2 border-indigo-600' : 'text-gray-500 hover:text-gray-700'}`}
+            className={`flex items-center gap-2 pb-4 font-medium px-1 transition ${
+              activeTab === "public"
+                ? "text-indigo-600 border-b-2 border-indigo-600"
+                : "text-gray-500 hover:text-gray-700"
+            }`}
           >
             <Globe size={18} /> Public Gallery
           </button>
-          <button 
+          <button
             onClick={() => setActiveTab("private")}
-            className={`flex items-center gap-2 pb-4 font-medium px-1 transition ${activeTab === 'private' ? 'text-indigo-600 border-b-2 border-indigo-600' : 'text-gray-500 hover:text-gray-700'}`}
+            className={`flex items-center gap-2 pb-4 font-medium px-1 transition ${
+              activeTab === "private"
+                ? "text-indigo-600 border-b-2 border-indigo-600"
+                : "text-gray-500 hover:text-gray-700"
+            }`}
           >
             <Lock size={18} /> Private Workspace
           </button>
@@ -194,61 +339,30 @@ export default function ProfileView({ userProfile, galleryItems, jobs }: { userP
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-4">
         {displayedGallery.length === 0 ? (
           <div className="col-span-full py-10 text-center text-slate-500">
-            No items found in {activeTab === "public" ? "public gallery" : "private workspace"}.
+            No items found in{" "}
+            {activeTab === "public" ? "public gallery" : "private workspace"}.
           </div>
         ) : (
           displayedGallery.map((item: any, idx: number) => {
             const assetVersion = item.assetVersion || {};
+            const mediaUrl =
+              assetVersion.fileUrl ||
+              "https://images.unsplash.com/photo-1605806616949-1e87b487cb2a?q=80&w=600&auto=format&fit=crop";
+            const isVideo =
+              assetVersion.mimeType?.startsWith("video/") ||
+              /\.(mp4|webm|mov|m4v)([?#]|$)/i.test(mediaUrl);
             return (
-            <div
-              key={item.id || idx}
-              className="bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-md transition group block relative"
-            >
-              <Link href={item.isJob ? '#' : `/post/${item.id || idx}`} className="absolute inset-0 z-10" />
-              <div className="relative h-48 bg-gray-100">
-                <img
-                  src={assetVersion.fileUrl || "https://images.unsplash.com/photo-1605806616949-1e87b487cb2a?q=80&w=600&auto=format&fit=crop"}
-                  alt={item.title || "Video thumbnail"}
-                  className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
-                />
-                <span className="absolute bottom-3 right-3 bg-black/60 backdrop-blur-md text-white text-xs font-semibold px-2.5 py-1 rounded-lg">
-                  {formatDuration(assetVersion.durationMs || 0)}
-                </span>
-              </div>
-              <div className="p-5">
-                <div className="flex justify-between items-start">
-                  <h3 className="font-semibold text-gray-900 truncate pr-4 text-lg">
-                    {item.title || "Untitled Video"}
-                  </h3>
-                  <button className="text-gray-400 hover:text-gray-700 mt-1">
-                    <MoreVertical size={18} />
-                  </button>
-                </div>
-                <div className="flex items-center justify-between mt-4">
-                  <div className="flex items-center gap-4 text-sm font-medium text-gray-500">
-                    <span className="flex items-center gap-1.5">
-                      <Eye size={16} /> {item.post?.viewCount || 0}
-                    </span>
-                    <span className="flex items-center gap-1.5">
-                      <Heart size={16} /> {item.post?.likeCount || 0}
-                    </span>
-                  </div>
-                  {(!item.isPublic || item.isJob) && (
-                    <button
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        setPublishingItem(item);
-                      }}
-                      className="relative z-20 flex items-center gap-1.5 text-xs font-semibold bg-indigo-50 text-indigo-600 px-3 py-1.5 rounded-lg hover:bg-indigo-100 transition-colors ml-auto"
-                    >
-                      <Send size={14} /> Publish
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
-          )})
+              <GalleryCard
+                key={item.id || idx}
+                item={item}
+                idx={idx}
+                mediaUrl={mediaUrl}
+                isVideo={isVideo}
+                formatDuration={formatDuration}
+                onPublish={setPublishingItem}
+              />
+            );
+          })
         )}
       </div>
 
@@ -277,16 +391,24 @@ export default function ProfileView({ userProfile, galleryItems, jobs }: { userP
           )}
           <div className="flex flex-col items-center gap-2">
             <img
-              src={userProfile?.avatarUrl || "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=200&auto=format&fit=crop"}
+              src={
+                userProfile?.avatarUrl ||
+                "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=200&auto=format&fit=crop"
+              }
               alt="Profile"
               className="w-24 h-24 rounded-full object-cover shadow-sm"
             />
-            <button type="button" className="text-sm text-indigo-600 font-medium hover:text-indigo-700 transition">
+            <button
+              type="button"
+              className="text-sm text-indigo-600 font-medium hover:text-indigo-700 transition"
+            >
               Change Photo
             </button>
           </div>
           <div>
-            <label className="block text-sm font-semibold text-gray-900 mb-1.5">Username</label>
+            <label className="block text-sm font-semibold text-gray-900 mb-1.5">
+              Username
+            </label>
             <input
               type="text"
               name="username"
@@ -296,7 +418,9 @@ export default function ProfileView({ userProfile, galleryItems, jobs }: { userP
           </div>
           <div>
             <div className="flex justify-between items-center mb-1.5">
-              <label className="block text-sm font-semibold text-gray-900">Bio</label>
+              <label className="block text-sm font-semibold text-gray-900">
+                Bio
+              </label>
             </div>
             <textarea
               rows={3}
@@ -306,11 +430,19 @@ export default function ProfileView({ userProfile, galleryItems, jobs }: { userP
             />
           </div>
           <div className="flex justify-center gap-4 mt-8 pt-4 border-t border-gray-100">
-            <button type="button" onClick={() => setIsEditDialogOpen(false)} className="px-6 py-2 border border-indigo-600 text-indigo-600 hover:bg-indigo-50 rounded-full font-medium transition">
+            <button
+              type="button"
+              onClick={() => setIsEditDialogOpen(false)}
+              className="px-6 py-2 border border-indigo-600 text-indigo-600 hover:bg-indigo-50 rounded-full font-medium transition"
+            >
               Cancel
             </button>
-            <button type="submit" disabled={isUpdating} className="px-6 py-2 bg-indigo-600 text-white rounded-full font-medium hover:bg-indigo-700 transition shadow-sm disabled:opacity-70">
-              {isUpdating ? 'Saving...' : 'Save Changes'}
+            <button
+              type="submit"
+              disabled={isUpdating}
+              className="px-6 py-2 bg-indigo-600 text-white rounded-full font-medium hover:bg-indigo-700 transition shadow-sm disabled:opacity-70"
+            >
+              {isUpdating ? "Saving..." : "Save Changes"}
             </button>
           </div>
         </form>

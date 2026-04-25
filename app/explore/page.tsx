@@ -13,6 +13,7 @@ import {
 import MainLayout from "../../component/MainLayout";
 import { fetchApi } from "@/lib/api";
 import ExploreFeed from "./ExploreFeed";
+import ExplorePublishButton from "./ExplorePublishButton";
 
 export default async function ExplorePage({
   searchParams,
@@ -26,9 +27,15 @@ export default async function ExplorePage({
   let exploreData: any = { data: [] };
   
   let isAuthenticated = false;
+  let userJobs: any[] = [];
   try {
     const me = await fetchApi('/users/me');
     isAuthenticated = !!me;
+    
+    if (isAuthenticated) {
+      const jobsRes = await fetchApi('/jobs').catch(() => []);
+      userJobs = Array.isArray(jobsRes) ? jobsRes : [];
+    }
   } catch (e) {
     // Guest user
   }
@@ -100,11 +107,15 @@ export default async function ExplorePage({
               {displayFeatured1 && (
                 <div className="col-span-8 relative rounded-2xl overflow-hidden group cursor-pointer shadow-sm block">
                   <Link href={`/post/${displayFeatured1.postId || displayFeatured1.id}`} className="absolute inset-0 z-10" />
-                  <img
-                    src={displayFeatured1.assetVersion?.fileUrl || "https://images.unsplash.com/photo-1605806616949-1e87b487cb2a?auto=format&fit=crop&q=80&w=1200"}
-                    alt={displayFeatured1.title || "Featured Video"}
-                    className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
+                  {(() => {
+                    const url = displayFeatured1.assetVersion?.fileUrl || "https://images.unsplash.com/photo-1605806616949-1e87b487cb2a?auto=format&fit=crop&q=80&w=1200";
+                    const isVideo = displayFeatured1.assetVersion?.mimeType?.startsWith('video/') || url.split('?')[0].match(/\.(mp4|webm|mov)$/i);
+                    return isVideo ? (
+                      <video src={url} className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" autoPlay loop muted playsInline />
+                    ) : (
+                      <img src={url} alt={displayFeatured1.title || "Featured Video"} className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                    );
+                  })()}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent p-6 flex flex-col justify-end pointer-events-none">
                     <div className="mb-auto mt-2 pointer-events-auto relative z-20 w-fit">
                       <span className="bg-indigo-600 text-white text-xs font-bold px-3 py-1 rounded-full tracking-wide">
@@ -137,11 +148,15 @@ export default async function ExplorePage({
               {displayFeatured2 && (
                 <div className="col-span-4 relative rounded-2xl overflow-hidden group cursor-pointer shadow-sm block">
                   <Link href={`/post/${displayFeatured2.postId || displayFeatured2.id}`} className="absolute inset-0 z-10" />
-                  <img
-                    src={displayFeatured2.assetVersion?.fileUrl || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=800"}
-                    alt={displayFeatured2.title || "Featured Video"}
-                    className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
+                  {(() => {
+                    const url = displayFeatured2.assetVersion?.fileUrl || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=800";
+                    const isVideo = displayFeatured2.assetVersion?.mimeType?.startsWith('video/') || url.split('?')[0].match(/\.(mp4|webm|mov)$/i);
+                    return isVideo ? (
+                      <video src={url} className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" autoPlay loop muted playsInline />
+                    ) : (
+                      <img src={url} alt={displayFeatured2.title || "Featured Video"} className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                    );
+                  })()}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent p-6 flex flex-col justify-end pointer-events-none">
                     <h4 className="text-xl font-bold text-white mb-2 relative z-20">
                       {displayFeatured2.title || "Untitled Video"}
@@ -170,9 +185,7 @@ export default async function ExplorePage({
           <ExploreFeed initialItems={items} initialCursor={nextCursor} mode={mode} />
         </div>
       </div>
-      <button className="fixed bottom-10 right-10 bg-indigo-500 hover:bg-indigo-600 text-white p-4 rounded-full shadow-xl shadow-indigo-200 transition-transform hover:scale-105 z-20">
-        <Film className="h-6 w-6" />
-      </button>
+      <ExplorePublishButton jobs={userJobs} isAuthenticated={isAuthenticated} />
     </MainLayout>
   );
 }
