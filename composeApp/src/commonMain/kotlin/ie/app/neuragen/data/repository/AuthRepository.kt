@@ -10,6 +10,7 @@ import org.koin.core.annotation.Single
 interface AuthRepository {
     suspend fun register(request: RegisterRequest): Result<AuthResponse>
     suspend fun login(request: LoginRequest): Result<AuthResponse>
+    suspend fun googleCallback(query: Map<String, String>): Result<AuthResponse>
     suspend fun refreshTokens(refreshToken: String): Result<AuthResponse>
     suspend fun logout(refreshToken: String): Result<MessageResponse>
     suspend fun logoutAll(): Result<MessageResponse>
@@ -32,6 +33,10 @@ class AuthRepositoryImpl(
 
     override suspend fun login(request: LoginRequest): Result<AuthResponse> = runCatching {
         api.login(request)
+    }
+
+    override suspend fun googleCallback(query: Map<String, String>): Result<AuthResponse> = runCatching {
+        api.googleCallback(query)
     }
 
     override suspend fun refreshTokens(refreshToken: String): Result<AuthResponse> = runCatching {

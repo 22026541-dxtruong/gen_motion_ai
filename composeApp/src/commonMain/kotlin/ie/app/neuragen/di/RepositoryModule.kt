@@ -5,4 +5,4 @@ import org.koin.core.annotation.Module
 
 @Module
 @ComponentScan("ie.app.neuragen.data.repository")
-class RepositoryModule
+object RepositoryModule

@@ -28,6 +28,7 @@ fun LoginScreen(
     val uiState by viewModel.uiState.collectAsState()
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
 
     LaunchedEffect(uiState) {
         if (uiState is AuthUiState.Success) {
@@ -186,7 +187,10 @@ fun LoginScreen(
                     Spacer(modifier = Modifier.height(24.dp))
 
                     OutlinedButton(
-                        onClick = { viewModel.signInWithGoogle() },
+                        onClick = { 
+                            val url = viewModel.getGoogleLoginUrl()
+                            uriHandler.openUri(url)
+                        },
                         modifier = Modifier.fillMaxWidth().height(48.dp),
                         shape = RoundedCornerShape(8.dp),
                         border = ButtonDefaults.outlinedButtonBorder.copy(width = 1.dp),

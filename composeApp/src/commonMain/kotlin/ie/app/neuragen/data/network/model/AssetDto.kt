@@ -1,21 +1,34 @@
 package ie.app.neuragen.data.network.model
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonObject
 
 @Serializable
 data class AssetDto(
-    val id: String,
-    val userId: String,
+    @SerialName("id")
+    val id: String? = null,
+    @SerialName("userId")
+    val userId: String? = null,
+    @SerialName("jobId")
     val jobId: String? = null,
-    val type: String, // IMAGE|VIDEO|THUMBNAIL|AUDIO
-    val role: String, // INPUT|OUTPUT|THUMBNAIL|PREVIEW|TEMP
+    @SerialName("type")
+    val type: String? = null, // IMAGE|VIDEO|THUMBNAIL|AUDIO
+    @SerialName("role")
+    val role: String? = null, // INPUT|OUTPUT|THUMBNAIL|PREVIEW|TEMP
+    @SerialName("mimeType")
     val mimeType: String? = null,
+    @SerialName("originalName")
     val originalName: String? = null,
-    val createdAt: String,
-    val updatedAt: String,
+    @SerialName("createdAt")
+    val createdAt: String? = null,
+    @SerialName("updatedAt")
+    val updatedAt: String? = null,
+    @SerialName("versions")
     val versions: List<AssetVersionDto>? = null,
+    @SerialName("user")
     val user: UserPublicDto? = null,
+    @SerialName("job")
     val job: AssetJobSummaryDto? = null
 )
 
@@ -25,19 +38,19 @@ data class AssetVersionDto(
     val assetId: String? = null,
     val version: Int? = null,
     val storageProvider: String? = null,
-    val bucket: String,
-    val objectKey: String,
+    val bucket: String? = null,
+    val objectKey: String? = null,
     val fileUrl: String? = null,
     val originalName: String? = null,
     val mimeType: String? = null,
-    val sizeBytes: Long,
+    val sizeBytes: Long? = null,
     val seed: Long? = null,
     val width: Int? = null,
     val height: Int? = null,
     val durationMs: Int? = null,
     val quality: String? = null,
     val metadata: JsonObject? = null,
-    val createdAt: String
+    val createdAt: String? = null
 )
 
 @Serializable

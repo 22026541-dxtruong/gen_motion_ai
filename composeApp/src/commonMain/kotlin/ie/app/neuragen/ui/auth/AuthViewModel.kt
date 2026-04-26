@@ -27,11 +27,21 @@ class AuthViewModel(
     @Provided
     private val authRepository: AuthRepository,
     @Provided
-    private val sessionRepository: SessionRepository
+    private val sessionRepository: SessionRepository,
+    @Provided
+    private val oauthCallbackHandler: OAuthCallbackHandler
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<AuthUiState>(AuthUiState.Idle)
     val uiState: StateFlow<AuthUiState> = _uiState.asStateFlow()
+
+    init {
+        viewModelScope.launch {
+            oauthCallbackHandler.callbacks.collect { query ->
+                signInWithGoogleCallback(query)
+            }
+        }
+    }
 
     fun login(email: String, password: String) {
         viewModelScope.launch {
@@ -67,7 +77,28 @@ class AuthViewModel(
 
     fun signInWithGoogle() {
         println("Auth: Sign in with Google requested")
-        // Implementation for Google Sign In would go here
+        // No-op here if you just want to return the URL, but we can't easily "return" from a void function
+        // In the UI we will use getGoogleLoginUrl()
+    }
+
+    fun getGoogleLoginUrl(): String {
+        return "${ie.app.neuragen.data.network.NetworkConstants.BASE_URL}/auth/google"
+    }
+
+    private fun signInWithGoogleCallback(query: Map<String, String>) {
+        viewModelScope.launch {
+            _uiState.value = AuthUiState.Loading
+            println("Auth: Handling Google OAuth callback")
+            val result = authRepository.googleCallback(query)
+            result.onSuccess { response ->
+                println("Auth: Google login successful for ${response.email}")
+                sessionRepository.saveSession(response)
+                _uiState.value = AuthUiState.Success(response)
+            }.onFailure { error ->
+                println("Auth: Google login failed: ${error.message}")
+                _uiState.value = AuthUiState.Error(error.message ?: "Google login failed")
+            }
+        }
     }
 
     fun resetState() {

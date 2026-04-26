@@ -1,27 +1,46 @@
 package ie.app.neuragen.data.network.model
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
 data class VideoJobRequest(
+    @SerialName("inputAssetId")
     val inputAssetId: String? = null,
+    @SerialName("prompt")
     val prompt: String,
+    @SerialName("negativePrompt")
     val negativePrompt: String? = null,
+    @SerialName("presetId")
     val presetId: String,
-    val includeBackgroundAudio: Boolean
 )
 
 @Serializable
 data class JobResponse(
-    val jobId: String,
-    val status: String,
-    val creditCost: Int,
+    @SerialName("jobId")
+    val jobId: String? = null,
+    @SerialName("id")
+    val id: String? = null,
+    @SerialName("status")
+    val status: String? = null,
+    @SerialName("creditCost")
+    val creditCost: Int? = null,
+    @SerialName("provider")
     val provider: String? = null,
+    @SerialName("modelName")
     val modelName: String? = null,
+    @SerialName("presetId")
     val presetId: String? = null,
+    @SerialName("tier")
     val tier: String? = null,
+    @SerialName("estimatedDurationSeconds")
     val estimatedDurationSeconds: Int? = null,
-    val includeBackgroundAudio: Boolean? = null
+    @SerialName("includeBackgroundAudio")
+    val includeBackgroundAudio: Boolean? = null,
+    @SerialName("output")
+    val output: JobOutputDto? = null,
+    @SerialName("thumbnail")
+    val thumbnail: JobOutputDto? = null
 )
 
 @Serializable
@@ -151,3 +170,17 @@ data class JobHeartbeatEvent(
     val jobId: String,
     val timestamp: String
 )
+
+@Serializable
+data class JobLogEvent(
+    val jobId: String,
+    val message: String,
+    val createdAt: String
+)
+
+sealed class JobStreamEvent {
+    data class Snapshot(val data: JobSnapshotEvent) : JobStreamEvent()
+    data class Status(val data: JobStatusEvent) : JobStreamEvent()
+    data class Log(val data: JobLogEvent) : JobStreamEvent()
+    data class Heartbeat(val data: JobHeartbeatEvent) : JobStreamEvent()
+}

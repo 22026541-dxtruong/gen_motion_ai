@@ -1,6 +1,7 @@
 package ie.app.neuragen.data.network
 
 import ie.app.neuragen.data.network.model.*
+import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.json.JsonObject
 import org.koin.core.annotation.Single
 
@@ -53,6 +54,12 @@ interface NeuraGenApi {
     // Assets
     suspend fun getAsset(id: String): AssetDto
     suspend fun getDownloadUrl(id: String): DownloadResponse
+    suspend fun uploadAsset(
+        fileBytes: ByteArray,
+        fileName: String,
+        type: String = "IMAGE",
+        role: String = "INPUT"
+    ): AssetDto
 
     // Gallery
     suspend fun createGalleryItem(request: CreateGalleryItemRequest): GalleryItemDto
@@ -86,6 +93,7 @@ interface NeuraGenApi {
     suspend fun getJob(id: String): JobDto
     suspend fun getJobResult(id: String): JobResultResponse
     suspend fun cancelJob(id: String): CancelJobResponse
+    fun streamJobEvents(jobId: String): Flow<JobStreamEvent>
 
     // Billing
     suspend fun getBillingCatalog(): BillingCatalogResponse

@@ -1,16 +1,23 @@
 package ie.app.neuragen.data.network
 
 import ie.app.neuragen.data.network.model.*
+import ie.app.neuragen.data.network.model.JobStreamEvent.*
 import io.ktor.client.*
 import io.ktor.client.call.*
+import io.ktor.client.plugins.sse.sse
 import io.ktor.client.request.*
+import io.ktor.client.request.forms.*
 import io.ktor.http.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
+import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import org.koin.core.annotation.Single
 
 @Single(binds = [NeuraGenApi::class])
 class NeuraGenApiImpl(
-    private val client: HttpClient
+    private val client: HttpClient,
+    private val json: Json
 ) : NeuraGenApi {
 
 
@@ -144,6 +151,31 @@ class NeuraGenApiImpl(
     override suspend fun getDownloadUrl(id: String): DownloadResponse =
         client.get("/assets/download/$id").body()
 
+    override suspend fun uploadAsset(
+        fileBytes: ByteArray,
+        fileName: String,
+        type: String,
+        role: String
+    ): AssetDto = client.post("/assets/upload") {
+        setBody(
+            MultiPartFormDataContent(
+                formData {
+                    // Đính kèm các trường text
+                    append("type", type)
+                    append("role", role)
+
+                    // Đính kèm File (Tên key là "file" cực kỳ quan trọng)
+                    append("file", fileBytes, Headers.build {
+                        // Ktor cần Content-Disposition để biết tên file
+                        append(HttpHeaders.ContentDisposition, "filename=\"$fileName\"")
+                        // Bạn có thể set thêm Content-Type của file ở đây nếu cần (vd: image/jpeg)
+                        append(HttpHeaders.ContentType, "image/*")
+                    })
+                }
+            )
+        )
+    }.body()
+
     // Gallery
     override suspend fun createGalleryItem(request: CreateGalleryItemRequest): GalleryItemDto =
         client.post("/gallery") { setBody(request) }.body()
@@ -211,6 +243,22 @@ class NeuraGenApiImpl(
 
     override suspend fun cancelJob(id: String): CancelJobResponse =
         client.post("/jobs/$id/cancel").body()
+
+    override fun streamJobEvents(jobId: String): Flow<JobStreamEvent> = flow {
+        client.sse("/jobs/$jobId/events") {
+            incoming.collect { event ->
+                val data = event.data ?: return@collect
+                val jobEvent = when (event.event) {
+                    "snapshot" -> Snapshot(json.decodeFromString<JobSnapshotEvent>(data))
+                    "status" -> Status(json.decodeFromString<JobStatusEvent>(data))
+                    "log" -> Log(json.decodeFromString<JobLogEvent>(data))
+                    "heartbeat" -> Heartbeat(json.decodeFromString<JobHeartbeatEvent>(data))
+                    else -> null
+                }
+                if (jobEvent != null) emit(jobEvent)
+            }
+        }
+    }
 
     // Billing
     override suspend fun getBillingCatalog(): BillingCatalogResponse =

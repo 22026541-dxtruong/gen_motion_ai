@@ -9,6 +9,12 @@ import org.koin.core.annotation.Single
 interface AssetRepository {
     suspend fun getAsset(id: String): Result<AssetDto>
     suspend fun getDownloadUrl(id: String): Result<DownloadResponse>
+    suspend fun uploadAsset(
+        fileBytes: ByteArray,
+        fileName: String,
+        type: String = "IMAGE",
+        role: String = "INPUT"
+    ): Result<AssetDto>
     suspend fun getGallery(): Result<List<GalleryItemDto>>
     suspend fun createGalleryItem(assetVersionId: String, isPublic: Boolean): Result<GalleryItemDto>
     suspend fun updateGalleryItem(id: String, isPublic: Boolean): Result<GalleryItemDto>
@@ -27,6 +33,15 @@ class AssetRepositoryImpl(
 
     override suspend fun getDownloadUrl(id: String): Result<DownloadResponse> = runCatching {
         api.getDownloadUrl(id)
+    }
+
+    override suspend fun uploadAsset(
+        fileBytes: ByteArray,
+        fileName: String,
+        type: String,
+        role: String
+    ): Result<AssetDto> = runCatching {
+        api.uploadAsset(fileBytes, fileName, type, role)
     }
 
     override suspend fun getGallery(): Result<List<GalleryItemDto>> = runCatching {
