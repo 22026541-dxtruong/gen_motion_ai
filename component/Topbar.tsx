@@ -12,7 +12,19 @@ export default function Topbar({ user }: { user?: any }) {
   const [isSwitchAccountOpen, setIsSwitchAccountOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Maintain saved_accounts in localStorage
+  const [savedAccounts, setSavedAccounts] = useState<any[]>([]);
+
+  // Load saved accounts on mount
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem('saved_accounts') || '[]');
+      setSavedAccounts(saved);
+    } catch (e) {
+      console.error('Failed to parse saved_accounts', e);
+    }
+  }, []);
+
+  // Maintain saved_accounts in localStorage when user logs in
   useEffect(() => {
     if (user?.email && user?.username) {
       try {
@@ -26,6 +38,7 @@ export default function Topbar({ user }: { user?: any }) {
           saved.push(newAccount);
         }
         localStorage.setItem('saved_accounts', JSON.stringify(saved));
+        setSavedAccounts(saved); // Update state as well
       } catch (e) {
         console.error('Failed to parse saved_accounts', e);
       }
@@ -141,9 +154,28 @@ export default function Topbar({ user }: { user?: any }) {
               )}
             </div>
           ) : (
-            <Link href="/login" className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors">
-              Log In
-            </Link>
+            <div className="flex items-center gap-3">
+              {savedAccounts.length > 0 && (
+                <button 
+                  onClick={() => setIsSwitchAccountOpen(true)}
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-slate-200 hover:bg-slate-50 transition-colors"
+                >
+                  <div className="h-6 w-6 rounded-full bg-indigo-100 flex items-center justify-center text-xs font-bold text-indigo-600 overflow-hidden">
+                    {savedAccounts[savedAccounts.length - 1].avatarUrl ? (
+                      <img src={savedAccounts[savedAccounts.length - 1].avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
+                    ) : (
+                      savedAccounts[savedAccounts.length - 1].username.charAt(0).toUpperCase()
+                    )}
+                  </div>
+                  <span className="text-sm font-medium text-slate-700 whitespace-nowrap">
+                    Continue as {savedAccounts[savedAccounts.length - 1].username}
+                  </span>
+                </button>
+              )}
+              <Link href="/login" className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors whitespace-nowrap">
+                Log In
+              </Link>
+            </div>
           )}
         </div>
       </header>

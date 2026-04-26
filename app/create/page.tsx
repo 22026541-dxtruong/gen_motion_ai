@@ -31,14 +31,16 @@ export default async function CreatePage() {
 
   return (
     <MainLayout activePage="create">
-      <div className="max-w-[1200px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
-
-        {/* Left Panel: Generate Form */}
-        <div className="lg:col-span-7 bg-white rounded-2xl p-8 shadow-sm border border-slate-100 h-fit">
-          <CreateForm credits={credits} />
+      <div className="max-w-[1200px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 relative">
+        
+        {/* Cột trái */}
+        <div className="lg:col-span-7"> 
+          <div className="lg:sticky lg:top-0 bg-white rounded-2xl p-8 shadow-sm border border-slate-100 max-h-[calc(100vh-8rem)] overflow-y-auto scrollbar-hide">
+            <CreateForm credits={credits} />
+          </div>
         </div>
 
-        {/* Right Panel: Recent Jobs */}
+        {/* Cột phải: Danh sách Jobs dài, cứ để nó tự nhiên kéo dài trang */}
         <div className="lg:col-span-5 flex flex-col">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-xl font-bold text-slate-900">My Recent Jobs</h3>

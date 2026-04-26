@@ -169,28 +169,42 @@ export async function switchAccountAction(email: string) {
   const accountRefresh = cookieStore.get(`refresh_${email}`)?.value;
 
   if (accountAccess) {
-    cookieStore.set('accessToken', accountAccess, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      path: '/',
-      maxAge: 60 * 60 * 24 * 7,
+    // Validate the token against the API to ensure it hasn't expired or been revoked
+    const res = await fetch(`${API_URL}/users/me`, {
+      headers: {
+        'Authorization': `Bearer ${accountAccess}`,
+        'Content-Type': 'application/json'
+      }
     });
-    
-    if (accountRefresh) {
-      cookieStore.set('refreshToken', accountRefresh, {
+
+    if (res.ok) {
+      // Token is valid, perform the switch
+      cookieStore.set('accessToken', accountAccess, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
         path: '/',
-        maxAge: 60 * 60 * 24 * 30,
+        maxAge: 60 * 60 * 24 * 7,
       });
+      
+      if (accountRefresh) {
+        cookieStore.set('refreshToken', accountRefresh, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'lax',
+          path: '/',
+          maxAge: 60 * 60 * 24 * 30,
+        });
+      }
+      return { success: true };
+    } else {
+      // Token is invalid/expired, delete the dead cookies
+      cookieStore.delete(`access_${email}`);
+      cookieStore.delete(`refresh_${email}`);
     }
-    
-    return { success: true };
   }
   
-  // No token found for this account, require login
+  // No token found (or it was invalid), require login
   return { requireLogin: true, email };
 }
 
