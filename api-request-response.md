@@ -376,14 +376,15 @@ Khi loi (400/401/403/404/500...), NestJS thuong tra:
 
 ## Comments
 
-### `POST /comments`
+### `POST /:postId/comments`
 - Auth: Bearer JWT
 - Request body:
 ```json
 {
-  "postId": "uuid",
-  "content": "This is a comment."
+  "content": "This is a comment.",
+  "postId": "optional"
 }
+
 ```
 - Response (Comment raw):
 ```json
@@ -396,7 +397,7 @@ Khi loi (400/401/403/404/500...), NestJS thuong tra:
 }
 ```
 
-### `GET /comments`
+### `GET /posts/:postId/comments`
 - Auth: Bearer JWT
 - Query:
   - `cursor?: string`
@@ -438,7 +439,7 @@ Khi loi (400/401/403/404/500...), NestJS thuong tra:
 
 ## Post Likes
 
-### `POST /post-likes`
+### `POST /posts/:postId/post-likes`
 - Auth: Bearer JWT
 - Request body:
 ```json
@@ -456,7 +457,7 @@ Khi loi (400/401/403/404/500...), NestJS thuong tra:
 }
 ```
 
-### `GET /post-likes`
+### `GET /posts/:postId/post-likes?cursor=&take=`
 - Auth: Bearer JWT
 - Query:
   - `cursor?: string`
@@ -478,10 +479,18 @@ Khi loi (400/401/403/404/500...), NestJS thuong tra:
 }
 ```
 
-### `DELETE /post-likes`
+### `DELETE /posts/:postId/post-likes`
 - Auth: Bearer JWT
 - Request: none (theo code hien tai)
-- Response: PostLike raw da xoa.
+- Response:
+```json
+{
+  "id": "uuid",
+  "userId": "uuid",
+  "postId": "uuid",
+  "createdAt": "datetime"
+}
+```
 
 ## Follows
 
@@ -490,8 +499,10 @@ Khi loi (400/401/403/404/500...), NestJS thuong tra:
 - Request body:
 ```json
 {
-  "followingId": "user-id-2"
+  "followingId": "user-id-2",
+  "sourcePostId": "optional-post-id"
 }
+
 ```
 - Response (Follow raw):
 ```json
@@ -501,6 +512,7 @@ Khi loi (400/401/403/404/500...), NestJS thuong tra:
   "followingId": "uuid",
   "createdAt": "datetime"
 }
+
 ```
 
 ### `GET /users/:userId/followers`

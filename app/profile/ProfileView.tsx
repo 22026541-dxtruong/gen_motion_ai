@@ -39,7 +39,7 @@ function GalleryCard({
 
   const handleMouseEnter = () => {
     if (isVideo && videoRef.current) {
-      videoRef.current.play().catch(() => {});
+      videoRef.current.play().catch(() => { });
     }
   };
 
@@ -57,7 +57,7 @@ function GalleryCard({
       onMouseLeave={handleMouseLeave}
     >
       <Link
-        href={item.isJob ? "#" : `/post/${item.id || idx}`}
+        href={item.isJob ? "#" : `/post/${item.id}`}
         className="absolute inset-0 z-10"
       />
       <div className="relative h-48 bg-slate-900 overflow-hidden">
@@ -142,21 +142,21 @@ export default function ProfileView({
     activeTab === "public"
       ? galleryItems.filter((item) => item.isPublic)
       : (
-          jobs
-            ?.filter((j: any) => j.status === "COMPLETED")
-            .map((job: any) => ({
-              id: job.id,
-              title: job.prompt || "Video Generation",
-              isJob: true,
-              assetVersion: {
-                fileUrl: job.thumbnail?.downloadUrl || job.output?.downloadUrl,
-                durationMs: job.estimatedDurationSeconds
-                  ? job.estimatedDurationSeconds * 1000
-                  : 0,
-              },
-              post: { viewCount: 0, likeCount: 0 },
-            })) || []
-        );
+        jobs
+          ?.filter((j: any) => j.status === "COMPLETED")
+          .map((job: any) => ({
+            id: job.id,
+            title: job.prompt || "Video Generation",
+            isJob: true,
+            assetVersion: {
+              fileUrl: job.thumbnail?.downloadUrl || job.output?.downloadUrl,
+              durationMs: job.estimatedDurationSeconds
+                ? job.estimatedDurationSeconds * 1000
+                : 0,
+            },
+            post: { viewCount: 0, likeCount: 0 },
+          })) || []
+      );
 
   const handleUpdateProfile = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -262,9 +262,8 @@ export default function ProfileView({
           <div
             key={stat.label}
             onClick={stat.onClick}
-            className={`bg-white p-6 rounded-2xl shadow-sm flex flex-col justify-center ${
-              stat.onClick ? "cursor-pointer hover:shadow-md transition" : ""
-            }`}
+            className={`bg-white p-6 rounded-2xl shadow-sm flex flex-col justify-center ${stat.onClick ? "cursor-pointer hover:shadow-md transition" : ""
+              }`}
           >
             <span className="text-xs font-semibold text-gray-500 tracking-wider">
               {stat.label}
@@ -311,21 +310,19 @@ export default function ProfileView({
         <div className="flex gap-8">
           <button
             onClick={() => setActiveTab("public")}
-            className={`flex items-center gap-2 pb-4 font-medium px-1 transition ${
-              activeTab === "public"
+            className={`flex items-center gap-2 pb-4 font-medium px-1 transition ${activeTab === "public"
                 ? "text-indigo-600 border-b-2 border-indigo-600"
                 : "text-gray-500 hover:text-gray-700"
-            }`}
+              }`}
           >
             <Globe size={18} /> Public Gallery
           </button>
           <button
             onClick={() => setActiveTab("private")}
-            className={`flex items-center gap-2 pb-4 font-medium px-1 transition ${
-              activeTab === "private"
+            className={`flex items-center gap-2 pb-4 font-medium px-1 transition ${activeTab === "private"
                 ? "text-indigo-600 border-b-2 border-indigo-600"
                 : "text-gray-500 hover:text-gray-700"
-            }`}
+              }`}
           >
             <Lock size={18} /> Private Workspace
           </button>
@@ -353,7 +350,7 @@ export default function ProfileView({
               /\.(mp4|webm|mov|m4v)([?#]|$)/i.test(mediaUrl);
             return (
               <GalleryCard
-                key={item.id || idx}
+                key={item.id}
                 item={item}
                 idx={idx}
                 mediaUrl={mediaUrl}

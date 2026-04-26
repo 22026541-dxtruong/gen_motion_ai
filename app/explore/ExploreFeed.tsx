@@ -10,6 +10,8 @@ type ExploreItem = {
   id: string;
   postId?: string;
   title?: string;
+  videoUrl?: string;
+  thumbnailUrl?: string;
   assetVersion?: {
     fileUrl?: string;
     mimeType?: string;
@@ -19,6 +21,8 @@ type ExploreItem = {
     id?: string;
     likeCount?: number;
     commentCount?: number;
+    videoUrl?: string;
+    thumbnailUrl?: string;
     user?: {
       id?: string;
       username?: string;
@@ -45,10 +49,16 @@ function ExploreCard({
   const videoRef = useRef<HTMLVideoElement>(null);
   const impressionSent = useRef(false);
 
-  const postId = item.post?.id || item.postId || item.id;
+  // IMPORTANT: Use the actual post ID for API calls (likes, comments).
+  // item.id is the ExploreItem ID — NOT the post ID.
+  const postId = item.postId || item.post?.id || '';
+  const linkId = postId || item.id; // for navigation links only
   const title = item.title || "Untitled Video";
-  const mediaUrl = item.assetVersion?.fileUrl || "";
-  const isVideo = isVideoSrc(mediaUrl, item.assetVersion?.mimeType);
+  // Prefer direct videoUrl/thumbnailUrl, fall back to assetVersion.fileUrl
+  const videoUrl = item.videoUrl || item.post?.videoUrl || item.assetVersion?.fileUrl || "";
+  const thumbnailUrl = item.thumbnailUrl || item.post?.thumbnailUrl || "";
+  const mediaUrl = videoUrl || thumbnailUrl;
+  const isVideo = isVideoSrc(videoUrl, item.assetVersion?.mimeType);
   const authorName = item.post?.user?.username || "unknown";
   const avatarUrl =
     item.post?.user?.avatarUrl ||
@@ -104,16 +114,26 @@ function ExploreCard({
   const handleLike = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (isLiking) return;
+    if (isLiking || !postId) return;
     setIsLiking(true);
     if (isLiked) {
       setIsLiked(false);
       setLikeCount((c) => Math.max(0, c - 1));
-      await unlikePostAction(postId);
+      const res = await unlikePostAction(postId);
+      if (!res.success) {
+        // Revert optimistic update on failure
+        setIsLiked(true);
+        setLikeCount((c) => c + 1);
+      }
     } else {
       setIsLiked(true);
       setLikeCount((c) => c + 1);
-      await likePostAction(postId);
+      const res = await likePostAction(postId);
+      if (!res.success) {
+        // Revert optimistic update on failure
+        setIsLiked(false);
+        setLikeCount((c) => Math.max(0, c - 1));
+      }
     }
     setIsLiking(false);
   };
@@ -153,14 +173,15 @@ function ExploreCard({
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      <Link href={`/post/${postId}`} className="absolute inset-0 z-10" />
+      <Link href={`/post/${linkId}`} className="absolute inset-0 z-10" />
 
       {/* Media */}
       <div className="relative aspect-[4/3] bg-slate-900 overflow-hidden">
-        {isVideo && mediaUrl ? (
+        {isVideo && videoUrl ? (
           <video
             ref={videoRef}
-            src={mediaUrl}
+            src={videoUrl}
+            poster={thumbnailUrl || undefined}
             className="w-full h-full object-cover"
             loop
             muted
@@ -169,7 +190,7 @@ function ExploreCard({
           />
         ) : (
           <img
-            src={mediaUrl || fallback}
+            src={thumbnailUrl || videoUrl || fallback}
             alt={title}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           />

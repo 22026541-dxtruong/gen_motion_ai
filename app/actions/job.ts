@@ -39,3 +39,40 @@ export async function createVideoJobAction(data: {
     return { success: false, error: error.message || 'Failed to create job' };
   }
 }
+
+export async function getJobsAction() {
+  try {
+    const data = await fetchApi('/jobs');
+    return { success: true, data };
+  } catch (error: any) {
+    return { success: false, error: error.message || 'Failed to fetch jobs' };
+  }
+}
+
+export async function getJobByIdAction(jobId: string) {
+  try {
+    const data = await fetchApi(`/jobs/${jobId}`);
+    return { success: true, data };
+  } catch (error: any) {
+    return { success: false, error: error.message || 'Failed to fetch job' };
+  }
+}
+
+export async function getJobResultAction(jobId: string) {
+  try {
+    const data = await fetchApi(`/jobs/${jobId}/result`);
+    return { success: true, data };
+  } catch (error: any) {
+    return { success: false, error: error.message || 'Failed to fetch job result' };
+  }
+}
+
+export async function cancelJobAction(jobId: string) {
+  try {
+    const data = await fetchApi(`/jobs/${jobId}/cancel`, { method: 'POST' });
+    revalidatePath('/create');
+    return { success: true, data };
+  } catch (error: any) {
+    return { success: false, error: error.message || 'Failed to cancel job' };
+  }
+}

@@ -214,3 +214,49 @@ export async function removeSavedAccountAction(email: string) {
   cookieStore.delete(`refresh_${email}`);
   return { success: true };
 }
+
+export async function logoutAllAction() {
+  try {
+    await fetchApi('/auth/logout-all', { method: 'POST' });
+    const cookieStore = await cookies();
+    cookieStore.delete('accessToken');
+    cookieStore.delete('refreshToken');
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message || 'Logout all failed' };
+  }
+}
+
+export async function forgotPasswordAction(email: string) {
+  try {
+    const res = await fetch(`${API_URL}/auth/forgot-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || 'Failed to request password reset');
+    }
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message || 'Failed to request password reset' };
+  }
+}
+
+export async function resetPasswordAction(token: string, newPassword: string) {
+  try {
+    const res = await fetch(`${API_URL}/auth/reset-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token, newPassword }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || 'Failed to reset password');
+    }
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message || 'Failed to reset password' };
+  }
+}

@@ -9,12 +9,14 @@ export default function PublishDialog({
   onClose,
   assetId,
   assetVersionId,
+  jobId,
   defaultCaption = ""
 }: {
   isOpen: boolean;
   onClose: () => void;
   assetId?: string | null;
   assetVersionId?: string | null;
+  jobId?: string | null;
   defaultCaption?: string;
 }) {
   const [caption, setCaption] = useState(defaultCaption);
@@ -25,7 +27,7 @@ export default function PublishDialog({
     setIsLoading(true);
     setError(null);
 
-    const res = await publishVideoAction(assetId || null, assetVersionId || null, caption);
+    const res = await publishVideoAction(assetId || null, assetVersionId || null, caption, jobId || null);
 
     if (res.success) {
       setIsLoading(false);

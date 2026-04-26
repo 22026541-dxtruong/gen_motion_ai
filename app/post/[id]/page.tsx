@@ -22,11 +22,12 @@ import {
   unlikePostAction,
   addCommentAction,
   fetchPostCommentsAction,
+  getPostLikeStatusAction,
 } from "@/app/actions/post";
 import { trackExploreEventAction } from "@/app/actions/explore";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-// Matches GET /posts/:id response exactly per API docs
+// Matches the actual GET /posts/:id response
 interface PostData {
   id: string;
   userId?: string;
@@ -37,17 +38,21 @@ interface PostData {
   commentCount?: number;
   viewCount?: number;
   createdAt?: string;
+  videoUrl?: string | null;
+  thumbnailUrl?: string | null;
   user?: {
     id?: string;
     username?: string;
-    // NOTE: GET /posts/:id user object only has { id, username } — no avatarUrl
   };
   assetVersion?: {
     id?: string;
-    // NOTE: assetVersion from GET /posts/:id only has { id, fileUrl, metadata }
-    // No mimeType or durationMs — detect video from URL extension
     fileUrl?: string | null;
+    mimeType?: string | null;
     metadata?: Record<string, unknown>;
+    asset?: {
+      type?: string;
+      job?: any;
+    };
   };
 }
 
@@ -80,14 +85,7 @@ function formatCount(n?: number): string {
   return String(n);
 }
 
-/**
- * Detect if a URL is a video by its file extension.
- * GET /posts/:id assetVersion does NOT include mimeType, so we rely on URL extension.
- */
-function isVideoUrl(url?: string | null): boolean {
-  if (!url) return false;
-  return /\.(mp4|webm|mov|m4v|ogg|ogv)(\?|$)/i.test(url);
-}
+// No helper needed — the backend provides videoUrl and thumbnailUrl directly
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 export default function PostDetailPage() {
@@ -117,22 +115,28 @@ export default function PostDetailPage() {
 
   // Video
   const [isPlaying, setIsPlaying] = useState(false);
+  const [videoFailed, setVideoFailed] = useState(false);
   const videoRef = React.useRef<HTMLVideoElement>(null);
 
-  // ── Fetch post data using server action (carries auth token) ─────────────
+  // ── Fetch post data + like status ─────────────────────────────────────────
   useEffect(() => {
     if (!postId) return;
     setIsLoading(true);
     setError(null);
 
-    getPostAction(postId).then((res) => {
-      if (res.success && res.data) {
-        const data = res.data as PostData;
+    Promise.all([
+      getPostAction(postId),
+      getPostLikeStatusAction(postId),
+    ]).then(([postRes, likeRes]) => {
+      if (postRes.success && postRes.data) {
+        const data = postRes.data as PostData;
         setPost(data);
         setLikeCount(data.likeCount ?? 0);
       } else {
-        setError(res.error || "Failed to load post");
+        setError(postRes.error || "Failed to load post");
       }
+      // Set the like status from the server
+      setIsLiked(likeRes.isLiked);
       setIsLoading(false);
       setAnimClass("translate-y-0 opacity-100 scale-100");
       // Track OPEN_POST — fire-and-forget
@@ -166,17 +170,28 @@ export default function PostDetailPage() {
 
   // ── Like / Unlike ────────────────────────────────────────────────────────
   const handleLike = async () => {
-    if (isLiking) return;
+    if (isLiking || !postId) return;
     setIsLiking(true);
     if (isLiked) {
       setIsLiked(false);
       setLikeCount((c) => Math.max(0, c - 1));
-      await unlikePostAction(postId);
+      const res = await unlikePostAction(postId);
+      if (!res.success) {
+        // Revert on failure
+        setIsLiked(true);
+        setLikeCount((c) => c + 1);
+      }
     } else {
       setIsLiked(true);
       setLikeCount((c) => c + 1);
-      await likePostAction(postId);
-      trackExploreEventAction(postId, "LIKE", { surface: "post_detail" });
+      const res = await likePostAction(postId);
+      if (!res.success) {
+        // Revert on failure
+        setIsLiked(false);
+        setLikeCount((c) => Math.max(0, c - 1));
+      } else {
+        trackExploreEventAction(postId, "LIKE", { surface: "post_detail" });
+      }
     }
     setIsLiking(false);
   };
@@ -242,12 +257,11 @@ export default function PostDetailPage() {
     }
   };
 
-  // Derive media info
-  // GET /posts/:id assetVersion = { id, fileUrl, metadata } — NO mimeType!
-  const mediaUrl = post?.assetVersion?.fileUrl;
-  const isVideo = isVideoUrl(mediaUrl);
-  const fallbackImg =
-    "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1200&auto=format&fit=crop";
+  // Derive media info — use direct fields from API response
+  const videoUrl = post?.videoUrl || post?.assetVersion?.fileUrl;
+  const thumbnailUrl = post?.thumbnailUrl;
+  const isVideo = !!videoUrl && (post?.assetVersion?.mimeType?.startsWith('video/') || /\.(mp4|webm|mov)(\?|$)/i.test(videoUrl));
+  const shouldRenderAsVideo = isVideo && !videoFailed;
 
   const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(
     post?.user?.username || "U"
@@ -289,26 +303,39 @@ export default function PostDetailPage() {
           onTouchStart={onTouchStart}
           onTouchMove={onTouchMove}
           onTouchEnd={onTouchEnd}
-          onClick={isVideo ? togglePlay : undefined}
+          onClick={shouldRenderAsVideo ? togglePlay : undefined}
         >
           {isLoading ? (
             <Loader2 className="h-10 w-10 text-white/40 animate-spin" />
-          ) : isVideo && mediaUrl ? (
+          ) : shouldRenderAsVideo && videoUrl ? (
             <video
               ref={videoRef}
-              src={mediaUrl}
+              src={videoUrl}
+              poster={thumbnailUrl || undefined}
               className="absolute inset-0 w-full h-full object-cover"
+              autoPlay
+              muted
               loop
               playsInline
+              preload="auto"
               onPlay={() => setIsPlaying(true)}
               onPause={() => setIsPlaying(false)}
+              onError={(e) => {
+                console.error('[PostDetail] Video failed to load:', videoUrl?.substring(0, 80), e);
+                setVideoFailed(true);
+              }}
             />
-          ) : (
+          ) : (thumbnailUrl || videoUrl) ? (
             <img
-              src={mediaUrl || fallbackImg}
+              src={thumbnailUrl || videoUrl || ''}
               alt={post?.caption || "Post"}
               className="absolute inset-0 w-full h-full object-cover opacity-90"
             />
+          ) : (
+            <div className="flex flex-col items-center gap-3 text-white/50">
+              <Play className="h-12 w-12" />
+              <span className="text-sm font-medium">Video not available</span>
+            </div>
           )}
 
           <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/60 pointer-events-none" />
@@ -320,7 +347,7 @@ export default function PostDetailPage() {
           </div>
 
           {/* Play/Pause overlay */}
-          {isVideo && !isLoading && (
+          {shouldRenderAsVideo && !isLoading && (
             <button
               onClick={togglePlay}
               className="relative z-10 bg-white/20 backdrop-blur-md hover:bg-white/30 text-white rounded-full p-5 transition-all hover:scale-105 opacity-0 group-hover:opacity-100"

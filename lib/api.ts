@@ -64,13 +64,26 @@ export async function fetchApi(endpoint: string, options: RequestInit = {}) {
   }
 
   if (!res.ok) {
-    const errorBody = await res.json().catch(() => ({}));
+    const errText = await res.text().catch(() => '');
+    let errorBody: any = {};
+    try {
+      if (errText.trim()) errorBody = JSON.parse(errText);
+    } catch {
+      // Body is not valid JSON — use raw text as message
+    }
     let msg = errorBody.message;
     if (Array.isArray(msg)) msg = msg.join(', ');
-    throw new Error(msg || `API Error: ${res.status}`);
+    throw new Error(msg || errText.trim() || `API Error: ${res.status}`);
   }
 
-  // Handle empty responses
+  // Handle empty / non-JSON responses safely
   const text = await res.text();
-  return text ? JSON.parse(text) : null;
+  const trimmed = text.trim();
+  if (!trimmed) return null;
+  try {
+    return JSON.parse(trimmed);
+  } catch {
+    // Response is not valid JSON — return raw text
+    return trimmed;
+  }
 }
