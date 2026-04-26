@@ -5,14 +5,18 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.koin.compose.viewmodel.koinViewModel
+import ie.app.neuragen.data.network.model.AuthResponse
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
@@ -95,7 +99,12 @@ fun AppNav(modifier: Modifier = Modifier) {
         modifier = modifier,
         topBar = {
             if (isMainScreen) {
-                NeuraGenTopBar()
+                NeuraGenTopBar(
+                    onLogout = {
+                        backStack.clear()
+                        backStack.add(Login)
+                    }
+                )
             }
         },
         floatingActionButton = {
@@ -193,7 +202,45 @@ fun AppNav(modifier: Modifier = Modifier) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun NeuraGenTopBar() {
+fun NeuraGenTopBar(
+    viewModel: NavigationViewModel = koinViewModel(),
+    onLogout: () -> Unit
+) {
+    val sessionStatus by viewModel.sessionStatus.collectAsState()
+    val session = (sessionStatus as? SessionStatus.Authenticated)?.response
+    var expanded by remember { mutableStateOf(false) }
+
+    LaunchedEffect(sessionStatus) {
+        if (sessionStatus is SessionStatus.Anonymous) {
+            onLogout()
+        }
+    }
+
+    if (viewModel.showLogoutConfirm) {
+        LogoutConfirmationDialog(
+            onConfirm = { viewModel.logout() },
+            onDismiss = { viewModel.showLogoutConfirm = false }
+        )
+    }
+
+    if (viewModel.showChangePassword) {
+        ChangePasswordDialog(
+            error = viewModel.changePasswordError,
+            isLoading = viewModel.isChangingPassword,
+            onConfirm = { old, new -> viewModel.changePassword(old, new) },
+            onDismiss = { viewModel.showChangePassword = false }
+        )
+    }
+
+    if (viewModel.showSwitchAccount) {
+        SwitchAccountDialog(
+            error = viewModel.switchAccountError,
+            isLoading = viewModel.isSwitchingAccount,
+            onConfirm = { email, password -> viewModel.switchAccount(email, password) },
+            onDismiss = { viewModel.showSwitchAccount = false }
+        )
+    }
+
     TopAppBar(
         title = {
             Text(
@@ -211,12 +258,107 @@ fun NeuraGenTopBar() {
                     tint = Color(0xFF6B7280)
                 )
             }
-            IconButton(onClick = {}) {
-                Icon(
-                    painterResource(Res.drawable.ic_billing),
-                    contentDescription = "Billing",
-                    tint = Color(0xFF6B7280)
-                )
+            Box {
+                IconButton(onClick = { expanded = true }) {
+                    Icon(
+                        painterResource(Res.drawable.ic_profile),
+                        contentDescription = "Avatar",
+                        tint = Color(0xFF6B7280)
+                    )
+                }
+                DropdownMenu(
+                    expanded = expanded,
+                    onDismissRequest = { expanded = false },
+                    offset = DpOffset(0.dp, 8.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    containerColor = Color.White
+                ) {
+                    // Header: User Info
+                    Column(
+                        modifier = Modifier
+                            .padding(horizontal = 16.dp, vertical = 12.dp)
+                            .fillMaxWidth()
+                    ) {
+                        Text(
+                            session?.username ?: "Guest",
+                            fontWeight = FontWeight.ExtraBold,
+                            fontSize = 16.sp,
+                            color = Color(0xFF1F2937)
+                        )
+                        Text(
+                            session?.email ?: "",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color(0xFF6B7280),
+                            fontSize = 12.sp
+                        )
+                    }
+                    HorizontalDivider(
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+                        color = Color(0xFFF3F4F6)
+                    )
+                    // Change Password
+                    DropdownMenuItem(
+                        text = { Text("Change Password", fontSize = 14.sp) },
+                        leadingIcon = {
+                            Icon(
+                                painterResource(Res.drawable.ic_change_password),
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp),
+                                tint = Color(0xFF4B5563)
+                            )
+                        },
+                        onClick = {
+                            expanded = false
+                            viewModel.showChangePassword = true
+                        },
+                        modifier = Modifier.height(48.dp)
+                    )
+                    // Switch Account
+                    DropdownMenuItem(
+                        text = { Text("Switch Account", fontSize = 14.sp) },
+                        leadingIcon = {
+                            Icon(
+                                painterResource(Res.drawable.ic_switch_account),
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp),
+                                tint = Color(0xFF4B5563)
+                            )
+                        },
+                        onClick = {
+                            expanded = false
+                            viewModel.showSwitchAccount = true
+                        },
+                        modifier = Modifier.height(48.dp)
+                    )
+                    HorizontalDivider(
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+                        color = Color(0xFFF3F4F6)
+                    )
+                    // Logout
+                    DropdownMenuItem(
+                        text = {
+                            Text(
+                                "Logout",
+                                color = Color(0xFFEF4444),
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        },
+                        leadingIcon = {
+                            Icon(
+                                painterResource(Res.drawable.ic_logout),
+                                contentDescription = null,
+                                tint = Color(0xFFEF4444),
+                                modifier = Modifier.size(18.dp)
+                            )
+                        },
+                        onClick = {
+                            expanded = false
+                            viewModel.showLogoutConfirm = true
+                        },
+                        modifier = Modifier.height(48.dp)
+                    )
+                }
             }
         },
         colors = TopAppBarDefaults.topAppBarColors(
@@ -295,6 +437,149 @@ fun ExploreFAB() {
             modifier = Modifier.size(24.dp)
         )
     }
+}
+
+@Composable
+fun LogoutConfirmationDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Log out of your account?") },
+        text = { Text("Are you sure you want to log out? You will need to sign in again to access your Neura Gen workspace.") },
+        confirmButton = {
+            Button(
+                onClick = onConfirm,
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEF4444))
+            ) {
+                Text("Logout")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel", color = Color(0xFF6B7280))
+            }
+        },
+        containerColor = Color.White,
+        shape = RoundedCornerShape(16.dp)
+    )
+}
+
+@Composable
+fun ChangePasswordDialog(
+    error: String?,
+    isLoading: Boolean,
+    onConfirm: (String, String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var oldPassword by remember { mutableStateOf("") }
+    var newPassword by remember { mutableStateOf("") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Change Password", fontWeight = FontWeight.Bold) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text("Enter your current password and a new one to update your security.", fontSize = 14.sp, color = Color.Gray)
+                OutlinedTextField(
+                    value = oldPassword,
+                    onValueChange = { oldPassword = it },
+                    label = { Text("Old Password") },
+                    visualTransformation = PasswordVisualTransformation(),
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(8.dp)
+                )
+                OutlinedTextField(
+                    value = newPassword,
+                    onValueChange = { newPassword = it },
+                    label = { Text("New Password") },
+                    visualTransformation = PasswordVisualTransformation(),
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(8.dp)
+                )
+                if (error != null) {
+                    Text(error, color = Color.Red, fontSize = 12.sp)
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = { onConfirm(oldPassword, newPassword) },
+                enabled = !isLoading && oldPassword.isNotBlank() && newPassword.isNotBlank(),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4F46E5))
+            ) {
+                if (isLoading) {
+                    CircularProgressIndicator(modifier = Modifier.size(18.dp), color = Color.White, strokeWidth = 2.dp)
+                } else {
+                    Text("Update Password")
+                }
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        },
+        containerColor = Color.White,
+        shape = RoundedCornerShape(16.dp)
+    )
+}
+
+@Composable
+fun SwitchAccountDialog(
+    error: String?,
+    isLoading: Boolean,
+    onConfirm: (String, String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Switch Account", fontWeight = FontWeight.Bold) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text("Log in with a different account. Successful login will replace your current session.", fontSize = 14.sp, color = Color.Gray)
+                OutlinedTextField(
+                    value = email,
+                    onValueChange = { email = it },
+                    label = { Text("Email Address") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(8.dp)
+                )
+                OutlinedTextField(
+                    value = password,
+                    onValueChange = { password = it },
+                    label = { Text("Password") },
+                    visualTransformation = PasswordVisualTransformation(),
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(8.dp)
+                )
+                if (error != null) {
+                    Text(error, color = Color.Red, fontSize = 12.sp)
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = { onConfirm(email, password) },
+                enabled = !isLoading && email.isNotBlank() && password.isNotBlank(),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4F46E5))
+            ) {
+                if (isLoading) {
+                    CircularProgressIndicator(modifier = Modifier.size(18.dp), color = Color.White, strokeWidth = 2.dp)
+                } else {
+                    Text("Sign In")
+                }
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        },
+        containerColor = Color.White,
+        shape = RoundedCornerShape(16.dp)
+    )
 }
 
 data class BottomNavItem(
