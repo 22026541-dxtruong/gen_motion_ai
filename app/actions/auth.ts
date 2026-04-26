@@ -2,6 +2,7 @@
 
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
+import { fetchApi } from '@/lib/api';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
 
@@ -42,7 +43,27 @@ export async function loginAction(formData: FormData) {
     });
   }
 
-  redirect('/explore');
+  // Also save account-specific tokens for Switch Account feature
+  if (email && typeof email === 'string') {
+    cookieStore.set(`access_${email}`, data.accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 60 * 60 * 24 * 7,
+    });
+    if (data.refreshToken) {
+      cookieStore.set(`refresh_${email}`, data.refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        path: '/',
+        maxAge: 60 * 60 * 24 * 30,
+      });
+    }
+  }
+
+  return { success: true };
 }
 
 export async function registerAction(formData: FormData) {
@@ -82,7 +103,27 @@ export async function registerAction(formData: FormData) {
     });
   }
 
-  redirect('/explore');
+  // Also save account-specific tokens for Switch Account feature
+  if (email && typeof email === 'string') {
+    cookieStore.set(`access_${email}`, data.accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 60 * 60 * 24 * 7,
+    });
+    if (data.refreshToken) {
+      cookieStore.set(`refresh_${email}`, data.refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        path: '/',
+        maxAge: 60 * 60 * 24 * 30,
+      });
+    }
+  }
+
+  return { success: true };
 }
 
 export async function logoutAction() {
@@ -105,4 +146,57 @@ export async function logoutAction() {
   cookieStore.delete('refreshToken');
   
   redirect('/login');
+}
+
+export async function changePasswordAction(formData: FormData) {
+  const oldPassword = formData.get('oldPassword') as string;
+  const newPassword = formData.get('newPassword') as string;
+
+  try {
+    await fetchApi('/auth/change-password', {
+      method: 'PATCH',
+      body: JSON.stringify({ oldPassword, newPassword }),
+    });
+    return { success: true };
+  } catch (error: any) {
+    return { error: error.message || 'Change password failed' };
+  }
+}
+
+export async function switchAccountAction(email: string) {
+  const cookieStore = await cookies();
+  const accountAccess = cookieStore.get(`access_${email}`)?.value;
+  const accountRefresh = cookieStore.get(`refresh_${email}`)?.value;
+
+  if (accountAccess) {
+    cookieStore.set('accessToken', accountAccess, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 60 * 60 * 24 * 7,
+    });
+    
+    if (accountRefresh) {
+      cookieStore.set('refreshToken', accountRefresh, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        path: '/',
+        maxAge: 60 * 60 * 24 * 30,
+      });
+    }
+    
+    return { success: true };
+  }
+  
+  // No token found for this account, require login
+  return { requireLogin: true, email };
+}
+
+export async function removeSavedAccountAction(email: string) {
+  const cookieStore = await cookies();
+  cookieStore.delete(`access_${email}`);
+  cookieStore.delete(`refresh_${email}`);
+  return { success: true };
 }

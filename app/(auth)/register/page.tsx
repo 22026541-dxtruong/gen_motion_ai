@@ -3,11 +3,14 @@ import React from 'react';
 import { Mail, Lock, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { registerAction } from '@/app/actions/auth';
 
 export default function RegisterPage() {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -18,6 +21,8 @@ export default function RegisterPage() {
       const result = await registerAction(formData);
       if (result?.error) {
         setError(result.error);
+      } else if (result?.success) {
+        router.push('/explore');
       }
     } catch (err) {
       setError('An unexpected error occurred');
@@ -53,7 +58,7 @@ export default function RegisterPage() {
                 {error}
               </div>
             )}
-            <form className="w-full space-y-5" onSubmit={handleSubmit}>
+            <form className="w-full space-y-5" onSubmit={handleSubmit} method="POST">
             
             {/* Email Input */}
             <div>
@@ -110,8 +115,8 @@ export default function RegisterPage() {
             </div>
 
             {/* Google Sign Up Button */}
-            <button
-              type="button"
+            <a
+              href={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/auth/google`}
               className="w-full bg-white hover:bg-gray-50 text-slate-800 font-semibold py-2.5 rounded-lg border border-gray-200 flex items-center justify-center gap-2.5 transition-colors shadow-sm"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -119,7 +124,7 @@ export default function RegisterPage() {
                 <path d="M12 10.35V13.82H15.75C15.54 15.15 14.28 16.5 12 16.5C9.64 16.5 7.73 14.54 7.73 12C7.73 9.46 9.64 7.5 12 7.5C13.06 7.5 13.92 7.91 14.43 8.39L16.48 6.34C15.31 5.25 13.8 4.5 12 4.5C7.86 4.5 4.5 7.86 4.5 12C4.5 16.14 7.86 19.5 12 19.5C16.33 19.5 19.23 16.45 19.23 12.18C19.23 11.51 19.16 10.9 19.04 10.35H12Z" fill="white"/>
               </svg>
               <span className="text-[14px]">Sign up with Google</span>
-            </button>
+            </a>
             </form>
           </div>
 
