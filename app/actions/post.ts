@@ -18,53 +18,11 @@ export async function getPostAction(postId: string) {
   try {
     const data = await fetchApi(`/posts/${postId}`);
 
-    // Check if we already have a usable video URL
-    const hasVideoUrl = data?.videoUrl || data?.assetVersion?.fileUrl;
-
-    if (!hasVideoUrl) {
-      // Try to resolve the video URL via the source job
-      const sourceJobId = data?.assetVersion?.metadata?.sourceJobId;
-
-      if (sourceJobId) {
-        try {
-          const job = await fetchApi(`/jobs/${sourceJobId}`);
-
-          // job.output.downloadUrl is the signed S3 video URL
-          if (job?.output?.downloadUrl) {
-            data.videoUrl = job.output.downloadUrl;
-
-            // Also set fileUrl on assetVersion for compatibility
-            if (data.assetVersion) {
-              data.assetVersion.fileUrl = job.output.downloadUrl;
-            }
-          }
-
-          // Try to extract thumbnail from job's input assets
-          if (!data.thumbnailUrl && job?.inputAssets?.length) {
-            for (const inputAsset of job.inputAssets) {
-              const thumbVersion = inputAsset?.versions?.[0];
-              if (thumbVersion?.fileUrl) {
-                data.thumbnailUrl = thumbVersion.fileUrl;
-                break;
-              }
-            }
-          }
-
-          // If still no thumbnail, try GET /assets/download for the input asset
-          if (!data.thumbnailUrl && job?.inputAssets?.[0]?.id) {
-            try {
-              const dl = await fetchApi(`/assets/download/${job.inputAssets[0].id}`);
-              if (dl?.url) {
-                data.thumbnailUrl = dl.url;
-              }
-            } catch {
-              // Silently fail — thumbnail is optional
-            }
-          }
-        } catch {
-          // Job fetch failed — can't resolve video URL
-        }
-      }
+    // The backend now natively returns videoUrl and thumbnailUrl.
+    // If not directly present, we can optionally map them from assetVersion as a fallback,
+    // though the backend should handle this now.
+    if (data && !data.videoUrl && data.assetVersion?.fileUrl) {
+      data.videoUrl = data.assetVersion.fileUrl;
     }
 
     return { success: true, data };
@@ -110,6 +68,7 @@ export async function unlikePostAction(postId: string) {
 
 /**
  * POST /posts/:postId/comments — Add a comment
+
  * Auth: Bearer JWT
  * Body: { content, postId? }
  * Response: { id, userId, postId, content, createdAt }

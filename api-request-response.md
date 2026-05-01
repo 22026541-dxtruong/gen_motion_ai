@@ -306,10 +306,15 @@ Khi loi (400/401/403/404/500...), NestJS thuong tra:
 {
   "assetVersionId": "uuid",
   "caption": "optional",
+  "videoUrl": "optional-client-url",
+  "thumbnailUrl": "optional-client-url",
   "isPublic": true
 }
 ```
-- Response (Post raw):
+- Note:
+  - `videoUrl` va `thumbnailUrl` trong request chi de dong bo payload tu FE.
+  - Backend khong luu 2 field nay trong bang `Post`; response se tu suy ra lai tu `assetVersion`.
+- Response (Serialized Post):
 ```json
 {
   "id": "uuid",
@@ -320,14 +325,40 @@ Khi loi (400/401/403/404/500...), NestJS thuong tra:
   "likeCount": 0,
   "commentCount": 0,
   "viewCount": 0,
-  "createdAt": "datetime"
+  "createdAt": "datetime",
+  "user": {
+    "id": "uuid",
+    "username": "string"
+  },
+  "assetVersion": {
+    "id": "uuid",
+    "fileUrl": "string|null",
+    "metadata": {},
+    "mimeType": "string|null",
+    "asset": {
+      "type": "IMAGE|VIDEO|THUMBNAIL|AUDIO",
+      "job": {
+        "assets": [
+          {
+            "versions": [
+              {
+                "fileUrl": "string|null"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "thumbnailUrl": "string|null",
+  "videoUrl": "string|null"
 }
 ```
 
 ### `GET /posts`
 - Auth: Public
 - Request: none
-- Response: `Post[]` raw.
+- Response: `Serialized Post[]` (cung shape voi `GET /posts/:id`).
 
 ### `GET /posts/:id`
 - Auth: Public (token optional)
@@ -351,8 +382,25 @@ Khi loi (400/401/403/404/500...), NestJS thuong tra:
   "assetVersion": {
     "id": "uuid",
     "fileUrl": "string|null",
-    "metadata": {}
-  }
+    "metadata": {},
+    "mimeType": "string|null",
+    "asset": {
+      "type": "IMAGE|VIDEO|THUMBNAIL|AUDIO",
+      "job": {
+        "assets": [
+          {
+            "versions": [
+              {
+                "fileUrl": "string|null"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "thumbnailUrl": "string|null",
+  "videoUrl": "string|null"
 }
 ```
 
@@ -364,10 +412,12 @@ Khi loi (400/401/403/404/500...), NestJS thuong tra:
 {
   "assetVersionId": "uuid",
   "caption": "string",
+  "videoUrl": "optional-client-url",
+  "thumbnailUrl": "optional-client-url",
   "isPublic": true
 }
 ```
-- Response: Post raw da update.
+- Response: Serialized Post da update (cung shape `GET /posts/:id`).
 
 ### `DELETE /posts/:id`
 - Auth: Bearer JWT
@@ -376,16 +426,18 @@ Khi loi (400/401/403/404/500...), NestJS thuong tra:
 
 ## Comments
 
-### `POST /:postId/comments`
+### `POST /posts/:postId/comments`
 - Auth: Bearer JWT
+- Path param: `postId`
 - Request body:
 ```json
 {
   "content": "This is a comment.",
   "postId": "optional"
 }
-
 ```
+- Rule:
+  - Neu co `postId` trong body thi phai trung voi `:postId` tren URL.
 - Response (Comment raw):
 ```json
 {
@@ -399,6 +451,7 @@ Khi loi (400/401/403/404/500...), NestJS thuong tra:
 
 ### `GET /posts/:postId/comments`
 - Auth: Bearer JWT
+- Path param: `postId`
 - Query:
   - `cursor?: string`
   - `take?: number (1..50, default 20)`
@@ -441,12 +494,15 @@ Khi loi (400/401/403/404/500...), NestJS thuong tra:
 
 ### `POST /posts/:postId/post-likes`
 - Auth: Bearer JWT
+- Path param: `postId`
 - Request body:
 ```json
 {
-  "postId": "uuid"
+  "postId": "optional"
 }
 ```
+- Rule:
+  - Neu co `postId` trong body thi phai trung voi `:postId` tren URL.
 - Response (PostLike raw):
 ```json
 {
@@ -459,6 +515,7 @@ Khi loi (400/401/403/404/500...), NestJS thuong tra:
 
 ### `GET /posts/:postId/post-likes?cursor=&take=`
 - Auth: Bearer JWT
+- Path param: `postId`
 - Query:
   - `cursor?: string`
   - `take?: number (1..50, default 20)`
@@ -729,7 +786,7 @@ Khi loi (400/401/403/404/500...), NestJS thuong tra:
 - Query:
   - `topic?: string`
   - `trending?: "true"|"false"`
-  - `mode?: "trending"|"new"|"top"|"for_you"`
+  - `mode?: "trending"|"new"|"top"`
   - `sort?: "score"|"newest"`
   - `limit?: number (1..50)`
   - `cursor?: string` (`ExploreItem.id`)
@@ -800,9 +857,35 @@ Khi loi (400/401/403/404/500...), NestJS thuong tra:
 }
 ```
 
+### `GET /explore/search`
+- Auth: Public
+- Muc dich:
+  - Tim ExploreItem theo `topic` da duoc chuan hoa.
+  - Endpoint nay map ve feed public voi `mode = top`.
+- Query:
+  - `topic: string` (required)
+  - `sort?: "score"|"newest"`
+  - `trending?: "true"|"false"`
+  - `limit?: number (1..50)`
+  - `cursor?: string` (`ExploreItem.id`)
+- Response:
+```json
+{
+  "mode": "top|new",
+  "data": [],
+  "nextCursor": "explore-item-id|null",
+  "limit": 20
+}
+```
+
 ### `GET /explore/for-you`
 - Auth: Bearer JWT
-- Query: giong `/explore`
+- Query:
+  - `topic?: string`
+  - `limit?: number (1..50)`
+  - `cursor?: string` (`ExploreItem.id`)
+- Note:
+  - `mode`, `sort`, `trending` khong duoc dung trong logic xep hang `for-you`.
 - Response:
 ```json
 {
@@ -896,6 +979,20 @@ Khi loi (400/401/403/404/500...), NestJS thuong tra:
   "includeBackgroundAudio": true
 }
 ```
+- Ghi chu:
+  - `preview_ltx_i2v`, `turbo_wan22_i2v_a14b`, `quality_hunyuan_i2v` bat buoc co `inputAssetId`.
+  - `standard_wan22_ti2v` va `standard_wan22_ti2v_8s` cho phep bo `inputAssetId`.
+  - Neu bo `inputAssetId` voi 2 preset Wan TI2V tren, job se chay theo `workflow = T2V`.
+  - Neu co `inputAssetId`, job se chay theo `workflow = I2V`.
+- Vi du T2V 8s:
+```json
+{
+  "prompt": "A cinematic night street shot with natural motion and stable camera movement.",
+  "negativePrompt": "blurry, low quality, distorted anatomy, flicker",
+  "presetId": "standard_wan22_ti2v_8s",
+  "includeBackgroundAudio": false
+}
+```
 - Response:
 ```json
 {
@@ -929,7 +1026,7 @@ Khi loi (400/401/403/404/500...), NestJS thuong tra:
     "presetId": "string|null",
     "tier": "string|null",
     "estimatedDurationSeconds": 420,
-    "workflow": "I2V|TI2V|null",
+    "workflow": "I2V|TI2V|T2V|null",
     "includeBackgroundAudio": true,
     "createdAt": "datetime",
     "updatedAt": "datetime",
@@ -1369,18 +1466,13 @@ data: {...}
 ```
 - Response: tra thang payload `res.data` tu Modal API (shape phu thuoc service ben ngoai).
 
-## 4) Luu y route mismatch trong code hien tai
+## 4) Luu y implementation hien tai
 
-- `GET /comments`:
-  - Controller dang doc `@Param('postId')` nhung route khong co `:postId`.
-  - Hien tai FE khong truyen duoc `postId` dung cach qua route nay.
-
-- `GET /post-likes`:
-  - Controller dang doc `@Param('postId')` nhung route khong co `:postId`.
-
-- `DELETE /post-likes`:
-  - Controller dang doc `@Param('postId')` nhung route khong co `:postId`.
-  - Neu FE can unlike theo post, route/DTO nen bo sung ro rang.
+- `Comments/PostLikes` duoc thiet ke de dung route nested:
+  - `/posts/:postId/comments`
+  - `/posts/:postId/post-likes`
+- `POST /posts` va `PATCH /posts/:id` nhan them `videoUrl` / `thumbnailUrl` de dong bo payload FE, nhung backend khong persist 2 field nay vao `Post`.
+- `GET /explore/search` tra ve ExploreItem public (khong phai danh sach Post thuần).
 
 - `PATCH /users/me` va `DELETE /users/me`:
   - Dang tra raw `User` co field `password` (da hash). FE co the nhan field nay trong response.

@@ -3,8 +3,8 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import { Heart, MessageSquare, Share2, Timer, Send, X } from "lucide-react";
-import { fetchExploreAction, trackExploreEventsBatchAction } from "@/app/actions/explore";
-import { likePostAction, unlikePostAction, addCommentAction } from "@/app/actions/post";
+import { fetchExploreAction, fetchExploreSearchAction, trackExploreEventsBatchAction } from "@/app/actions/explore";
+import { likePostAction, unlikePostAction, addCommentAction, getPostLikeStatusAction } from "@/app/actions/post";
 
 type ExploreItem = {
   id: string;
@@ -60,6 +60,7 @@ function ExploreCard({
   const mediaUrl = videoUrl || thumbnailUrl;
   const isVideo = isVideoSrc(videoUrl, item.assetVersion?.mimeType);
   const authorName = item.post?.user?.username || "unknown";
+  const authorId = item.post?.user?.id || authorName;
   const avatarUrl =
     item.post?.user?.avatarUrl ||
     `https://ui-avatars.com/api/?name=${encodeURIComponent(authorName)}&background=e0e7ff&color=4f46e5`;
@@ -81,6 +82,15 @@ function ExploreCard({
   const [showCommentBox, setShowCommentBox] = useState(false);
   const [commentText, setCommentText] = useState("");
   const [isCommenting, setIsCommenting] = useState(false);
+
+  // Check if liked on mount
+  useEffect(() => {
+    if (postId) {
+      getPostLikeStatusAction(postId).then(res => {
+        setIsLiked(res.isLiked);
+      });
+    }
+  }, [postId]);
 
   // Impression tracking
   useEffect(() => {
@@ -208,7 +218,7 @@ function ExploreCard({
       {/* Card body */}
       <div className="p-4 flex flex-col flex-1 pointer-events-none">
         <Link
-          href={`/user/${authorName}`}
+          href={`/user/${authorId}`}
           className="flex items-center gap-2 mb-3 pointer-events-auto relative z-20 w-fit hover:opacity-80 transition-opacity"
         >
           <img src={avatarUrl} alt={authorName} className="h-6 w-6 rounded-full object-cover" />
@@ -279,16 +289,32 @@ export default function ExploreFeed({
   initialItems,
   initialCursor,
   mode,
+  topic,
 }: {
   initialItems: ExploreItem[];
   initialCursor?: string | null;
   mode: string;
+  topic?: string;
 }) {
   const [items, setItems] = useState<ExploreItem[]>(initialItems);
   const [cursor, setCursor] = useState<string | null | undefined>(initialCursor);
   const [isLoading, setIsLoading] = useState(false);
 
+  // Save current feed to session storage for infinite swiping in post detail
+  useEffect(() => {
+    if (items.length > 0) {
+      const feedContext = {
+        items: items.map(item => item.postId || item.post?.id || item.id),
+        cursor,
+        mode,
+        topic
+      };
+      sessionStorage.setItem('motion_explore_feed', JSON.stringify(feedContext));
+    }
+  }, [items, cursor, mode, topic]);
+
   const impressionQueue = useRef<string[]>([]);
+  const loadMoreRef = useRef<HTMLDivElement>(null);
 
   const handleImpressionTracked = useCallback((postId: string) => {
     if (!impressionQueue.current.includes(postId)) {
@@ -307,16 +333,40 @@ export default function ExploreFeed({
     return () => clearInterval(interval);
   }, []);
 
-  const loadMore = async () => {
+  const loadMore = useCallback(async () => {
     if (!cursor || isLoading) return;
     setIsLoading(true);
-    const res = await fetchExploreAction(mode, cursor);
+    
+    let res;
+    if (topic) {
+      res = await fetchExploreSearchAction(topic, cursor);
+    } else {
+      res = await fetchExploreAction(mode, cursor);
+    }
+    
     if (res.success && res.data) {
       setItems((prev) => [...prev, ...(res.data.data || [])]);
       setCursor(res.data.nextCursor);
     }
     setIsLoading(false);
-  };
+  }, [cursor, isLoading, mode, topic]);
+
+  useEffect(() => {
+    const currentObserver = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && cursor && !isLoading) {
+          loadMore();
+        }
+      },
+      { rootMargin: "200px" } // Load earlier for better UX
+    );
+
+    if (loadMoreRef.current) {
+      currentObserver.observe(loadMoreRef.current);
+    }
+
+    return () => currentObserver.disconnect();
+  }, [cursor, isLoading, loadMore]);
 
   if (items.length === 0) {
     return (
@@ -336,7 +386,7 @@ export default function ExploreFeed({
       </div>
 
       {cursor && (
-        <div className="mt-10 mb-8 flex justify-center">
+        <div ref={loadMoreRef} className="mt-10 mb-8 flex justify-center">
           <button
             onClick={loadMore}
             disabled={isLoading}

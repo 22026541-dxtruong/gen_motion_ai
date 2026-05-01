@@ -20,16 +20,25 @@ export default async function ProfilePage() {
   }
 
   try {
-    galleryItems = await fetchApi('/gallery');
+    const allPosts = await fetchApi('/posts');
+    if (Array.isArray(allPosts)) {
+      galleryItems = allPosts.filter((p: any) => p.userId === userProfile.id);
+    }
   } catch (err) {
     // Silently handle gallery fetch errors
   }
 
   let jobs = [];
   try {
-    jobs = await fetchApi('/jobs');
+    const fetchedJobs = await fetchApi('/jobs');
+    jobs = Array.isArray(fetchedJobs) ? fetchedJobs : [];
   } catch (err) {
     // Silently handle jobs fetch errors
+  }
+
+  // Fallback to the initial page of jobs returned in userProfile
+  if (!jobs || jobs.length === 0) {
+    jobs = userProfile.jobs?.data || [];
   }
 
   return (

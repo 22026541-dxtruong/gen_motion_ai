@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
 import {
@@ -24,7 +24,8 @@ import {
   fetchPostCommentsAction,
   getPostLikeStatusAction,
 } from "@/app/actions/post";
-import { trackExploreEventAction } from "@/app/actions/explore";
+import { trackExploreEventAction, fetchExploreAction, fetchExploreSearchAction } from "@/app/actions/explore";
+import PostLikesModal from "./PostLikesModal";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 // Matches the actual GET /posts/:id response
@@ -106,6 +107,22 @@ export default function PostDetailPage() {
   const [isCommenting, setIsCommenting] = useState(false);
   const [commentsNextCursor, setCommentsNextCursor] = useState<string | null>(null);
   const [isLoadingComments, setIsLoadingComments] = useState(false);
+  const loadMoreCommentsRef = useRef<HTMLButtonElement>(null);
+
+  // Likes Modal
+  const [isLikesModalOpen, setIsLikesModalOpen] = useState(false);
+
+  // Feed Navigation State
+  const [feedState, setFeedState] = useState<any>(null);
+
+  useEffect(() => {
+    try {
+      const stored = sessionStorage.getItem("motion_explore_feed");
+      if (stored) {
+        setFeedState(JSON.parse(stored));
+      }
+    } catch (e) {}
+  }, []);
 
   // Animation
   const [animClass, setAnimClass] = useState("translate-y-16 opacity-0 scale-95");
@@ -164,6 +181,24 @@ export default function PostDetailPage() {
     [postId]
   );
 
+  // Infinite scroll for comments
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && commentsNextCursor && !isLoadingComments) {
+          loadComments(commentsNextCursor);
+        }
+      },
+      { rootMargin: "100px" }
+    );
+
+    if (loadMoreCommentsRef.current) {
+      observer.observe(loadMoreCommentsRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, [commentsNextCursor, isLoadingComments, loadComments]);
+
   useEffect(() => {
     if (postId) loadComments();
   }, [postId, loadComments]);
@@ -213,15 +248,77 @@ export default function PostDetailPage() {
   };
 
   // ── Navigation ───────────────────────────────────────────────────────────
-  const handleNavigation = (direction: "up" | "down") => {
+  const handleNavigation = async (direction: "up" | "down") => {
     if (isNavigating) return;
+    
+    let nextPostId = null;
+
+    if (feedState && feedState.items) {
+      const currentIndex = feedState.items.indexOf(postId);
+      
+      if (direction === "up") { // Swipe UP -> Next post (down the feed)
+        if (currentIndex >= 0 && currentIndex < feedState.items.length - 1) {
+          nextPostId = feedState.items[currentIndex + 1];
+        } else if ((currentIndex === feedState.items.length - 1 || currentIndex === -1) && feedState.cursor) {
+          // Reached end, load more!
+          setIsNavigating(true); // show loading state visually by blocking double swipe
+          let res;
+          if (feedState.topic) {
+            res = await fetchExploreSearchAction(feedState.topic, feedState.cursor);
+          } else {
+            res = await fetchExploreAction(feedState.mode || 'trending', feedState.cursor);
+          }
+          if (res.success && res.data?.data?.length > 0) {
+            const newItems = res.data.data.map((i: any) => i.postId || i.post?.id || i.id);
+            const updatedItems = [...feedState.items, ...newItems];
+            const newFeedState = {
+              ...feedState,
+              items: updatedItems,
+              cursor: res.data.nextCursor
+            };
+            sessionStorage.setItem("motion_explore_feed", JSON.stringify(newFeedState));
+            setFeedState(newFeedState);
+            nextPostId = newItems[0];
+          }
+          setIsNavigating(false);
+        }
+      } else { // Swipe DOWN -> Previous post (up the feed)
+        if (currentIndex > 0) {
+          nextPostId = feedState.items[currentIndex - 1];
+        }
+      }
+    } else {
+      // Fallback if no feed state (direct link visit)
+      if (direction === "up") {
+        setIsNavigating(true);
+        const res = await fetchExploreAction('trending');
+        if (res.success && res.data?.data?.length > 0) {
+          const newItems = res.data.data.map((i: any) => i.postId || i.post?.id || i.id);
+          const newFeedState = {
+            items: newItems,
+            cursor: res.data.nextCursor,
+            mode: 'trending'
+          };
+          sessionStorage.setItem("motion_explore_feed", JSON.stringify(newFeedState));
+          setFeedState(newFeedState);
+          nextPostId = newItems.find((id: string) => id !== postId) || newItems[0];
+        }
+        setIsNavigating(false);
+      }
+    }
+
     setIsNavigating(true);
     setAnimClass(
       direction === "up"
         ? "-translate-y-24 opacity-0 scale-95"
         : "translate-y-24 opacity-0 scale-95"
     );
-    setTimeout(() => router.back(), 280);
+
+    if (nextPostId) {
+      setTimeout(() => router.push(`/post/${nextPostId}`), 280);
+    } else {
+      setTimeout(() => router.back(), 280);
+    }
   };
 
   const onTouchStart = (e: React.TouchEvent) => {
@@ -233,8 +330,11 @@ export default function PostDetailPage() {
   const onTouchEnd = () => {
     if (!touchStartY || !touchEndY) return;
     const dist = touchStartY - touchEndY;
-    if (dist > 50) handleNavigation("up");
-    else if (dist < -50) handleNavigation("down");
+    // Tweak threshold for better mobile feel
+    if (dist > 70) handleNavigation("up");
+    else if (dist < -70) handleNavigation("down");
+    setTouchStartY(null);
+    setTouchEndY(null);
   };
 
   // ── Video play/pause ─────────────────────────────────────────────────────
@@ -418,7 +518,7 @@ export default function PostDetailPage() {
               </div>
             ) : (
               <div className="flex items-center gap-3">
-                <Link href={`/user/${post?.user?.username || "unknown"}`}>
+                <Link href={`/user/${post?.user?.id || post?.user?.username || "unknown"}`}>
                   <img
                     src={avatarUrl}
                     alt={post?.user?.username || "User"}
@@ -427,7 +527,7 @@ export default function PostDetailPage() {
                 </Link>
                 <div>
                   <Link
-                    href={`/user/${post?.user?.username || "unknown"}`}
+                    href={`/user/${post?.user?.id || post?.user?.username || "unknown"}`}
                     className="hover:underline"
                   >
                     <h3 className="font-semibold text-slate-900 text-sm">
@@ -462,10 +562,13 @@ export default function PostDetailPage() {
             {/* Stats */}
             {!isLoading && !error && (
               <div className="flex items-center gap-4 text-sm border-b border-slate-100 pb-4">
-                <span className="text-slate-900 font-semibold">
+                <button 
+                  onClick={() => setIsLikesModalOpen(true)}
+                  className="text-slate-900 font-semibold hover:underline"
+                >
                   {formatCount(likeCount)}{" "}
                   <span className="text-slate-500 font-normal">Likes</span>
-                </span>
+                </button>
                 <span className="text-slate-900 font-semibold">
                   {formatCount(post?.commentCount)}{" "}
                   <span className="text-slate-500 font-normal">Comments</span>
@@ -520,6 +623,7 @@ export default function PostDetailPage() {
 
               {commentsNextCursor && (
                 <button
+                  ref={loadMoreCommentsRef}
                   onClick={() => loadComments(commentsNextCursor)}
                   disabled={isLoadingComments}
                   className="w-full text-center text-indigo-600 text-sm font-medium hover:underline disabled:opacity-50 py-2"
@@ -561,6 +665,12 @@ export default function PostDetailPage() {
           </div>
         </div>
       </div>
+
+      <PostLikesModal 
+        postId={postId} 
+        isOpen={isLikesModalOpen} 
+        onClose={() => setIsLikesModalOpen(false)} 
+      />
     </div>
   );
 }

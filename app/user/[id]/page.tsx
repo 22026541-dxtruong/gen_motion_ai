@@ -1,5 +1,3 @@
-'use client';
-
 import {
   ArrowLeft,
   Search,
@@ -9,21 +7,60 @@ import {
   Link as LinkIcon,
   Mail,
   LayoutGrid,
-  Library,
-  Play
+  Library
 } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { notFound, redirect } from 'next/navigation';
+import { getUserByIdAction, checkFollowStatusAction } from '@/app/actions/user';
+import { fetchApi } from '@/lib/api';
+import UserVideoCard from './UserVideoCard';
+import FollowButton from './FollowButton';
 
-export default function UserProfile() {
-    const router = useRouter();
-    
+export default async function UserProfile({ params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = await params;
+  const userId = resolvedParams.id;
+  
+  const userRes = await getUserByIdAction(userId);
+  if (!userRes.success || !userRes.data) {
+    notFound();
+  }
+  const user = userRes.data;
+
+  let currentUser = null;
+  try {
+    currentUser = await fetchApi('/users/me');
+  } catch (error) {
+    // Guest user
+  }
+
+  // Redirect to profile if this is the current user
+  if (currentUser && currentUser.id === user.id) {
+    redirect('/profile');
+  }
+
+  let isFollowing = false;
+  if (currentUser) {
+    const followStatus = await checkFollowStatusAction(user.id);
+    isFollowing = followStatus.isFollowing;
+  }
+
+  let userPosts = [];
+  try {
+    const allPosts = await fetchApi('/posts');
+    if (Array.isArray(allPosts)) {
+      userPosts = allPosts.filter((p: any) => p.userId === user.id);
+    }
+  } catch (error) {
+    console.error("Failed to fetch posts:", error);
+  }
+
   return (
     <div className="min-h-screen bg-[#FDFDFD] p-4 md:p-8 font-sans text-slate-900">
       {/* Header */}
       <header className="flex items-center justify-between mb-8 max-w-7xl mx-auto">
-        <button className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-600">
-          <ArrowLeft onClick={() => router.back()} className="w-6 h-6" />
-        </button>
+        <Link href="/explore" className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-600 block">
+          <ArrowLeft className="w-6 h-6" />
+        </Link>
         <div className="relative w-full max-w-2xl ml-4">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
           <input
@@ -42,43 +79,40 @@ export default function UserProfile() {
           <div className="lg:col-span-2 bg-white rounded-3xl p-6 md:p-8 border border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] flex flex-col sm:flex-row gap-6 sm:gap-8 items-start">
             
             {/* Avatar */}
-            <div className="relative shrink-0">
+            <div className="relative inline-block w-fit">
               <img
-                src="https://images.unsplash.com/photo-1618331835717-801e976710b2?q=80&w=256&auto=format&fit=crop"
-                alt="Marcus Ray"
-                className="w-32 h-32 rounded-full object-cover shadow-sm"
+                src={user.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username)}&background=e0e7ff&color=4f46e5`}
+                alt={user.username}
+                className="w-32 h-32 rounded-full object-cover shadow-sm bg-slate-100"
               />
-              <div className="absolute bottom-1 right-1 bg-white rounded-full p-0.5">
-                <BadgeCheck className="w-7 h-7 text-black fill-black" color="white" />
-              </div>
+              {user.role === 'PRO' && (
+                <div className="absolute bottom-1 right-1 bg-white rounded-full p-0.5">
+                  <BadgeCheck className="w-7 h-7 text-indigo-600 fill-indigo-600" color="white" />
+                </div>
+              )}
             </div>
 
             {/* Details */}
             <div className="flex-1 w-full">
               <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start w-full gap-4 mb-4">
                 <div>
-                  <h1 className="text-2xl font-medium text-slate-900">Marcus Ray</h1>
-                  <p className="text-slate-600 mt-1">@marcus_visuals</p>
+                  <h1 className="text-2xl font-medium text-slate-900">{user.username}</h1>
+                  <p className="text-slate-600 mt-1">@{user.username}</p>
                 </div>
-                <button className="px-8 py-2.5 rounded-full border border-slate-200 font-medium hover:bg-slate-50 transition-colors shadow-sm">
-                  Follow
-                </button>
+                <FollowButton 
+                  userId={user.id} 
+                  initialIsFollowing={isFollowing} 
+                  isAuthenticated={!!currentUser} 
+                />
               </div>
               
               <p className="text-slate-800 mb-2 leading-relaxed max-w-lg">
-                Digital artist exploring the intersection of nature and cyberpunk aesthetics. Creating high-fidelity AI video loops.
+                {user.bio || "No bio available."}
               </p>
               
               <div className="flex items-center gap-2 text-slate-800 mb-6">
-                <span>Based in Seattle.</span>
-                <Rocket className="w-4 h-4" />
-                <Bot className="w-4 h-4" />
-              </div>
-              
-              <div className="flex gap-4 text-slate-800 text-sm">
-                <span>#Cyberpunk</span>
-                <span>#Surreal</span>
-                <span>#VFX</span>
+                <Rocket className="w-4 h-4 text-indigo-600" />
+                <Bot className="w-4 h-4 text-purple-600" />
               </div>
             </div>
           </div>
@@ -89,17 +123,17 @@ export default function UserProfile() {
             {/* Stats Row */}
             <div className="flex items-center justify-between text-center mb-8">
               <div className="flex-1">
-                <div className="text-lg font-medium text-slate-900">142</div>
+                <div className="text-lg font-medium text-slate-900">{user.counts?.posts || 0}</div>
                 <div className="text-xs mt-1.5 text-slate-500 uppercase tracking-wider">Posts</div>
               </div>
               <div className="w-px h-10 bg-slate-200"></div>
               <div className="flex-1">
-                <div className="text-lg font-medium text-slate-900">24.5k</div>
+                <div className="text-lg font-medium text-slate-900">{user.counts?.followers || 0}</div>
                 <div className="text-xs mt-1.5 text-slate-500 uppercase tracking-wider">Followers</div>
               </div>
               <div className="w-px h-10 bg-slate-200"></div>
               <div className="flex-1">
-                <div className="text-lg font-medium text-slate-900">89</div>
+                <div className="text-lg font-medium text-slate-900">{user.counts?.following || 0}</div>
                 <div className="text-xs mt-1.5 text-slate-500 uppercase tracking-wider">Following</div>
               </div>
             </div>
@@ -132,30 +166,15 @@ export default function UserProfile() {
 
         {/* Video Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {/* Video Item 1 */}
-          <div className="relative aspect-[3/4] bg-[#111] rounded-2xl overflow-hidden group cursor-pointer">
-             <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/60"></div>
-             <Play className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 text-white/90 group-hover:scale-110 transition-transform fill-white/20" />
-          </div>
-          
-          {/* Video Item 2 */}
-          <div className="relative aspect-[3/4] bg-[#1a1a1a] rounded-2xl overflow-hidden group cursor-pointer flex items-center justify-center">
-             <div className="absolute bottom-4 left-0 right-0 text-center font-bold text-2xl tracking-widest text-[#a8905b] opacity-60">E M P O W O</div>
-             <Play className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 text-white/90 group-hover:scale-110 transition-transform fill-white/20" />
-          </div>
-          
-          {/* Video Item 3 */}
-          <div className="relative aspect-[3/4] bg-[#222] rounded-2xl overflow-hidden group cursor-pointer">
-             <img src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?q=80&w=400&auto=format&fit=crop" className="w-full h-full object-cover opacity-80 mix-blend-overlay" alt="Video thumbnail" />
-          </div>
-          
-          {/* Video Item 4 */}
-          <div className="relative aspect-[3/4] bg-[#161616] rounded-2xl overflow-hidden group cursor-pointer">
-             <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
-             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#B71C1C] rounded-full p-4 group-hover:scale-110 transition-transform shadow-lg">
-               <Play className="w-8 h-8 text-white fill-white" />
-             </div>
-          </div>
+          {userPosts.length === 0 ? (
+            <div className="col-span-full py-12 text-center text-slate-500">
+              No public videos available.
+            </div>
+          ) : (
+            userPosts.map((post: any) => (
+              <UserVideoCard key={post.id} post={post} />
+            ))
+          )}
         </div>
       </main>
     </div>

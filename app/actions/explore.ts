@@ -12,6 +12,19 @@ export async function fetchExploreAction(mode: string, cursor?: string) {
 }
 
 /**
+ * GET /explore/search
+ * Search for ExploreItems by topic
+ */
+export async function fetchExploreSearchAction(topic: string, cursor?: string) {
+  try {
+    const data = await fetchApi(`/explore/search?topic=${encodeURIComponent(topic)}&limit=10${cursor ? `&cursor=${cursor}` : ''}`);
+    return { success: true, data };
+  } catch (error: any) {
+    return { success: false, error: error.message || 'Failed to search' };
+  }
+}
+
+/**
  * Track a single explore event (IMPRESSION, OPEN_POST, LIKE, etc.)
  * POST /explore/events
  */

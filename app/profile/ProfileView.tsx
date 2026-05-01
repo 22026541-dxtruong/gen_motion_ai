@@ -12,10 +12,13 @@ import {
   Heart,
   MoreVertical,
   Send,
+  Loader2,
 } from "lucide-react";
 import Dialog from "../../component/Dialog";
 import PublishDialog from "../../component/PublishDialog";
 import { updateUserProfileAction } from "@/app/actions/user";
+import { uploadAssetAction } from "@/app/actions/job";
+import FollowsModal from "../component/FollowsModal";
 
 // ─── GalleryCard — video plays on hover ──────────────────────────────────────
 function GalleryCard({
@@ -85,7 +88,7 @@ function GalleryCard({
       <div className="p-5">
         <div className="flex justify-between items-start">
           <h3 className="font-semibold text-gray-900 truncate pr-4 text-lg">
-            {item.title || "Untitled Video"}
+            {item.title || item.caption || "Untitled Video"}
           </h3>
           <button className="text-gray-400 hover:text-gray-700 mt-1">
             <MoreVertical size={18} />
@@ -94,10 +97,10 @@ function GalleryCard({
         <div className="flex items-center justify-between mt-4">
           <div className="flex items-center gap-4 text-sm font-medium text-gray-500">
             <span className="flex items-center gap-1.5">
-              <Eye size={16} /> {item.post?.viewCount || 0}
+              <Eye size={16} /> {item.viewCount ?? item.post?.viewCount ?? 0}
             </span>
             <span className="flex items-center gap-1.5">
-              <Heart size={16} /> {item.post?.likeCount || 0}
+              <Heart size={16} /> {item.likeCount ?? item.post?.likeCount ?? 0}
             </span>
           </div>
           {(!item.isPublic || item.isJob) && (
@@ -130,7 +133,13 @@ export default function ProfileView({
 }) {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isFollowersDialogOpen, setIsFollowersDialogOpen] = useState(false);
+  const [isFollowingsDialogOpen, setIsFollowingsDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"public" | "private">("public");
+
+  // Avatar Upload State
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
 
   // Publish Dialog State
   const [publishingItem, setPublishingItem] = useState<any>(null);
@@ -149,7 +158,7 @@ export default function ProfileView({
             title: job.prompt || "Video Generation",
             isJob: true,
             assetVersion: {
-              fileUrl: job.thumbnail?.downloadUrl || job.output?.downloadUrl,
+              fileUrl: job.output?.downloadUrl || job.thumbnail?.downloadUrl || job.assets?.[0]?.versions?.[0]?.fileUrl,
               durationMs: job.estimatedDurationSeconds
                 ? job.estimatedDurationSeconds * 1000
                 : 0,
@@ -165,16 +174,42 @@ export default function ProfileView({
     const formData = new FormData(e.currentTarget);
 
     try {
-      const res = await updateUserProfileAction({
+      const payload: any = {
         username: formData.get("username") as string,
         bio: formData.get("bio") as string,
-      });
+      };
+      if (avatarPreview && avatarPreview.startsWith("http")) {
+        payload.avatarUrl = avatarPreview;
+      }
+
+      const res = await updateUserProfileAction(payload);
       if (!res.success) throw new Error(res.error);
       setIsEditDialogOpen(false);
     } catch (err: any) {
       setUpdateError(err.message);
     } finally {
       setIsUpdating(false);
+    }
+  };
+
+  const handleAvatarFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploadingAvatar(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await uploadAssetAction(formData);
+      if (res.success && res.asset?.versions?.[0]?.fileUrl) {
+        setAvatarPreview(res.asset.versions[0].fileUrl);
+      } else {
+        alert("Failed to upload avatar: " + (res.error || "Unknown error"));
+      }
+    } catch (err) {
+      alert("Error uploading file");
+    } finally {
+      setIsUploadingAvatar(false);
     }
   };
 
@@ -205,7 +240,7 @@ export default function ProfileView({
               <img
                 src={
                   userProfile?.avatarUrl ||
-                  "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200&auto=format&fit=crop"
+                  `https://ui-avatars.com/api/?name=${encodeURIComponent(userProfile?.username || "User")}&background=e0e7ff&color=4f46e5`
                 }
                 alt={userProfile?.username || "User"}
                 className="w-32 h-32 rounded-2xl border-4 border-white shadow-sm object-cover bg-gray-100"
@@ -247,6 +282,7 @@ export default function ProfileView({
             label: "FOLLOWING",
             value: userProfile?.counts?.following || 0,
             color: "text-gray-900",
+            onClick: () => setIsFollowingsDialogOpen(true),
           },
           {
             label: "POSTS",
@@ -343,9 +379,10 @@ export default function ProfileView({
           displayedGallery.map((item: any, idx: number) => {
             const assetVersion = item.assetVersion || {};
             const mediaUrl =
-              assetVersion.fileUrl ||
+              item.videoUrl || item.thumbnailUrl || assetVersion.fileUrl ||
               "https://images.unsplash.com/photo-1605806616949-1e87b487cb2a?q=80&w=600&auto=format&fit=crop";
             const isVideo =
+              !!item.videoUrl ||
               assetVersion.mimeType?.startsWith("video/") ||
               /\.(mp4|webm|mov|m4v)([?#]|$)/i.test(mediaUrl);
             return (
@@ -387,17 +424,34 @@ export default function ProfileView({
             </div>
           )}
           <div className="flex flex-col items-center gap-2">
-            <img
-              src={
-                userProfile?.avatarUrl ||
-                "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=200&auto=format&fit=crop"
-              }
-              alt="Profile"
-              className="w-24 h-24 rounded-full object-cover shadow-sm"
+            <div className="relative">
+              <img
+                src={
+                  avatarPreview ||
+                  userProfile?.avatarUrl ||
+                  `https://ui-avatars.com/api/?name=${encodeURIComponent(userProfile?.username || "User")}&background=e0e7ff&color=4f46e5`
+                }
+                alt="Profile"
+                className={`w-24 h-24 rounded-full object-cover shadow-sm ${isUploadingAvatar ? 'opacity-50' : ''}`}
+              />
+              {isUploadingAvatar && (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <Loader2 className="animate-spin text-indigo-600" />
+                </div>
+              )}
+            </div>
+            <input
+              type="file"
+              ref={fileInputRef}
+              accept="image/*"
+              className="hidden"
+              onChange={handleAvatarFileChange}
             />
             <button
               type="button"
-              className="text-sm text-indigo-600 font-medium hover:text-indigo-700 transition"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isUploadingAvatar}
+              className="text-sm text-indigo-600 font-medium hover:text-indigo-700 transition mt-1"
             >
               Change Photo
             </button>
@@ -444,6 +498,20 @@ export default function ProfileView({
           </div>
         </form>
       </Dialog>
+
+      <FollowsModal
+        userId={userProfile?.id}
+        isOpen={isFollowersDialogOpen}
+        onClose={() => setIsFollowersDialogOpen(false)}
+        type="followers"
+      />
+
+      <FollowsModal
+        userId={userProfile?.id}
+        isOpen={isFollowingsDialogOpen}
+        onClose={() => setIsFollowingsDialogOpen(false)}
+        type="followings"
+      />
     </div>
   );
 }
