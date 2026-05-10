@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.koin.core.annotation.KoinViewModel
 import org.koin.core.annotation.Provided
@@ -237,42 +238,67 @@ class CreateViewModel(
 
         viewModelScope.launch {
             println("CreateViewModel: Starting SSE event observation for job: $jobId")
-            try {
-                jobRepository.streamJobEvents(jobId).collect { event ->
-                    when (event) {
-                        is Snapshot -> {
-                            println("CreateViewModel: SSE Snapshot received")
-                            updateJobInState(event.data)
-                        }
-                        is Status -> {
-                            println("CreateViewModel: SSE Status update: ${event.data.status}")
-                            updateJobStatusInState(event.data)
-
-                            val currentStatus = event.data.status.lowercase()
-                            if (currentStatus in listOf("completed", "failed", "cancelled")) {
-                                println("CreateViewModel: Job finished. Closing SSE connection for $jobId.")
-                                activeSseConnections.remove(jobId)
-                                viewModelScope.launch {
-                                    kotlinx.coroutines.delay(1500)
-                                    refreshJobs()
+            var isFinished = false
+            
+            while (!isFinished && isActive) {
+                try {
+                    jobRepository.streamJobEvents(jobId).collect { event ->
+                        when (event) {
+                            is Snapshot -> {
+                                println("CreateViewModel: SSE Snapshot received")
+                                updateJobInState(event.data)
+                                
+                                val currentStatus = event.data.status.lowercase()
+                                if (currentStatus in listOf("completed", "failed", "cancelled")) {
+                                    isFinished = true
+                                    println("CreateViewModel: Job finished from Snapshot. Closing SSE connection for $jobId.")
+                                    activeSseConnections.remove(jobId)
+                                    viewModelScope.launch {
+                                        kotlinx.coroutines.delay(1500)
+                                        refreshJobs()
+                                    }
+                                    this@launch.cancel() // Hủy coroutine -> Đóng Socket SSE
                                 }
-                                this@launch.cancel() // Hủy coroutine -> Đóng Socket SSE
+                            }
+                            is Status -> {
+                                println("CreateViewModel: SSE Status update: ${event.data.status}")
+                                updateJobStatusInState(event.data)
+
+                                val currentStatus = event.data.status.lowercase()
+                                if (currentStatus in listOf("completed", "failed", "cancelled")) {
+                                    isFinished = true
+                                    println("CreateViewModel: Job finished. Closing SSE connection for $jobId.")
+                                    activeSseConnections.remove(jobId)
+                                    viewModelScope.launch {
+                                        kotlinx.coroutines.delay(1500)
+                                        refreshJobs()
+                                    }
+                                    this@launch.cancel() // Hủy coroutine -> Đóng Socket SSE
+                                }
+                            }
+                            is Log -> {
+                                println("CreateViewModel: SSE Log: ${event.data.message}")
+                                updateJobLogsInState(event.data)
+                            }
+                            is Heartbeat -> {
+                                // Bỏ qua để log đỡ nhiễu, nó chỉ giúp giữ kết nối
                             }
                         }
-                        is Log -> {
-                            println("CreateViewModel: SSE Log: ${event.data.message}")
-                            updateJobLogsInState(event.data)
-                        }
-                        is Heartbeat -> {
-                            // Bỏ qua để log đỡ nhiễu, nó chỉ giúp giữ kết nối
-                        }
                     }
+                } catch (e: kotlinx.coroutines.CancellationException) {
+                    // Coroutine bị hủy một cách chủ động
+                    throw e
+                } catch (e: Exception) {
+                    // Rớt mạng hoặc server đóng đột ngột
+                    println("CreateViewModel: SSE Connection lost for job $jobId: ${e.message}. Reconnecting in 3s...")
                 }
-            } catch (e: Exception) {
-                // Rớt mạng hoặc server đóng đột ngột
-                println("CreateViewModel: SSE Connection lost for job $jobId: ${e.message}")
-                activeSseConnections.remove(jobId) // Xóa đi để lần refresh tiếp theo có thể kết nối lại
+                
+                if (!isFinished) {
+                    kotlinx.coroutines.delay(3000)
+                }
             }
+            
+            activeSseConnections.remove(jobId)
         }
     }
 

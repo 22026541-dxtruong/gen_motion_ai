@@ -28,6 +28,7 @@ import androidx.navigation3.ui.NavDisplay
 import androidx.savedstate.serialization.SavedStateConfiguration
 import ie.app.neuragen.ui.auth.LoginScreen
 import ie.app.neuragen.ui.auth.RegisterScreen
+import ie.app.neuragen.ui.auth.ForgotPasswordScreen
 import ie.app.neuragen.ui.auth.SplashScreen
 import ie.app.neuragen.ui.billing.BillingScreen
 import ie.app.neuragen.ui.create.CreateScreen
@@ -58,6 +59,9 @@ data object Login : AppRoute
 
 @Serializable
 data object Register : AppRoute
+
+@Serializable
+data object ForgotPassword : AppRoute
 
 @Serializable
 data object Explore : AppRoute
@@ -147,6 +151,16 @@ fun AppNav(modifier: Modifier = Modifier) {
                         },
                         onRegisterClick = {
                             backStack.add(Register)
+                        },
+                        onForgotPasswordClick = {
+                            backStack.add(ForgotPassword)
+                        }
+                    )
+                }
+                entry<ForgotPassword> {
+                    ForgotPasswordScreen(
+                        onBackToLogin = {
+                            backStack.removeLastOrNull()
                         }
                     )
                 }
