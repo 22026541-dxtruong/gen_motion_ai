@@ -15,6 +15,7 @@ import { getUserByIdAction, checkFollowStatusAction } from '@/app/actions/user';
 import { fetchApi } from '@/lib/api';
 import UserVideoCard from './UserVideoCard';
 import FollowButton from './FollowButton';
+import ShareButtons from "../../../component/ShareButtons";
 
 export default async function UserProfile({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = await params;
@@ -61,14 +62,6 @@ export default async function UserProfile({ params }: { params: Promise<{ id: st
         <Link href="/explore" className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-600 block">
           <ArrowLeft className="w-6 h-6" />
         </Link>
-        <div className="relative w-full max-w-2xl ml-4">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
-          <input
-            type="text"
-            placeholder="Search creators, videos..."
-            className="w-full pl-12 pr-4 py-3 rounded-full border border-slate-300 bg-white focus:outline-none focus:ring-1 focus:ring-slate-400 shadow-sm transition-shadow"
-          />
-        </div>
       </header>
 
       {/* Main Content Area */}
@@ -141,14 +134,11 @@ export default async function UserProfile({ params }: { params: Promise<{ id: st
             <hr className="border-slate-100 mb-8" />
             
             {/* Link Buttons */}
-            <div className="flex justify-center gap-4">
-              <button className="p-3 border border-slate-200 rounded-full hover:bg-slate-50 transition-colors shadow-sm text-slate-700">
-                <LinkIcon className="w-5 h-5" />
-              </button>
-              <button className="p-3 border border-slate-200 rounded-full hover:bg-slate-50 transition-colors shadow-sm text-slate-700">
-                <Mail className="w-5 h-5" />
-              </button>
-            </div>
+            <ShareButtons 
+              title={`${user.username}'s Profile on Neura Gen`} 
+              className="flex justify-center gap-4" 
+              iconClassName="p-3 border border-slate-200 rounded-full hover:bg-slate-50 transition-colors shadow-sm text-slate-700" 
+            />
           </div>
         </div>
 
@@ -157,10 +147,6 @@ export default async function UserProfile({ params }: { params: Promise<{ id: st
           <button className="flex items-center gap-2 pb-4 border-b-2 border-slate-900 font-medium text-slate-900">
             <LayoutGrid className="w-5 h-5" />
             Public Videos
-          </button>
-          <button className="flex items-center gap-2 pb-4 border-b-2 border-transparent text-slate-500 hover:text-slate-800 transition-colors">
-            <Library className="w-5 h-5" />
-            Collections
           </button>
         </div>
 

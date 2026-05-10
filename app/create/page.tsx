@@ -44,7 +44,6 @@ export default async function CreatePage() {
         <div className="lg:col-span-5 flex flex-col">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-xl font-bold text-slate-900">My Recent Jobs</h3>
-            <button className="text-indigo-600 text-sm font-medium hover:underline">View All</button>
           </div>
 
           <div className="space-y-4">

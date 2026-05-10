@@ -5,6 +5,7 @@ import { logoutAction } from '@/app/actions/auth';
 import Link from 'next/link';
 import ChangePasswordDialog from './ChangePasswordDialog';
 import SwitchAccountDialog from './SwitchAccountDialog';
+import NotificationBell from './NotificationBell';
 
 export default function Topbar({ user }: { user?: any }) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -70,20 +71,10 @@ export default function Topbar({ user }: { user?: any }) {
         </div>
 
         <div className="flex-1 flex justify-center">
-          <div className="relative w-full max-w-xl">
-            <Search className="absolute left-4 top-2.5 h-4 w-4 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Search creations..."
-              className="w-full bg-[#f0f4f8] rounded-full pl-11 pr-4 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-100 transition-all placeholder:text-slate-400"
-            />
-          </div>
         </div>
 
         <div className="flex items-center gap-6 justify-end w-64">
-          <button className="text-slate-400 hover:text-slate-600">
-            <Bell className="h-5 w-5" />
-          </button>
+          {user && <NotificationBell />}
           <div className="flex items-center gap-2 text-indigo-600 font-medium text-sm cursor-pointer">
             <CreditCard className="h-5 w-5" />
             <span>{user?.credits?.balance || 0}</span>

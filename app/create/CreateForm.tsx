@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Wand2, Image as ImageIcon, X } from 'lucide-react';
 import { uploadAssetAction, createVideoJobAction } from '@/app/actions/job';
 
@@ -20,6 +20,15 @@ export default function CreateForm({ credits }: { credits: number }) {
   
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (error) {
+      const timer = setTimeout(() => {
+        setError(null);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [error]);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -108,9 +117,13 @@ export default function CreateForm({ credits }: { credits: number }) {
       </div>
 
       {error && (
-        <div className="mb-6 p-4 bg-red-50 text-red-600 text-sm rounded-xl border border-red-100 flex items-center justify-between">
-          <span>{error}</span>
-          <button onClick={() => setError(null)} className="hover:text-red-800"><X className="h-4 w-4" /></button>
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-5 fade-in duration-300">
+          <div className="bg-slate-900 text-white px-6 py-3 rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.12)] flex items-center gap-3 border border-slate-800">
+            <span className="text-sm font-medium">{error}</span>
+            <button onClick={() => setError(null)} className="text-slate-400 hover:text-white transition-colors">
+              <X className="h-4 w-4" />
+            </button>
+          </div>
         </div>
       )}
 

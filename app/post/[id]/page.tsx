@@ -11,6 +11,7 @@ import {
   Heart,
   MessageSquare,
   Share2,
+  Mail,
   Send,
   ChevronUp,
   ChevronDown,
@@ -354,7 +355,15 @@ export default function PostDetailPage() {
       navigator.share({ title: post?.caption || "Check this out", url }).catch(() => {});
     } else {
       navigator.clipboard.writeText(url);
+      alert("Link copied to clipboard!");
     }
+  };
+
+  const handleMail = () => {
+    const url = window.location.href;
+    const subject = encodeURIComponent(post?.caption || "Check this out on Neura Gen");
+    const body = encodeURIComponent(`Check this out:\n\n${url}`);
+    window.location.href = `mailto:?subject=${subject}&body=${body}`;
   };
 
   // Derive media info — use direct fields from API response
@@ -500,6 +509,16 @@ export default function PostDetailPage() {
                 <Share2 className="h-6 w-6" />
               </button>
               <span className="text-white text-xs font-semibold drop-shadow-md">Share</span>
+            </div>
+
+            <div className="flex flex-col items-center gap-1.5">
+              <button
+                onClick={(e) => { e.stopPropagation(); handleMail(); }}
+                className="w-12 h-12 bg-black/40 backdrop-blur-sm rounded-full flex items-center justify-center text-white hover:bg-black/60 transition"
+              >
+                <Mail className="h-6 w-6" />
+              </button>
+              <span className="text-white text-xs font-semibold drop-shadow-md">Mail</span>
             </div>
           </div>
         </div>

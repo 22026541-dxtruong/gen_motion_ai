@@ -220,28 +220,6 @@ export default function JobItem({ job }: { job: any }) {
           >
             <Send className="h-4 w-4" /> Publish
           </button>
-          
-          <button
-            onClick={async () => {
-              if (!currentJob.output?.assetVersionId) {
-                alert("Asset version ID not found");
-                return;
-              }
-              setIsAddingToGallery(true);
-              const res = await createGalleryItemAction(currentJob.output.assetVersionId, true);
-              setIsAddingToGallery(false);
-              if (res.success) {
-                alert("Added to Gallery successfully!");
-              } else {
-                alert(res.error || "Failed to add to gallery");
-              }
-            }}
-            disabled={!currentJob.output?.assetVersionId || isAddingToGallery}
-            className="flex-1 bg-emerald-50 border border-emerald-100 hover:bg-emerald-100 text-emerald-700 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isAddingToGallery ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImageIcon className="h-4 w-4" />}
-            Gallery
-          </button>
         </div>
       )}
 

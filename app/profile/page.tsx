@@ -3,6 +3,7 @@ import MainLayout from "../../component/MainLayout";
 import ProfileView from "./ProfileView";
 import { fetchApi } from "@/lib/api";
 import { redirect } from "next/navigation";
+export const dynamic = "force-dynamic";
 
 export default async function ProfilePage() {
   let userProfile = null;
@@ -20,7 +21,7 @@ export default async function ProfilePage() {
   }
 
   try {
-    const allPosts = await fetchApi('/posts');
+    const allPosts = await fetchApi('/posts', { cache: 'no-store' });
     if (Array.isArray(allPosts)) {
       galleryItems = allPosts.filter((p: any) => p.userId === userProfile.id);
     }
@@ -30,7 +31,7 @@ export default async function ProfilePage() {
 
   let jobs = [];
   try {
-    const fetchedJobs = await fetchApi('/jobs');
+    const fetchedJobs = await fetchApi('/jobs', { cache: 'no-store' });
     jobs = Array.isArray(fetchedJobs) ? fetchedJobs : [];
   } catch (err) {
     // Silently handle jobs fetch errors

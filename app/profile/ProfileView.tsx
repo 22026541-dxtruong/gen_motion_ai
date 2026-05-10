@@ -18,7 +18,10 @@ import Dialog from "../../component/Dialog";
 import PublishDialog from "../../component/PublishDialog";
 import { updateUserProfileAction } from "@/app/actions/user";
 import { uploadAssetAction } from "@/app/actions/job";
+import { deleteGalleryItemAction } from "@/app/actions/gallery";
+import { updatePostAction, deletePostAction } from "@/app/actions/post";
 import FollowsModal from "../component/FollowsModal";
+import ShareButtons from "../../component/ShareButtons";
 
 // ─── GalleryCard — video plays on hover ──────────────────────────────────────
 function GalleryCard({
@@ -28,6 +31,9 @@ function GalleryCard({
   isVideo,
   formatDuration,
   onPublish,
+  onDeleted,
+  onWatch,
+  onEdit,
 }: {
   item: any;
   idx: number;
@@ -35,10 +41,53 @@ function GalleryCard({
   isVideo: boolean;
   formatDuration: (ms: number) => string;
   onPublish: (item: any) => void;
+  onDeleted?: (id: string) => void;
+  onWatch?: (url: string) => void;
+  onEdit?: (item: any) => void;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const assetVersion = item.assetVersion || {};
+  const durationMs = assetVersion.durationMs || assetVersion.metadata?.durationMs || (item.estimatedDurationSeconds ? item.estimatedDurationSeconds * 1000 : 0);
+
+  React.useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsMenuOpen(false);
+      }
+    }
+    if (isMenuOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isMenuOpen]);
+
+  const handleDelete = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!window.confirm("Are you sure you want to delete this?")) return;
+    setIsDeleting(true);
+    if (!item.isJob) {
+      await deletePostAction(item.id);
+      if (onDeleted) onDeleted(item.id);
+    }
+    setIsMenuOpen(false);
+    setIsDeleting(false);
+  };
+
+  const handleEdit = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsMenuOpen(false);
+    if (!item.isJob && onEdit) {
+      onEdit(item);
+    } else {
+      window.alert("You can only edit published posts.");
+    }
+  };
 
   const handleMouseEnter = () => {
     if (isVideo && videoRef.current) {
@@ -55,15 +104,21 @@ function GalleryCard({
 
   return (
     <div
-      className="bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-md transition group block relative"
+      className="bg-white rounded-3xl shadow-sm hover:shadow-md transition group block relative"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
       <Link
         href={item.isJob ? "#" : `/post/${item.id}`}
         className="absolute inset-0 z-10"
+        onClick={(e) => {
+          if (item.isJob) {
+            e.preventDefault();
+            if (onWatch) onWatch(mediaUrl);
+          }
+        }}
       />
-      <div className="relative h-48 bg-slate-900 overflow-hidden">
+      <div className="relative h-48 bg-slate-900 overflow-hidden rounded-t-3xl">
         {isVideo ? (
           <video
             ref={videoRef}
@@ -82,26 +137,58 @@ function GalleryCard({
           />
         )}
         <span className="absolute bottom-3 right-3 bg-black/60 backdrop-blur-md text-white text-xs font-semibold px-2.5 py-1 rounded-lg z-20">
-          {formatDuration(assetVersion.durationMs || 0)}
+          {formatDuration(durationMs)}
         </span>
       </div>
       <div className="p-5">
-        <div className="flex justify-between items-start">
+        <div className="flex justify-between items-start relative">
           <h3 className="font-semibold text-gray-900 truncate pr-4 text-lg">
             {item.title || item.caption || "Untitled Video"}
           </h3>
-          <button className="text-gray-400 hover:text-gray-700 mt-1">
-            <MoreVertical size={18} />
-          </button>
+          {!item.isJob && (
+            <div ref={menuRef} className="relative z-30">
+              <button 
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); setIsMenuOpen(!isMenuOpen); }}
+                className="text-gray-400 hover:text-gray-700 mt-1 p-1 rounded-md hover:bg-gray-100 transition-colors"
+              >
+                <MoreVertical size={18} />
+              </button>
+              {isMenuOpen && (
+                <div className="absolute right-0 mt-1 w-40 bg-white rounded-xl shadow-lg border border-gray-100 py-1 overflow-hidden z-50">
+                  <button 
+                    onClick={handleEdit}
+                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                  >
+                    Edit
+                  </button>
+                  <button 
+                    onClick={handleDelete}
+                    disabled={isDeleting}
+                    className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50"
+                  >
+                    {isDeleting ? 'Deleting...' : 'Delete'}
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
         <div className="flex items-center justify-between mt-4">
           <div className="flex items-center gap-4 text-sm font-medium text-gray-500">
-            <span className="flex items-center gap-1.5">
-              <Eye size={16} /> {item.viewCount ?? item.post?.viewCount ?? 0}
-            </span>
-            <span className="flex items-center gap-1.5">
-              <Heart size={16} /> {item.likeCount ?? item.post?.likeCount ?? 0}
-            </span>
+            {item.isPublic && !item.isJob ? (
+              <>
+                <span className="flex items-center gap-1.5">
+                  <Eye size={16} /> {item.viewCount ?? item.post?.viewCount ?? 0}
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <Heart size={16} /> {item.likeCount ?? item.post?.likeCount ?? 0}
+                </span>
+              </>
+            ) : (
+              <span className="text-xs px-2 py-1 bg-gray-100 text-gray-500 rounded-md font-semibold">
+                Private
+              </span>
+            )}
           </div>
           {(!item.isPublic || item.isJob) && (
             <button
@@ -135,6 +222,12 @@ export default function ProfileView({
   const [isFollowersDialogOpen, setIsFollowersDialogOpen] = useState(false);
   const [isFollowingsDialogOpen, setIsFollowingsDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"public" | "private">("public");
+  const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set());
+
+  const [previewMediaUrl, setPreviewMediaUrl] = useState<string | null>(null);
+  const [editingPost, setEditingPost] = useState<any | null>(null);
+  const [editCaption, setEditCaption] = useState<string>("");
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
 
   // Avatar Upload State
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -163,9 +256,13 @@ export default function ProfileView({
                 ? job.estimatedDurationSeconds * 1000
                 : 0,
             },
+            output: job.output,
+            prompt: job.prompt,
             post: { viewCount: 0, likeCount: 0 },
           })) || []
       );
+
+  const visibleGallery = displayedGallery.filter(item => !deletedIds.has(item.id));
 
   const handleUpdateProfile = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -262,9 +359,7 @@ export default function ProfileView({
             >
               Edit Profile
             </button>
-            <button className="p-2.5 rounded-full border border-gray-200 hover:bg-gray-50 text-gray-700 transition">
-              <Share2 size={20} />
-            </button>
+            <ShareButtons url={typeof window !== "undefined" ? window.location.href : ""} title={`${userProfile?.username}'s Profile on Neura Gen`} />
           </div>
         </div>
       </div>
@@ -370,13 +465,13 @@ export default function ProfileView({
 
       {/* Gallery Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-4">
-        {displayedGallery.length === 0 ? (
+        {visibleGallery.length === 0 ? (
           <div className="col-span-full py-10 text-center text-slate-500">
             No items found in{" "}
             {activeTab === "public" ? "public gallery" : "private workspace"}.
           </div>
         ) : (
-          displayedGallery.map((item: any, idx: number) => {
+          visibleGallery.map((item: any, idx: number) => {
             const assetVersion = item.assetVersion || {};
             const mediaUrl =
               item.videoUrl || item.thumbnailUrl || assetVersion.fileUrl ||
@@ -394,6 +489,12 @@ export default function ProfileView({
                 isVideo={isVideo}
                 formatDuration={formatDuration}
                 onPublish={setPublishingItem}
+                onDeleted={(id) => setDeletedIds(prev => new Set(prev).add(id))}
+                onWatch={(url) => setPreviewMediaUrl(url)}
+                onEdit={(item) => {
+                  setEditingPost(item);
+                  setEditCaption(item.caption || item.title || "");
+                }}
               />
             );
           })
@@ -405,9 +506,10 @@ export default function ProfileView({
         <PublishDialog
           isOpen={!!publishingItem}
           onClose={() => setPublishingItem(null)}
-          assetId={publishingItem.isJob ? publishingItem.id : null}
+          assetId={publishingItem.isJob ? publishingItem.output?.assetId : null}
           assetVersionId={publishingItem.assetVersion?.id}
-          defaultCaption={publishingItem.title}
+          jobId={publishingItem.isJob ? publishingItem.id : null}
+          defaultCaption={publishingItem.prompt || publishingItem.title}
         />
       )}
 
@@ -512,6 +614,67 @@ export default function ProfileView({
         onClose={() => setIsFollowingsDialogOpen(false)}
         type="followings"
       />
+
+      {previewMediaUrl && (
+        <Dialog
+          isOpen={!!previewMediaUrl}
+          onClose={() => setPreviewMediaUrl(null)}
+          title="Video Preview"
+        >
+          <div className="w-full bg-black rounded-xl overflow-hidden aspect-video flex items-center justify-center">
+            <video
+              controls
+              autoPlay
+              className="w-full h-full object-contain"
+              src={previewMediaUrl}
+            />
+          </div>
+        </Dialog>
+      )}
+
+      {editingPost && (
+        <Dialog
+          isOpen={!!editingPost}
+          onClose={() => setEditingPost(null)}
+          title="Edit Post"
+        >
+          <div className="p-1">
+            <label className="block text-sm font-semibold text-gray-900 mb-2">
+              Caption
+            </label>
+            <textarea
+              rows={4}
+              value={editCaption}
+              onChange={(e) => setEditCaption(e.target.value)}
+              className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition resize-none text-gray-900"
+              placeholder="Write a caption for your post..."
+            />
+            <div className="flex justify-end gap-3 mt-6">
+              <button
+                type="button"
+                onClick={() => setEditingPost(null)}
+                className="px-5 py-2 border border-gray-200 text-gray-700 hover:bg-gray-50 rounded-full font-medium transition"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={isSavingEdit}
+                onClick={async () => {
+                  setIsSavingEdit(true);
+                  await updatePostAction(editingPost.id, { caption: editCaption });
+                  setIsSavingEdit(false);
+                  setEditingPost(null);
+                  window.location.reload();
+                }}
+                className="px-5 py-2 bg-indigo-600 text-white rounded-full font-medium hover:bg-indigo-700 transition shadow-sm disabled:opacity-70"
+              >
+                {isSavingEdit ? "Saving..." : "Save Changes"}
+              </button>
+            </div>
+          </div>
+        </Dialog>
+      )}
     </div>
   );
 }
