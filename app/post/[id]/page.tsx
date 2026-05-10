@@ -421,7 +421,7 @@ export default function PostDetailPage() {
               ref={videoRef}
               src={videoUrl}
               poster={thumbnailUrl || undefined}
-              className="absolute inset-0 w-full h-full object-cover"
+              className="absolute inset-0 w-full h-full object-contain"
               autoPlay
               muted
               loop
@@ -438,7 +438,7 @@ export default function PostDetailPage() {
             <img
               src={thumbnailUrl || videoUrl || ''}
               alt={post?.caption || "Post"}
-              className="absolute inset-0 w-full h-full object-cover opacity-90"
+              className="absolute inset-0 w-full h-full object-contain opacity-90"
             />
           ) : (
             <div className="flex flex-col items-center gap-3 text-white/50">
