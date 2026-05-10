@@ -7,12 +7,28 @@ import io.ktor.client.call.*
 import io.ktor.client.plugins.sse.sse
 import io.ktor.client.request.*
 import io.ktor.client.request.forms.*
+import io.ktor.client.statement.*
 import io.ktor.http.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import org.koin.core.annotation.Single
+
+suspend inline fun <reified T> HttpResponse.bodyOrThrow(): T {
+    if (!status.isSuccess()) {
+        val errorBody = runCatching { bodyAsText() }.getOrDefault("")
+        // Try to extract message if it's a JSON object, otherwise use status description
+        val msg = if (errorBody.contains("\"message\"")) {
+            // A simple regex/string extraction is safer here than parsing with kotlinx.serialization if the structure varies
+            errorBody.substringAfter("\"message\":\"").substringBefore("\"")
+        } else {
+            status.description
+        }
+        throw Exception(msg)
+    }
+    return body()
+}
 
 @Single(binds = [NeuraGenApi::class])
 class NeuraGenApiImpl(
@@ -21,37 +37,47 @@ class NeuraGenApiImpl(
 ) : NeuraGenApi {
 
 
-    override suspend fun getHello(): String = client.get("/").body()
+    override suspend fun getHello(): String = client.get("/").bodyOrThrow()
 
     // Auth
     override suspend fun register(request: RegisterRequest): AuthResponse =
-        client.post("/auth/register") { setBody(request) }.body()
+        client.post("/auth/register") { setBody(request) }.bodyOrThrow()
 
     override suspend fun login(request: LoginRequest): AuthResponse =
-        client.post("/auth/login") { setBody(request) }.body()
+        client.post("/auth/login") { setBody(request) }.bodyOrThrow()
 
     override suspend fun googleCallback(query: Map<String, String>): AuthResponse =
         client.get("/auth/google/callback") {
             query.forEach { (key, value) -> parameter(key, value) }
-        }.body()
+        }.bodyOrThrow()
+
+    override suspend fun googleExchangeCode(code: String): AuthResponse =
+        client.post("/auth/google/exchange-code") {
+            setBody(GoogleExchangeCodeRequest(code))
+        }.bodyOrThrow()
+
+    override suspend fun googleTokenLogin(idToken: String, platform: String): AuthResponse =
+        client.post("/auth/google/token") {
+            setBody(GoogleTokenLoginRequest(idToken, platform))
+        }.bodyOrThrow()
 
     override suspend fun refreshTokens(request: RefreshRequest): AuthResponse =
-        client.post("/auth/refresh") { setBody(request) }.body()
+        client.post("/auth/refresh") { setBody(request) }.bodyOrThrow()
 
     override suspend fun logout(request: LogoutRequest): MessageResponse =
-        client.post("/auth/logout") { setBody(request) }.body()
+        client.post("/auth/logout") { setBody(request) }.bodyOrThrow()
 
     override suspend fun logoutAll(): MessageResponse =
-        client.post("/auth/logout-all").body()
+        client.post("/auth/logout-all").bodyOrThrow()
 
     override suspend fun changePassword(request: ChangePasswordRequest): MessageResponse =
-        client.patch("/auth/change-password") { setBody(request) }.body()
+        client.patch("/auth/change-password") { setBody(request) }.bodyOrThrow()
 
     override suspend fun forgotPassword(request: ForgotPasswordRequest): MessageResponse =
-        client.post("/auth/forgot-password") { setBody(request) }.body()
+        client.post("/auth/forgot-password") { setBody(request) }.bodyOrThrow()
 
     override suspend fun resetPassword(request: ResetPasswordRequest): MessageResponse =
-        client.post("/auth/reset-password") { setBody(request) }.body()
+        client.post("/auth/reset-password") { setBody(request) }.bodyOrThrow()
 
     // Users
     override suspend fun updateMe(request: UserUpdateDto): UserDto =
@@ -90,15 +116,10 @@ class NeuraGenApiImpl(
 
     // Comments
     override suspend fun createComment(request: CreateCommentRequest): CommentDto =
-        client.post("/comments") { setBody(request) }.body()
+        client.post("/posts/${request.postId}/comments") { setBody(request) }.body()
 
     override suspend fun getComments(postId: String, cursor: String?, take: Int?): CommentsPaginationDto =
-        client.get("/comments") {
-            // Note: Doc says route is /comments but expects postId. 
-            // In implementation, if route is /comments, we probably need query param or it's misaligned in doc.
-            // Following current doc structure which says "Controller dang doc @Param('postId') nhung route khong co :postId".
-            // I'll add it as query for now or wait for BE fix.
-            parameter("postId", postId) 
+        client.get("/posts/$postId/comments") {
             parameter("cursor", cursor)
             parameter("take", take)
         }.body()
@@ -111,19 +132,16 @@ class NeuraGenApiImpl(
 
     // Post Likes
     override suspend fun likePost(request: CreatePostLikeRequest): PostLikeDto =
-        client.post("/post-likes") { setBody(request) }.body()
+        client.post("/posts/${request.postId}/post-likes") { setBody(request) }.body()
 
     override suspend fun getPostLikes(postId: String, cursor: String?, take: Int?): PostLikesPaginationDto =
-        client.get("/post-likes") {
-            parameter("postId", postId)
+        client.get("/posts/$postId/post-likes") {
             parameter("cursor", cursor)
             parameter("take", take)
         }.body()
 
     override suspend fun unlikePost(postId: String): PostLikeDto =
-        client.delete("/post-likes") {
-            parameter("postId", postId)
-        }.body()
+        client.delete("/posts/$postId/post-likes").body()
 
     // Follows
     override suspend fun followUser(request: CreateFollowRequest): FollowDto =
@@ -198,9 +216,25 @@ class NeuraGenApiImpl(
         limit: Int?,
         cursor: String?
     ): ExploreResponse = client.get("/explore") {
+        header(HttpHeaders.CacheControl, "no-cache")
         parameter("topic", topic)
         parameter("trending", trending)
         parameter("mode", mode)
+        parameter("sort", sort)
+        parameter("limit", limit)
+        parameter("cursor", cursor)
+    }.body()
+
+    override suspend fun searchExplore(
+        topic: String,
+        trending: Boolean?,
+        sort: String?,
+        limit: Int?,
+        cursor: String?
+    ): ExploreResponse = client.get("/explore/search") {
+        header(HttpHeaders.CacheControl, "no-cache")
+        parameter("topic", topic)
+        parameter("trending", trending)
         parameter("sort", sort)
         parameter("limit", limit)
         parameter("cursor", cursor)
@@ -214,6 +248,7 @@ class NeuraGenApiImpl(
         limit: Int?,
         cursor: String?
     ): ForYouResponse = client.get("/explore/for-you") {
+        header(HttpHeaders.CacheControl, "no-cache")
         parameter("topic", topic)
         parameter("trending", trending)
         parameter("mode", mode)
@@ -245,17 +280,44 @@ class NeuraGenApiImpl(
         client.post("/jobs/$id/cancel").body()
 
     override fun streamJobEvents(jobId: String): Flow<JobStreamEvent> = flow {
-        client.sse("/jobs/$jobId/events") {
+        client.sse(
+            urlString = "/jobs/$jobId/events",
+            request = {
+                header(HttpHeaders.Accept, "text/event-stream")
+                header(HttpHeaders.CacheControl, "no-cache")
+            }
+        ) {
             incoming.collect { event ->
                 val data = event.data ?: return@collect
-                val jobEvent = when (event.event) {
-                    "snapshot" -> Snapshot(json.decodeFromString<JobSnapshotEvent>(data))
-                    "status" -> Status(json.decodeFromString<JobStatusEvent>(data))
-                    "log" -> Log(json.decodeFromString<JobLogEvent>(data))
-                    "heartbeat" -> Heartbeat(json.decodeFromString<JobHeartbeatEvent>(data))
-                    else -> null
+                val jobEvent = try {
+                    when (event.event) {
+                        "snapshot" -> Snapshot(json.decodeFromString<JobSnapshotEvent>(data))
+                        "status" -> Status(json.decodeFromString<JobStatusEvent>(data))
+                        "log" -> Log(json.decodeFromString<JobLogEvent>(data))
+                        "heartbeat" -> Heartbeat(json.decodeFromString<JobHeartbeatEvent>(data))
+                        else -> null
+                    }
+                } catch (e: Exception) {
+                    println("NeuraGenApiImpl: Failed to parse SSE event: ${event.event}. Error: ${e.message}")
+                    null
                 }
                 if (jobEvent != null) emit(jobEvent)
+            }
+        }
+    }
+
+    override fun streamNotifications(): Flow<JobNotificationPayload> = flow {
+        client.sse("/jobs/events/me") {
+            incoming.collect { event ->
+                if (event.event == "notification") {
+                    val data = event.data ?: return@collect
+                    try {
+                        val payload = json.decodeFromString<JobNotificationPayload>(data)
+                        emit(payload)
+                    } catch (e: Exception) {
+                        // Ignore parse errors
+                    }
+                }
             }
         }
     }

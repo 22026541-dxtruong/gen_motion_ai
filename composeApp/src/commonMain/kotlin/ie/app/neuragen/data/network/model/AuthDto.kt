@@ -54,3 +54,14 @@ data class ResetPasswordRequest(
 data class MessageResponse(
     val message: String
 )
+
+@Serializable
+data class GoogleExchangeCodeRequest(
+    val code: String
+)
+
+@Serializable
+data class GoogleTokenLoginRequest(
+    val idToken: String,
+    val platform: String = "android"
+)

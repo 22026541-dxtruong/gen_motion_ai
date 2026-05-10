@@ -7,10 +7,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import ie.app.neuragen.ui.navigation.AppNav
 
+import ie.app.neuragen.ui.theme.NeuraGenTheme
+
 @Composable
 @Preview
 fun App() {
-    MaterialTheme {
+    NeuraGenTheme {
         AppNav(modifier = Modifier.fillMaxSize())
     }
 }

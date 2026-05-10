@@ -37,6 +37,13 @@ kotlin {
             // Video
             implementation(libs.androidx.media3.exoplayer)
             implementation(libs.androidx.media3.ui.compose.material3)
+            implementation(libs.androidx.media3.ui.compose)
+            // Coil video
+            implementation(libs.coil.video)
+            // Google Sign-In (Credential Manager)
+            implementation(libs.androidx.credentials)
+            implementation(libs.androidx.credentials.play.services)
+            implementation(libs.googleid)
         }
         commonMain.dependencies {
             implementation(libs.compose.runtime)
@@ -47,6 +54,7 @@ kotlin {
             implementation(libs.compose.uiToolingPreview)
             implementation(libs.androidx.lifecycle.viewmodelCompose)
             implementation(libs.androidx.lifecycle.runtimeCompose)
+            implementation(libs.material.icons.extended)
             // Ktor
             implementation(libs.ktor.client.core)
             implementation(libs.ktor.client.content.negotiation)

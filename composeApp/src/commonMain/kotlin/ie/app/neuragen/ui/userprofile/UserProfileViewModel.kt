@@ -6,6 +6,7 @@ import ie.app.neuragen.data.network.model.PostDto
 import ie.app.neuragen.data.network.model.UserPublicDto
 import ie.app.neuragen.data.repository.PostRepository
 import ie.app.neuragen.data.repository.UserRepository
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -17,9 +18,13 @@ import org.koin.core.annotation.Provided
 data class UserProfileUiState(
     val user: UserPublicDto? = null,
     val posts: List<PostDto> = emptyList(),
+    val followersCount: Int = 0,
+    val followingCount: Int = 0,
     val isLoading: Boolean = false,
     val error: String? = null,
-    val selectedTab: Int = 0 // 0 for Videos, 1 for Collections
+    val selectedTab: Int = 0, // 0 for Videos, 1 for Collections
+    val isFollowing: Boolean = false,
+    val isTogglingFollow: Boolean = false
 )
 
 @KoinViewModel
@@ -31,23 +36,44 @@ class UserProfileViewModel(
     private val _uiState = MutableStateFlow(UserProfileUiState())
     val uiState: StateFlow<UserProfileUiState> = _uiState.asStateFlow()
 
+    private var currentUserId: String? = null
+
     fun loadProfile(userId: String) {
+        currentUserId = userId
         viewModelScope.launch {
             println("UserProfileViewModel: Loading profile for $userId...")
             _uiState.update { it.copy(isLoading = true, error = null) }
-            
-            val userResult = userRepository.getUser(userId)
-            val postsResult = postRepository.getPosts() // Ideally filtered by userId, but following current repo structure
+
+            val userDeferred = async { userRepository.getUser(userId) }
+            val postsDeferred = async { postRepository.getPosts() }
+            val followersDeferred = async { postRepository.getFollowers(userId, take = 50) }
+            val followingDeferred = async { postRepository.getFollowings(userId, take = 50) }
+            val meDeferred = async { userRepository.getMe() }
+
+            val userResult = userDeferred.await()
+            val postsResult = postsDeferred.await()
+            val followersResult = followersDeferred.await()
+            val followingResult = followingDeferred.await()
+            val meResult = meDeferred.await()
 
             if (userResult.isSuccess && postsResult.isSuccess) {
                 val user = userResult.getOrThrow()
-                // Filtering posts for this user specifically
+                // Filter posts for this user specifically
                 val userPosts = postsResult.getOrThrow().filter { it.userId == userId }
+                val followers = followersResult.getOrNull()?.data ?: emptyList()
+                val following = followingResult.getOrNull()?.data ?: emptyList()
+                val myUserId = meResult.getOrNull()?.id
+
+                val isFollowing = myUserId != null && followers.any { it.follower?.id == myUserId }
+
                 println("UserProfileViewModel: Successfully loaded profile for ${user.username} and ${userPosts.size} posts")
-                _uiState.update { 
+                _uiState.update {
                     it.copy(
                         user = user,
                         posts = userPosts,
+                        followersCount = followers.size,
+                        followingCount = following.size,
+                        isFollowing = isFollowing,
                         isLoading = false
                     )
                 }
@@ -56,7 +82,7 @@ class UserProfileViewModel(
                 val postsError = postsResult.exceptionOrNull()?.message
                 val errorMsg = "Failed to load user profile. User error: $userError, Posts error: $postsError"
                 println("UserProfileViewModel: ERROR: $errorMsg")
-                _uiState.update { 
+                _uiState.update {
                     it.copy(
                         isLoading = false,
                         error = "Failed to load profile"
@@ -68,5 +94,44 @@ class UserProfileViewModel(
 
     fun onTabSelected(index: Int) {
         _uiState.update { it.copy(selectedTab = index) }
+    }
+
+    fun toggleFollow() {
+        val userId = currentUserId ?: return
+        val isCurrentlyFollowing = _uiState.value.isFollowing
+        val currentFollowerCount = _uiState.value.followersCount
+
+        viewModelScope.launch {
+            println("UserProfileViewModel: Toggling follow for $userId (currently following=$isCurrentlyFollowing)...")
+            // Optimistic update
+            _uiState.update { 
+                it.copy(
+                    isFollowing = !isCurrentlyFollowing, 
+                    isTogglingFollow = true,
+                    followersCount = if (isCurrentlyFollowing) (currentFollowerCount - 1).coerceAtLeast(0) else currentFollowerCount + 1
+                ) 
+            }
+
+            val result = if (isCurrentlyFollowing) {
+                postRepository.unfollowUser(userId)
+            } else {
+                postRepository.followUser(userId)
+            }
+
+            result.onSuccess {
+                println("UserProfileViewModel: Successfully toggled follow!")
+                _uiState.update { it.copy(isTogglingFollow = false) }
+            }.onFailure { error ->
+                println("UserProfileViewModel: Failed to toggle follow: ${error.message}")
+                // Revert optimistic update on failure
+                _uiState.update { 
+                    it.copy(
+                        isFollowing = isCurrentlyFollowing, 
+                        isTogglingFollow = false,
+                        followersCount = currentFollowerCount
+                    ) 
+                }
+            }
+        }
     }
 }

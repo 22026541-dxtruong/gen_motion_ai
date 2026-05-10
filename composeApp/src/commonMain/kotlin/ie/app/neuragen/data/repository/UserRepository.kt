@@ -2,9 +2,9 @@ package ie.app.neuragen.data.repository
 
 import ie.app.neuragen.data.network.NeuraGenApi
 import ie.app.neuragen.data.network.model.*
-import org.koin.core.annotation.Factory
 import org.koin.core.annotation.Provided
 import org.koin.core.annotation.Single
+import kotlinx.coroutines.flow.Flow
 
 interface UserRepository {
     suspend fun getMe(cursor: String? = null, take: Int? = null): Result<UserMeDto>
@@ -12,6 +12,7 @@ interface UserRepository {
     suspend fun deleteMe(): Result<UserDto>
     suspend fun getUser(id: String): Result<UserPublicDto>
     suspend fun topupCredits(amount: Int, note: String? = null): Result<CreditTopupResponse>
+    fun streamNotifications(): Flow<JobNotificationPayload>
 }
 
 @Single([UserRepository::class])
@@ -39,4 +40,6 @@ class UserRepositoryImpl(
     override suspend fun topupCredits(amount: Int, note: String?): Result<CreditTopupResponse> = runCatching {
         api.topupCredits(CreditTopupRequest(amount, note))
     }
+
+    override fun streamNotifications(): Flow<JobNotificationPayload> = api.streamNotifications()
 }

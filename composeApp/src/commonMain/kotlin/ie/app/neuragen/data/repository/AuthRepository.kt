@@ -11,6 +11,8 @@ interface AuthRepository {
     suspend fun register(request: RegisterRequest): Result<AuthResponse>
     suspend fun login(request: LoginRequest): Result<AuthResponse>
     suspend fun googleCallback(query: Map<String, String>): Result<AuthResponse>
+    suspend fun googleExchangeCode(code: String): Result<AuthResponse>
+    suspend fun googleTokenLogin(idToken: String, platform: String = "android"): Result<AuthResponse>
     suspend fun refreshTokens(refreshToken: String): Result<AuthResponse>
     suspend fun logout(refreshToken: String): Result<MessageResponse>
     suspend fun logoutAll(): Result<MessageResponse>
@@ -37,6 +39,14 @@ class AuthRepositoryImpl(
 
     override suspend fun googleCallback(query: Map<String, String>): Result<AuthResponse> = runCatching {
         api.googleCallback(query)
+    }
+
+    override suspend fun googleExchangeCode(code: String): Result<AuthResponse> = runCatching {
+        api.googleExchangeCode(code)
+    }
+
+    override suspend fun googleTokenLogin(idToken: String, platform: String): Result<AuthResponse> = runCatching {
+        api.googleTokenLogin(idToken, platform)
     }
 
     override suspend fun refreshTokens(refreshToken: String): Result<AuthResponse> = runCatching {

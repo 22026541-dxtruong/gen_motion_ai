@@ -16,6 +16,14 @@ interface ExploreRepository {
         cursor: String? = null
     ): Result<ExploreResponse>
 
+    suspend fun searchExplore(
+        topic: String,
+        trending: Boolean? = null,
+        sort: String? = null,
+        limit: Int? = null,
+        cursor: String? = null
+    ): Result<ExploreResponse>
+
     suspend fun getForYou(
         topic: String? = null,
         trending: Boolean? = null,
@@ -45,6 +53,16 @@ class ExploreRepositoryImpl(
         cursor: String?
     ): Result<ExploreResponse> = runCatching {
         api.getExplore(topic, trending, mode, sort, limit, cursor)
+    }
+
+    override suspend fun searchExplore(
+        topic: String,
+        trending: Boolean?,
+        sort: String?,
+        limit: Int?,
+        cursor: String?
+    ): Result<ExploreResponse> = runCatching {
+        api.searchExplore(topic, trending, sort, limit, cursor)
     }
 
     override suspend fun getForYou(

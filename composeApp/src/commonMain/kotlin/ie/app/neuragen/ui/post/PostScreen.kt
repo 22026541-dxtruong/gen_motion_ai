@@ -1,12 +1,22 @@
 package ie.app.neuragen.ui.post
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.pager.VerticalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.Favorite
+import androidx.compose.material.icons.rounded.FavoriteBorder
+import androidx.compose.material.icons.rounded.ModeComment
+import androidx.compose.material.icons.rounded.Send
+import androidx.compose.material.icons.rounded.Visibility
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -14,22 +24,80 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil3.compose.AsyncImage
 import ie.app.neuragen.data.network.model.CommentDto
-import ie.app.neuragen.data.network.model.PostDto
-import neuragen.composeapp.generated.resources.*
-import org.jetbrains.compose.resources.painterResource
+import ie.app.neuragen.ui.common.VideoPlayer
+import ie.app.neuragen.ui.explore.SharedFeedState
 import org.koin.compose.viewmodel.koinViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
+// Colors matching web
+private val Indigo600 = Color(0xFF4F46E5)
+private val SlateText = Color(0xFF0F172A)
+private val GrayText = Color(0xFF94A3B8)
+
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun PostScreen(
     postId: String,
-    viewModel: PostViewModel = koinViewModel(),
-    onBackClick: () -> Unit = {}
+    onBackClick: () -> Unit = {},
+    onUserClick: (userId: String) -> Unit = {}
+) {
+    val items by SharedFeedState.itemsFlow.collectAsState()
+
+    val initialIndex = remember(items, postId) {
+        val idx = items.indexOfFirst { it.postId == postId || it.post?.id == postId }
+        if (idx != -1) idx else 0
+    }
+
+    val pagerState = rememberPagerState(
+        initialPage = initialIndex,
+        pageCount = { items.size.coerceAtLeast(1) }
+    )
+
+    LaunchedEffect(pagerState.currentPage) {
+        if (pagerState.currentPage >= items.size - 2 && items.isNotEmpty()) {
+            SharedFeedState.onLoadMore?.invoke()
+        }
+    }
+
+    if (items.isEmpty()) {
+        PostDetailContent(
+            postId = postId,
+            onBackClick = onBackClick,
+            onUserClick = onUserClick,
+            isFocused = true
+        )
+    } else {
+        VerticalPager(
+            state = pagerState,
+            modifier = Modifier.fillMaxSize()
+        ) { page ->
+            val item = items[page]
+            val actualPostId = item.postId ?: item.post?.id ?: postId
+
+            PostDetailContent(
+                postId = actualPostId,
+                onBackClick = onBackClick,
+                onUserClick = onUserClick,
+                isFocused = pagerState.currentPage == page
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun PostDetailContent(
+    postId: String,
+    viewModel: PostViewModel = koinViewModel(key = postId),
+    onBackClick: () -> Unit = {},
+    onUserClick: (userId: String) -> Unit = {},
+    isFocused: Boolean = true
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var showComments by remember { mutableStateOf(false) }
@@ -43,193 +111,259 @@ fun PostScreen(
             .fillMaxSize()
             .background(Color.Black)
     ) {
-        // Full-screen Video Background Placeholder
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color.DarkGray) // Placeholder for video
-        )
+        // Video / Thumbnail
+        val videoUrl = uiState.post?.videoUrl ?: uiState.post?.assetVersion?.fileUrl
+        val thumbUrl = uiState.post?.thumbnailUrl
 
-        // Gradient for better text readability at bottom
+        if (isFocused && videoUrl != null) {
+            VideoPlayer(
+                videoUrl = videoUrl,
+                modifier = Modifier.fillMaxSize()
+            )
+        } else if (thumbUrl != null) {
+            AsyncImage(
+                model = thumbUrl,
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Fit
+            )
+        } else {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color(0xFF0F0F23))
+            )
+        }
+
+        // Loading
+        if (uiState.isLoading) {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator(color = Color.White)
+            }
+        }
+
+        // Gradient overlay
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(
                     Brush.verticalGradient(
-                        colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.7f)),
-                        startY = 500f
+                        colors = listOf(
+                            Color.Black.copy(alpha = 0.4f),
+                            Color.Transparent,
+                            Color.Transparent,
+                            Color.Black.copy(alpha = 0.6f)
+                        )
                     )
                 )
         )
 
-        // Top Overlays
+        // Top bar: AI badge + close
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 48.dp, start = 16.dp, end = 16.dp)
+                .statusBarsPadding()
+                .padding(horizontal = 16.dp, vertical = 12.dp)
                 .align(Alignment.TopCenter),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
+            // AI Generated badge
             Surface(
-                color = Color.White.copy(alpha = 0.2f),
-                shape = RoundedCornerShape(12.dp)
+                color = Color.White.copy(alpha = 0.15f),
+                shape = RoundedCornerShape(20.dp)
             ) {
                 Row(
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(
-                        painterResource(Res.drawable.ic_create),
-                        contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.size(14.dp)
-                    )
-                    @OptIn(ExperimentalLayoutApi::class)
+                    Text("✨", fontSize = 14.sp)
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
                         "AI Generated",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = Color.White,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = Color.White.copy(alpha = 0.9f),
                         fontWeight = FontWeight.Medium
                     )
                 }
             }
 
+            // Close button
             IconButton(
                 onClick = onBackClick,
                 modifier = Modifier
-                    .background(Color.White.copy(alpha = 0.2f), CircleShape)
-                    .size(36.dp)
+                    .size(40.dp)
+                    .background(Color.White.copy(alpha = 0.15f), CircleShape)
             ) {
                 Icon(
-                    painterResource(Res.drawable.ic_search), // Using search as close placeholder
+                    Icons.Rounded.Close,
                     contentDescription = "Close",
                     tint = Color.White,
-                    modifier = Modifier.size(20.dp)
+                    modifier = Modifier.size(22.dp)
                 )
             }
         }
 
-        // Right-side Interactions
+        // Right side interaction buttons
         Column(
             modifier = Modifier
                 .align(Alignment.BottomEnd)
-                .padding(bottom = 100.dp, end = 16.dp),
+                .padding(bottom = 120.dp, end = 12.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            InteractionItem(
-                icon = Res.drawable.ic_like,
-                count = uiState.post?.likeCount?.toString() ?: "12.4k",
-                onClick = viewModel::toggleLike
-            )
-            InteractionItem(
-                icon = Res.drawable.ic_comment,
-                count = uiState.post?.commentCount?.toString() ?: "342",
-                onClick = { showComments = true }
-            )
-            InteractionItem(
-                icon = Res.drawable.ic_share,
-                count = "Share",
-                onClick = {}
-            )
+            // Like
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                IconButton(
+                    onClick = viewModel::toggleLike,
+                    modifier = Modifier
+                        .size(48.dp)
+                        .background(
+                            if (uiState.isLiked) Color.Red.copy(alpha = 0.8f)
+                            else Color.Black.copy(alpha = 0.4f),
+                            CircleShape
+                        )
+                ) {
+                    Icon(
+                        if (uiState.isLiked) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,
+                        contentDescription = "Like",
+                        tint = Color.White,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    formatCount(uiState.post?.likeCount ?: 0),
+                    color = Color.White,
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+
+            // Comment
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                IconButton(
+                    onClick = { showComments = true },
+                    modifier = Modifier
+                        .size(48.dp)
+                        .background(Color.Black.copy(alpha = 0.4f), CircleShape)
+                ) {
+                    Icon(
+                        Icons.Rounded.ModeComment,
+                        contentDescription = "Comments",
+                        tint = Color.White,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    formatCount(uiState.post?.commentCount ?: 0),
+                    color = Color.White,
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+
+            // Views
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                IconButton(
+                    onClick = {},
+                    modifier = Modifier
+                        .size(48.dp)
+                        .background(Color.Black.copy(alpha = 0.4f), CircleShape)
+                ) {
+                    Icon(
+                        Icons.Rounded.Visibility,
+                        contentDescription = "Views",
+                        tint = Color.White,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    formatCount(uiState.post?.viewCount ?: 0),
+                    color = Color.White,
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
         }
 
-        // Bottom Info Overlay
+        // Bottom info overlay
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .align(Alignment.BottomStart)
-                .padding(16.dp)
+                .padding(start = 16.dp, end = 72.dp, bottom = 24.dp)
+                .navigationBarsPadding()
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(
+            // Author row
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.clickable {
+                    uiState.post?.userId?.let { onUserClick(it) }
+                }
+            ) {
+                val username = uiState.post?.user?.username ?: "U"
+                val avatarUrl = "https://ui-avatars.com/api/?name=$username&background=e0e7ff&color=4f46e5"
+
+                AsyncImage(
+                    model = avatarUrl,
+                    contentDescription = null,
                     modifier = Modifier
-                        .size(36.dp)
-                        .clip(CircleShape)
-                        .background(Color.Gray)
+                        .size(40.dp)
+                        .clip(CircleShape),
+                    contentScale = ContentScale.Crop
                 )
-                Spacer(modifier = Modifier.width(12.dp))
-                Text(
-                    text = "@${uiState.post?.user?.username ?: "neura_creator"}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Color.White,
-                    fontWeight = FontWeight.Bold
-                )
-                Spacer(modifier = Modifier.width(12.dp))
-                Button(
-                    onClick = {},
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4F46E5)),
-                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
-                    modifier = Modifier.height(30.dp),
-                    shape = RoundedCornerShape(8.dp)
-                ) {
-                    Text("Follow", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+
+                Spacer(modifier = Modifier.width(10.dp))
+
+                Column {
+                    Text(
+                        text = "@${uiState.post?.user?.username ?: "user"}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = timeAgo(uiState.post?.createdAt ?: ""),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Color.White.copy(alpha = 0.6f)
+                    )
                 }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
-            Text(
-                text = uiState.post?.caption ?: "Ethereal Fluid Dynamics\nExperimenting with the latest particle simulation models in Neura Gen. #AIArt #GenerativeDesign",
-                style = MaterialTheme.typography.bodyMedium,
-                color = Color.White,
-                maxLines = 3,
-                overflow = TextOverflow.Ellipsis
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // Seek Bar Placeholder
-            LinearProgressIndicator(
-                progress = { 0.4f },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(2.dp),
-                color = Color(0xFF6366F1),
-                trackColor = Color.White.copy(alpha = 0.3f),
-            )
+            // Caption
+            if (!uiState.post?.caption.isNullOrBlank()) {
+                Text(
+                    text = uiState.post?.caption ?: "",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.White,
+                    maxLines = 3,
+                    overflow = TextOverflow.Ellipsis,
+                    lineHeight = 20.sp
+                )
+            }
         }
 
+        // Comments bottom sheet
         if (showComments) {
             ModalBottomSheet(
                 onDismissRequest = { showComments = false },
                 sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-                containerColor = Color.White
+                containerColor = Color.White,
+                shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
             ) {
                 CommentsContent(
                     comments = uiState.comments,
                     onAddComment = viewModel::addComment,
-                    isAdding = uiState.isCommenting
+                    isAdding = uiState.isCommenting,
+                    onUserClick = onUserClick
                 )
             }
         }
-    }
-}
-
-@Composable
-fun InteractionItem(
-    icon: org.jetbrains.compose.resources.DrawableResource,
-    count: String,
-    onClick: () -> Unit
-) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.clickable(onClick = onClick)
-    ) {
-        Icon(
-            painterResource(icon),
-            contentDescription = null,
-            tint = Color.White,
-            modifier = Modifier.size(32.dp)
-        )
-        Text(
-            text = count,
-            color = Color.White,
-            style = MaterialTheme.typography.labelSmall,
-            fontWeight = FontWeight.Medium
-        )
     }
 }
 
@@ -237,118 +371,205 @@ fun InteractionItem(
 fun CommentsContent(
     comments: List<CommentDto>,
     onAddComment: (String) -> Unit,
-    isAdding: Boolean
+    isAdding: Boolean,
+    onUserClick: (userId: String) -> Unit = {}
 ) {
-
     var commentText by remember { mutableStateOf("") }
 
     Column(
         modifier = Modifier
             .fillMaxHeight(0.7f)
-            .padding(bottom = 16.dp)
     ) {
-        Text(
-            text = "Comments",
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(16.dp)
-        )
-
-        LazyColumn(modifier = Modifier.weight(1f)) {
-            items(comments) { comment ->
-                CommentItem(comment)
-            }
-            if (comments.isEmpty()) {
-                item {
-                    Box(Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
-                        Text("No comments yet.", color = Color.Gray)
-                    }
-                }
-            }
-        }
-
+        // Header
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp)
-                .background(Color(0xFFF3F4F6), RoundedCornerShape(24.dp))
-                .padding(horizontal = 16.dp, vertical = 4.dp),
+                .padding(horizontal = 20.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Box(
-                modifier = Modifier
-                    .size(32.dp)
-                    .clip(CircleShape)
-                    .background(Color.LightGray)
+            Text(
+                text = "Comments",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = SlateText
             )
-            TextField(
+            Spacer(modifier = Modifier.width(6.dp))
+            Text(
+                text = "(${comments.size})",
+                style = MaterialTheme.typography.titleMedium,
+                color = GrayText
+            )
+        }
+
+        HorizontalDivider(color = Color(0xFFF1F5F9))
+
+        // Comments list
+        LazyColumn(
+            modifier = Modifier.weight(1f),
+            contentPadding = PaddingValues(vertical = 8.dp)
+        ) {
+            if (comments.isEmpty()) {
+                item {
+                    Box(
+                        Modifier.fillMaxWidth().padding(48.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            "No comments yet. Be the first!",
+                            color = GrayText,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+                }
+            }
+            items(comments) { comment ->
+                CommentItem(comment = comment, onUserClick = onUserClick)
+            }
+        }
+
+        // Input bar
+        HorizontalDivider(color = Color(0xFFF1F5F9))
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Avatar
+            Surface(
+                modifier = Modifier.size(32.dp),
+                shape = CircleShape,
+                color = Color(0xFFE0E7FF)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Text("Me", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Indigo600)
+                }
+            }
+            Spacer(modifier = Modifier.width(10.dp))
+            OutlinedTextField(
                 value = commentText,
                 onValueChange = { commentText = it },
-                placeholder = { Text("Add a comment...", fontSize = 14.sp) },
-                modifier = Modifier.weight(1f),
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = Color.Transparent,
-                    unfocusedContainerColor = Color.Transparent,
-                    focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent
-                )
+                placeholder = {
+                    Text("Add a comment...", style = MaterialTheme.typography.bodySmall, color = GrayText)
+                },
+                modifier = Modifier.weight(1f).height(44.dp),
+                shape = RoundedCornerShape(22.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = Color(0xFFE2E8F0),
+                    unfocusedBorderColor = Color(0xFFE2E8F0),
+                    focusedContainerColor = Color(0xFFF8FAFC),
+                    unfocusedContainerColor = Color(0xFFF8FAFC),
+                    focusedTextColor = SlateText,
+                    unfocusedTextColor = SlateText
+                ),
+                singleLine = true,
+                textStyle = MaterialTheme.typography.bodySmall
             )
+            Spacer(modifier = Modifier.width(8.dp))
             IconButton(
                 onClick = {
-                    onAddComment(commentText)
-                    commentText = ""
+                    if (commentText.isNotBlank()) {
+                        onAddComment(commentText)
+                        commentText = ""
+                    }
                 },
-                enabled = commentText.isNotBlank() && !isAdding
+                enabled = commentText.isNotBlank() && !isAdding,
+                modifier = Modifier
+                    .size(36.dp)
+                    .background(
+                        if (commentText.isNotBlank() && !isAdding) Indigo600
+                        else Color(0xFFE2E8F0),
+                        CircleShape
+                    )
             ) {
-                Icon(
-                    painterResource(Res.drawable.ic_arrow_right),
-                    contentDescription = "Send",
-                    tint = if (commentText.isNotBlank()) Color(0xFF4F46E5) else Color.Gray,
-                    modifier = Modifier.size(24.dp)
-                )
+                if (isAdding) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(16.dp),
+                        color = Color.White,
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Icon(
+                        Icons.Rounded.Send,
+                        contentDescription = "Send",
+                        tint = if (commentText.isNotBlank()) Color.White else GrayText,
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
             }
         }
     }
 }
 
 @Composable
-fun CommentItem(comment: ie.app.neuragen.data.network.model.CommentDto) {
+fun CommentItem(
+    comment: CommentDto,
+    onUserClick: (userId: String) -> Unit = {}
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(16.dp),
+            .padding(horizontal = 20.dp, vertical = 10.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Box(
+        val username = comment.user?.username ?: "U"
+        val avatarUrl = "https://ui-avatars.com/api/?name=$username&background=e0e7ff&color=4f46e5"
+
+        AsyncImage(
+            model = avatarUrl,
+            contentDescription = null,
             modifier = Modifier
                 .size(32.dp)
                 .clip(CircleShape)
-                .background(Color.Gray)
+                .clickable { comment.user?.id?.let { onUserClick(it) } },
+            contentScale = ContentScale.Crop
         )
-        Column {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+
+        Column(modifier = Modifier.weight(1f)) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
                 Text(
                     text = "@${comment.user?.username ?: "user"}",
                     style = MaterialTheme.typography.bodySmall,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.SemiBold,
+                    color = SlateText,
+                    modifier = Modifier.clickable {
+                        comment.user?.id?.let { onUserClick(it) }
+                    }
                 )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(text = "2h", style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+                Text(
+                    text = timeAgo(comment.createdAt),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = GrayText
+                )
             }
-            Text(text = comment.content, style = MaterialTheme.typography.bodyMedium)
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(top = 4.dp),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                Text(text = "Reply", style = MaterialTheme.typography.labelSmall, color = Color.Gray)
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(painterResource(Res.drawable.ic_like), contentDescription = null, modifier = Modifier.size(12.dp), tint = Color.Gray)
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(text = "24", style = MaterialTheme.typography.labelSmall, color = Color.Gray)
-                }
-            }
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(
+                text = comment.content,
+                style = MaterialTheme.typography.bodySmall,
+                color = Color(0xFF475569),
+                lineHeight = 18.sp
+            )
         }
     }
 }
 
+// --- Helpers ---
+
+private fun formatCount(n: Int): String {
+    if (n >= 1000) return "${(n / 1000f).let { if (it % 1 == 0f) it.toInt().toString() else "%.1f".format(it) }}k"
+    return n.toString()
+}
+
+private fun timeAgo(dateStr: String): String {
+    if (dateStr.isBlank()) return ""
+    return try {
+        val datePart = dateStr.take(10)
+        val timePart = dateStr.substringAfter("T").take(5)
+        "$datePart $timePart"
+    } catch (e: Exception) {
+        dateStr.take(10)
+    }
+}

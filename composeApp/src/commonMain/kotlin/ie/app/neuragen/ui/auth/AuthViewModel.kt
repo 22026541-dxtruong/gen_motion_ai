@@ -75,21 +75,34 @@ class AuthViewModel(
         }
     }
 
-    fun signInWithGoogle() {
-        println("Auth: Sign in with Google requested")
-        // No-op here if you just want to return the URL, but we can't easily "return" from a void function
-        // In the UI we will use getGoogleLoginUrl()
-    }
-
-    fun getGoogleLoginUrl(): String {
-        return "${ie.app.neuragen.data.network.NetworkConstants.BASE_URL}/auth/google"
+    fun signInWithGoogleToken(idToken: String) {
+        viewModelScope.launch {
+            _uiState.value = AuthUiState.Loading
+            println("Auth: Signing in with Google ID token...")
+            val result = authRepository.googleTokenLogin(idToken)
+            result.onSuccess { response ->
+                println("Auth: Google login successful for ${response.email}")
+                sessionRepository.saveSession(response)
+                _uiState.value = AuthUiState.Success(response)
+            }.onFailure { error ->
+                println("Auth: Google login failed: ${error.message}")
+                _uiState.value = AuthUiState.Error(error.message ?: "Google login failed")
+            }
+        }
     }
 
     private fun signInWithGoogleCallback(query: Map<String, String>) {
         viewModelScope.launch {
             _uiState.value = AuthUiState.Loading
-            println("Auth: Handling Google OAuth callback")
-            val result = authRepository.googleCallback(query)
+            val code = query["code"]
+            if (code.isNullOrBlank()) {
+                val error = query["error"] ?: "No authorization code received"
+                println("Auth: Google OAuth error: $error")
+                _uiState.value = AuthUiState.Error(error)
+                return@launch
+            }
+            println("Auth: Exchanging Google code for tokens...")
+            val result = authRepository.googleExchangeCode(code)
             result.onSuccess { response ->
                 println("Auth: Google login successful for ${response.email}")
                 sessionRepository.saveSession(response)

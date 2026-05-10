@@ -2,7 +2,6 @@ package ie.app.neuragen.data.repository
 
 import ie.app.neuragen.data.network.NeuraGenApi
 import ie.app.neuragen.data.network.model.*
-import org.koin.core.annotation.Factory
 import org.koin.core.annotation.Provided
 import org.koin.core.annotation.Single
 
@@ -26,6 +25,21 @@ interface PostRepository {
     suspend fun getFollowings(userId: String, cursor: String? = null, take: Int? = null): Result<FollowsPaginationDto>
     suspend fun followUser(followingId: String): Result<FollowDto>
     suspend fun unfollowUser(userId: String): Result<FollowDto>
+
+    /**
+     * Publish a completed video job as a public post.
+     * Resolution chain (mirrors publishVideoAction on web):
+     *   1. Direct assetVersionId if provided
+     *   2. GET /assets/:assetId → versions[0].id
+     *   3. GET /jobs/:jobId → output.assetId → GET /assets/:assetId → versions[0].id
+     * Also creates a gallery item automatically.
+     */
+    suspend fun publishPost(
+        jobId: String? = null,
+        assetId: String? = null,
+        assetVersionId: String? = null,
+        caption: String
+    ): Result<PostDto>
 }
 
 @Single([PostRepository::class])
@@ -96,5 +110,49 @@ class PostRepositoryImpl(
 
     override suspend fun unfollowUser(userId: String): Result<FollowDto> = runCatching {
         api.unfollowUser(userId)
+    }
+
+    override suspend fun publishPost(
+        jobId: String?,
+        assetId: String?,
+        assetVersionId: String?,
+        caption: String
+    ): Result<PostDto> = runCatching {
+        var resolvedVersionId = assetVersionId
+        var resolvedAssetId = assetId
+
+        // Step 1: If no assetId and no versionId, resolve from job
+        if (resolvedVersionId == null && resolvedAssetId == null && jobId != null) {
+            println("PostRepository: Resolving assetId from job $jobId...")
+            val job = api.getJob(jobId)
+            resolvedAssetId = job.output?.assetId
+            println("PostRepository: Resolved assetId: $resolvedAssetId")
+        }
+
+        // Step 2: Resolve assetVersionId from assetId
+        if (resolvedVersionId == null && resolvedAssetId != null) {
+            println("PostRepository: Resolving assetVersionId from asset $resolvedAssetId...")
+            val asset = api.getAsset(resolvedAssetId)
+            resolvedVersionId = asset.versions?.firstOrNull()?.id
+            println("PostRepository: Resolved assetVersionId: $resolvedVersionId")
+        }
+
+        if (resolvedVersionId == null) {
+            throw IllegalStateException("Could not resolve asset version ID for publishing.")
+        }
+
+        // Step 3: Create the post
+        println("PostRepository: Creating post with assetVersionId=$resolvedVersionId, caption='$caption'")
+        val post = api.createPost(CreatePostRequest(resolvedVersionId, caption.ifBlank { null }, isPublic = true))
+
+        // Step 4: Also add to gallery (best-effort, ignore failures)
+        try {
+            api.createGalleryItem(CreateGalleryItemRequest(resolvedVersionId, isPublic = true))
+            println("PostRepository: Gallery item created successfully")
+        } catch (e: Exception) {
+            println("PostRepository: Failed to create gallery item (ignored): ${e.message}")
+        }
+
+        post
     }
 }

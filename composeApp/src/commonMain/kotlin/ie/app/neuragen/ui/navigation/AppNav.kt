@@ -1,5 +1,7 @@
 package ie.app.neuragen.ui.navigation
 
+import androidx.compose.material3.MaterialTheme
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -15,6 +17,8 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.layout.ContentScale
+import coil3.compose.AsyncImage
 import org.koin.compose.viewmodel.koinViewModel
 import ie.app.neuragen.data.network.model.AuthResponse
 import androidx.navigation3.runtime.NavKey
@@ -107,11 +111,6 @@ fun AppNav(modifier: Modifier = Modifier) {
                 )
             }
         },
-        floatingActionButton = {
-            if (currentDestination is Explore) {
-                ExploreFAB()
-            }
-        },
         bottomBar = {
             if (isMainScreen) {
                 NeuraGenBottomBar(currentDestination = currentDestination) { route ->
@@ -184,7 +183,10 @@ fun AppNav(modifier: Modifier = Modifier) {
                 entry<PostDetail> { route ->
                     PostScreen(
                         postId = route.id.toString(),
-                        onBackClick = { backStack.removeLastOrNull() }
+                        onBackClick = { backStack.removeLastOrNull() },
+                        onUserClick = { userId ->
+                            backStack.add(UserProfile(Uuid.parse(userId)))
+                        }
                     )
                 }
 
@@ -208,6 +210,8 @@ fun NeuraGenTopBar(
 ) {
     val sessionStatus by viewModel.sessionStatus.collectAsState()
     val session = (sessionStatus as? SessionStatus.Authenticated)?.response
+    val userProfile by viewModel.userProfile.collectAsState()
+    val notifications by viewModel.notifications.collectAsState()
     var expanded by remember { mutableStateOf(false) }
 
     LaunchedEffect(sessionStatus) {
@@ -246,24 +250,46 @@ fun NeuraGenTopBar(
             Text(
                 "Neura Gen",
                 style = MaterialTheme.typography.titleLarge,
-                color = Color(0xFF4F46E5),
+                color = MaterialTheme.colorScheme.primary,
                 fontWeight = FontWeight.Bold
             )
         },
         actions = {
-            IconButton(onClick = {}) {
+            ie.app.neuragen.ui.common.NotificationBell(
+                notifications = notifications,
+                onMarkAllAsRead = { viewModel.markAllNotificationsAsRead() },
+                onMarkAsRead = { viewModel.markNotificationAsRead(it) },
+                onRemove = { viewModel.removeNotification(it) },
+                onClearAll = { viewModel.clearNotifications() }
+            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(horizontal = 8.dp)
+            ) {
                 Icon(
-                    painterResource(Res.drawable.ic_notifications),
-                    contentDescription = "Notifications",
-                    tint = Color(0xFF6B7280)
+                    painterResource(Res.drawable.ic_credit_card),
+                    contentDescription = "Credits",
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    text = userProfile?.credits?.balance?.toString() ?: "0",
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Medium,
+                    fontSize = 14.sp
                 )
             }
             Box {
                 IconButton(onClick = { expanded = true }) {
-                    Icon(
-                        painterResource(Res.drawable.ic_profile),
+                    val usernameStr = session?.username ?: "U"
+                    val avatarUrl = "https://ui-avatars.com/api/?name=$usernameStr&background=random"
+                    
+                    AsyncImage(
+                        model = avatarUrl,
                         contentDescription = "Avatar",
-                        tint = Color(0xFF6B7280)
+                        modifier = Modifier.size(28.dp).clip(CircleShape),
+                        contentScale = ContentScale.Crop
                     )
                 }
                 DropdownMenu(
@@ -288,13 +314,13 @@ fun NeuraGenTopBar(
                         Text(
                             session?.email ?: "",
                             style = MaterialTheme.typography.bodySmall,
-                            color = Color(0xFF6B7280),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                             fontSize = 12.sp
                         )
                     }
                     HorizontalDivider(
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
-                        color = Color(0xFFF3F4F6)
+                        color = MaterialTheme.colorScheme.surfaceVariant
                     )
                     // Change Password
                     DropdownMenuItem(
@@ -332,14 +358,14 @@ fun NeuraGenTopBar(
                     )
                     HorizontalDivider(
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
-                        color = Color(0xFFF3F4F6)
+                        color = MaterialTheme.colorScheme.surfaceVariant
                     )
                     // Logout
                     DropdownMenuItem(
                         text = {
                             Text(
                                 "Logout",
-                                color = Color(0xFFEF4444),
+                                color = MaterialTheme.colorScheme.error,
                                 fontSize = 14.sp,
                                 fontWeight = FontWeight.SemiBold
                             )
@@ -348,7 +374,7 @@ fun NeuraGenTopBar(
                             Icon(
                                 painterResource(Res.drawable.ic_logout),
                                 contentDescription = null,
-                                tint = Color(0xFFEF4444),
+                                tint = MaterialTheme.colorScheme.error,
                                 modifier = Modifier.size(18.dp)
                             )
                         },
@@ -400,7 +426,7 @@ fun NeuraGenBottomBar(
                         Icon(
                             painterResource(item.icon),
                             contentDescription = item.label,
-                            tint = if (isSelected) Color(0xFF4F46E5) else Color(0xFF9CA3AF),
+                            tint = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.size(24.dp)
                         )
                     }
@@ -410,7 +436,7 @@ fun NeuraGenBottomBar(
                         item.label,
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                        color = if (isSelected) Color(0xFF4F46E5) else Color(0xFF9CA3AF),
+                        color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                         fontSize = 10.sp
                     )
                 },
@@ -426,7 +452,7 @@ fun NeuraGenBottomBar(
 fun ExploreFAB() {
     FloatingActionButton(
         onClick = {},
-        containerColor = Color(0xFF4F46E5),
+        containerColor = MaterialTheme.colorScheme.primary,
         contentColor = Color.White,
         shape = CircleShape,
         modifier = Modifier.padding(bottom = 16.dp)
@@ -448,14 +474,14 @@ fun LogoutConfirmationDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
         confirmButton = {
             Button(
                 onClick = onConfirm,
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEF4444))
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
             ) {
                 Text("Logout")
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel", color = Color(0xFF6B7280))
+                Text("Cancel", color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         },
         containerColor = Color.White,
@@ -504,7 +530,7 @@ fun ChangePasswordDialog(
             Button(
                 onClick = { onConfirm(oldPassword, newPassword) },
                 enabled = !isLoading && oldPassword.isNotBlank() && newPassword.isNotBlank(),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4F46E5))
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
             ) {
                 if (isLoading) {
                     CircularProgressIndicator(modifier = Modifier.size(18.dp), color = Color.White, strokeWidth = 2.dp)
@@ -563,7 +589,7 @@ fun SwitchAccountDialog(
             Button(
                 onClick = { onConfirm(email, password) },
                 enabled = !isLoading && email.isNotBlank() && password.isNotBlank(),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4F46E5))
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
             ) {
                 if (isLoading) {
                     CircularProgressIndicator(modifier = Modifier.size(18.dp), color = Color.White, strokeWidth = 2.dp)

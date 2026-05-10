@@ -6,6 +6,7 @@ import ie.app.neuragen.data.network.model.*
 import ie.app.neuragen.data.network.model.JobStreamEvent.*
 import ie.app.neuragen.data.repository.AssetRepository
 import ie.app.neuragen.data.repository.JobRepository
+import ie.app.neuragen.data.repository.PostRepository
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -23,13 +24,21 @@ data class CreateUiState(
     val recentJobs: List<JobDto> = emptyList(),
     val isLoadingJobs: Boolean = false,
     val isGenerating: Boolean = false,
-    val error: String? = null
+    val error: String? = null,
+    // Publish Video
+    val isPublishDialogOpen: Boolean = false,
+    val publishCaption: String = "",
+    val publishingJobId: String? = null,
+    val isPublishing: Boolean = false,
+    val publishSuccess: Boolean = false,
+    val publishError: String? = null
 )
 
 @KoinViewModel
 class CreateViewModel(
     @Provided private val jobRepository: JobRepository,
-    @Provided private val assetRepository: AssetRepository
+    @Provided private val assetRepository: AssetRepository,
+    @Provided private val postRepository: PostRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(CreateUiState())
@@ -58,6 +67,73 @@ class CreateViewModel(
     fun onPresetSelected(presetId: String) {
         println("CreateViewModel: Preset selected: $presetId")
         _uiState.update { it.copy(selectedPresetId = presetId) }
+    }
+
+    // ─── Publish Video ───────────────────────────────────────────────────────
+
+    fun openPublishDialog(job: JobDto) {
+        println("CreateViewModel: Opening publish dialog for job ${job.id}")
+        _uiState.update {
+            it.copy(
+                isPublishDialogOpen = true,
+                publishingJobId = job.id,
+                publishCaption = "",
+                publishError = null,
+                publishSuccess = false
+            )
+        }
+    }
+
+    fun onPublishCaptionChange(caption: String) {
+        _uiState.update { it.copy(publishCaption = caption) }
+    }
+
+    fun dismissPublishDialog() {
+        _uiState.update {
+            it.copy(
+                isPublishDialogOpen = false,
+                publishingJobId = null,
+                publishCaption = "",
+                publishError = null,
+                publishSuccess = false
+            )
+        }
+    }
+
+    fun publishVideo() {
+        val currentState = _uiState.value
+        val jobId = currentState.publishingJobId ?: return
+
+        viewModelScope.launch {
+            println("CreateViewModel: Publishing job $jobId as post...")
+            _uiState.update { it.copy(isPublishing = true, publishError = null) }
+
+            val result = postRepository.publishPost(
+                jobId = jobId,
+                caption = currentState.publishCaption
+            )
+
+            result.onSuccess { post ->
+                println("CreateViewModel: Published successfully! Post id: ${post.id}")
+                _uiState.update {
+                    it.copy(
+                        isPublishing = false,
+                        publishSuccess = true,
+                        isPublishDialogOpen = false,
+                        publishingJobId = null,
+                        publishCaption = ""
+                    )
+                }
+            }.onFailure { error ->
+                println("CreateViewModel: Failed to publish: ${error.message}")
+                _uiState.update {
+                    it.copy(
+                        isPublishing = false,
+                        publishError = error.message ?: "Failed to publish video"
+                    )
+                }
+            }
+        }
     }
 
     fun refreshJobs() {
@@ -176,7 +252,10 @@ class CreateViewModel(
                             if (currentStatus in listOf("completed", "failed", "cancelled")) {
                                 println("CreateViewModel: Job finished. Closing SSE connection for $jobId.")
                                 activeSseConnections.remove(jobId)
-                                refreshJobs()
+                                viewModelScope.launch {
+                                    kotlinx.coroutines.delay(1500)
+                                    refreshJobs()
+                                }
                                 this@launch.cancel() // Hủy coroutine -> Đóng Socket SSE
                             }
                         }

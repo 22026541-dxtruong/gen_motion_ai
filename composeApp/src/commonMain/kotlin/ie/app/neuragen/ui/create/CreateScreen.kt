@@ -1,8 +1,13 @@
 package ie.app.neuragen.ui.create
 
+import androidx.compose.material3.MaterialTheme
+
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.*
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -48,63 +53,96 @@ fun CreateScreen(
 
     val fileBytesLoader = rememberFileBytesLoader()
 
-    LazyColumn(
-        modifier = Modifier.fillMaxSize().background(Color(0xFFF8F9FF)),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        item {
-            GenerationForm(
-                prompt = uiState.prompt,
-                onPromptChange = viewModel::onPromptChange,
-                negativePrompt = uiState.negativePrompt,
-                onNegativePromptChange = viewModel::onNegativePromptChange,
-                selectedImageUri = uiState.selectedImageUri,
-                onImageClick = imagePickerLauncher,
-                onRemoveImage = { viewModel.onImageSelected(null) },
-                selectedPresetId = uiState.selectedPresetId,
-                onPresetSelected = viewModel::onPresetSelected,
-                isGenerating = uiState.isGenerating,
-                onGenerateClick = {
-                    val bytes = uiState.selectedImageUri?.let { fileBytesLoader(it) }
-                    viewModel.generateVideo(bytes)
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(uiState.error) {
+        uiState.error?.let {
+            snackbarHostState.showSnackbar(it, duration = SnackbarDuration.Short)
+        }
+    }
+    
+    LaunchedEffect(uiState.publishError) {
+        uiState.publishError?.let {
+            snackbarHostState.showSnackbar(it, duration = SnackbarDuration.Short)
+        }
+    }
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        Scaffold(
+            snackbarHost = { SnackbarHost(snackbarHostState) }
+        ) { padding ->
+            LazyColumn(
+                modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).padding(padding),
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                item {
+                    GenerationForm(
+                        prompt = uiState.prompt,
+                        onPromptChange = viewModel::onPromptChange,
+                        negativePrompt = uiState.negativePrompt,
+                        onNegativePromptChange = viewModel::onNegativePromptChange,
+                        selectedImageUri = uiState.selectedImageUri,
+                        onImageClick = imagePickerLauncher,
+                        onRemoveImage = { viewModel.onImageSelected(null) },
+                        selectedPresetId = uiState.selectedPresetId,
+                        onPresetSelected = viewModel::onPresetSelected,
+                        isGenerating = uiState.isGenerating,
+                        onGenerateClick = {
+                            val bytes = uiState.selectedImageUri?.let { fileBytesLoader(it) }
+                            viewModel.generateVideo(bytes)
+                        }
+                    )
                 }
-            )
-        }
 
-        item {
-            RecentJobsHeader()
-        }
+                item {
+                    RecentJobsHeader()
+                }
 
-        if (uiState.recentJobs.isEmpty() && !uiState.isLoadingJobs) {
-            item {
-                Text(
-                    "No recent jobs found.",
-                    modifier = Modifier.fillMaxWidth().padding(32.dp),
-                    textAlign = TextAlign.Center,
-                    color = Color.Gray
+                if (uiState.recentJobs.isEmpty() && !uiState.isLoadingJobs) {
+                    item {
+                        Text(
+                            "No recent jobs found.",
+                            modifier = Modifier.fillMaxWidth().padding(32.dp),
+                            textAlign = TextAlign.Center,
+                            color = Color.Gray
+                        )
+                    }
+                } else {
+                    items(uiState.recentJobs, key = { it.id }) { job ->
+                        JobItem(
+                            job = job,
+                            onWatchClick = { selectedJobForWatch = job },
+                            onDownloadClick = { job.output?.downloadUrl?.let { uriHandler.openUri(it) } },
+                            onPublishClick = { viewModel.openPublishDialog(job) }
+                        )
+                    }
+                }
+            }
+
+            if (uiState.isPublishDialogOpen) {
+                PublishDialog(
+                    caption = uiState.publishCaption,
+                    onCaptionChange = viewModel::onPublishCaptionChange,
+                    isPublishing = uiState.isPublishing,
+                    error = uiState.publishError,
+                    onPublish = viewModel::publishVideo,
+                    onDismiss = viewModel::dismissPublishDialog
                 )
             }
-        } else {
-            items(uiState.recentJobs, key = { it.id }) { job ->
-                JobItem(
-                    job = job,
-                    onWatchClick = { selectedJobForWatch = job },
-                    onDownloadClick = { job.output?.downloadUrl?.let { uriHandler.openUri(it) } }
+        } // Close Scaffold
+
+        // Fullscreen video overlay — rendered on top of Scaffold
+        selectedJobForWatch?.let { job ->
+            val videoUrl = job.output?.downloadUrl
+            if (videoUrl != null) {
+                WatchVideoOverlay(
+                    videoUrl = videoUrl,
+                    onDismiss = { selectedJobForWatch = null }
                 )
             }
         }
-    }
-
-    selectedJobForWatch?.let { job ->
-        val videoUrl = job.output?.downloadUrl
-        if (videoUrl != null) {
-            WatchDialog(
-                videoUrl = videoUrl,
-                onDismiss = { selectedJobForWatch = null }
-            )
-        }
-    }
+    } // Close Box
 }
 
 @Composable
@@ -137,7 +175,7 @@ fun GenerationForm(
                     Icon(
                         painter = painterResource(Res.drawable.ic_create),
                         contentDescription = null,
-                        tint = Color(0xFF4F46E5),
+                        tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(20.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
@@ -145,18 +183,18 @@ fun GenerationForm(
                         "Generate Video",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF0D1B3E)
+                        color = MaterialTheme.colorScheme.onBackground
                     )
                 }
                 Surface(
-                    color = Color(0xFFEEF2FF),
+                    color = MaterialTheme.colorScheme.primaryContainer,
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Text(
                         "AI v2.5 Active",
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                         style = MaterialTheme.typography.labelSmall,
-                        color = Color(0xFF4F46E5),
+                        color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.Bold
                     )
                 }
@@ -172,7 +210,7 @@ fun GenerationForm(
                 modifier = Modifier.fillMaxWidth().height(100.dp),
                 placeholder = { Text("Describe the scene you want to bring to life...") },
                 shape = RoundedCornerShape(12.dp),
-                colors = OutlinedTextFieldDefaults.colors(unfocusedBorderColor = Color(0xFFE5E7EB))
+                colors = OutlinedTextFieldDefaults.colors(unfocusedBorderColor = MaterialTheme.colorScheme.outline)
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -185,7 +223,7 @@ fun GenerationForm(
                 modifier = Modifier.fillMaxWidth().height(80.dp),
                 placeholder = { Text("Low quality, blurry, distorted faces...") },
                 shape = RoundedCornerShape(12.dp),
-                colors = OutlinedTextFieldDefaults.colors(unfocusedBorderColor = Color(0xFFE5E7EB))
+                colors = OutlinedTextFieldDefaults.colors(unfocusedBorderColor = MaterialTheme.colorScheme.outline)
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -199,7 +237,7 @@ fun GenerationForm(
                         .fillMaxWidth()
                         .height(160.dp)
                         .clip(RoundedCornerShape(12.dp))
-                        .background(Color(0xFFF3F4F6))
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
                 ) {
                     AsyncImage(
                         model = selectedImageUri,
@@ -228,7 +266,7 @@ fun GenerationForm(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(120.dp)
-                        .border(1.dp, Color(0xFFE5E7EB), RoundedCornerShape(12.dp))
+                        .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(12.dp))
                         .clickable { onImageClick() },
                     contentAlignment = Alignment.Center
                 ) {
@@ -304,7 +342,7 @@ fun GenerationForm(
                         } else {
                             Modifier.background(
                                 Brush.horizontalGradient(
-                                    colors = listOf(Color(0xFF6366F1), Color(0xFFA855F7))
+                                    colors = listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.secondary)
                                 )
                             )
                         }
@@ -342,11 +380,11 @@ fun PresetItem(
         modifier = modifier
             .border(
                 width = 1.dp,
-                color = if (isSelected) Color(0xFF4F46E5) else Color(0xFFE5E7EB),
+                color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
                 shape = RoundedCornerShape(12.dp)
             )
             .background(
-                color = if (isSelected) Color(0xFFEEF2FF) else Color.White,
+                color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else Color.White,
                 shape = RoundedCornerShape(12.dp)
             )
             .clickable { onClick(id) }
@@ -354,7 +392,7 @@ fun PresetItem(
         contentAlignment = Alignment.Center
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(title, fontWeight = FontWeight.Bold, color = if (isSelected) Color(0xFF4F46E5) else Color.DarkGray)
+            Text(title, fontWeight = FontWeight.Bold, color = if (isSelected) MaterialTheme.colorScheme.primary else Color.DarkGray)
             Text(subtitle, style = MaterialTheme.typography.labelSmall, color = Color.Gray)
         }
     }
@@ -369,7 +407,7 @@ fun RecentJobsHeader() {
     ) {
         Text("My Recent Jobs", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
         TextButton(onClick = {}) {
-            Text("View All", color = Color(0xFF4F46E5))
+            Text("View All", color = MaterialTheme.colorScheme.primary)
         }
     }
 }
@@ -378,7 +416,8 @@ fun RecentJobsHeader() {
 fun JobItem(
     job: JobDto,
     onWatchClick: () -> Unit,
-    onDownloadClick: () -> Unit
+    onDownloadClick: () -> Unit,
+    onPublishClick: () -> Unit = {}
 ) {
     val status = job.status.uppercase()
     val isProcessing = listOf("PENDING", "QUEUED", "PROCESSING").contains(status)
@@ -387,14 +426,24 @@ fun JobItem(
     when {
         isProcessing -> ProcessingJobItem(job)
         isFailed -> FailedJobItem(job)
-        else -> CompletedJobItem(job, onWatchClick, onDownloadClick)
+        else -> CompletedJobItem(job, onWatchClick, onDownloadClick, onPublishClick)
     }
 }
 
 @Composable
 fun ProcessingJobItem(job: JobDto) {
     val gradientBrush = Brush.horizontalGradient(
-        colors = listOf(Color(0xFF6366F1), Color(0xFFA855F7))
+        colors = listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.secondary)
+    )
+    
+    val infiniteTransition = rememberInfiniteTransition()
+    val pulseAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.3f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(800, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        )
     )
 
     Card(
@@ -417,26 +466,26 @@ fun ProcessingJobItem(job: JobDto) {
                         modifier = Modifier
                             .size(8.dp)
                             .clip(CircleShape)
-                            .background(Color(0xFF10B981))
+                            .background(Color(0xFF10B981).copy(alpha = pulseAlpha))
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         "LIVE SSE CONNECTION",
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF6B7280),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         letterSpacing = 0.5.sp
                     )
                 }
                 Surface(
-                    color = Color(0xFFEEF2FF),
+                    color = MaterialTheme.colorScheme.primaryContainer,
                     shape = RoundedCornerShape(6.dp)
                 ) {
                     Text(
                         job.status.uppercase(),
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
                         style = MaterialTheme.typography.labelSmall,
-                        color = Color(0xFF4F46E5),
+                        color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.ExtraBold
                     )
                 }
@@ -450,7 +499,7 @@ fun ProcessingJobItem(job: JobDto) {
                     modifier = Modifier
                         .size(100.dp)
                         .clip(RoundedCornerShape(12.dp))
-                        .background(Color(0xFFF3F4F6))
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
                 ) {
                     if (job.thumbnail?.downloadUrl != null) {
                         AsyncImage(
@@ -473,8 +522,10 @@ fun ProcessingJobItem(job: JobDto) {
                             horizontalArrangement = Arrangement.SpaceBetween,
                             modifier = Modifier.fillMaxWidth()
                         ) {
+                            val estimatedFrames = 240
+                            val currentFrame = (job.progress * estimatedFrames).toInt()
                             Text(
-                                "Frame: 156/240",
+                                "Frame: $currentFrame/$estimatedFrames",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = Color.White,
                                 fontSize = 8.sp
@@ -483,7 +534,7 @@ fun ProcessingJobItem(job: JobDto) {
                                 modifier = Modifier
                                     .size(4.dp)
                                     .clip(CircleShape)
-                                    .background(Color(0xFF10B981))
+                                    .background(Color(0xFF10B981).copy(alpha = pulseAlpha))
                             )
                         }
                     }
@@ -498,12 +549,12 @@ fun ProcessingJobItem(job: JobDto) {
                         overflow = TextOverflow.Ellipsis,
                         fontWeight = FontWeight.Bold,
                         fontSize = 16.sp,
-                        color = Color(0xFF111827)
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
                         "ID: #VGEN-${job.id.take(4).uppercase()}",
                         style = MaterialTheme.typography.bodySmall,
-                        color = Color(0xFF9CA3AF)
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
 
                     Spacer(modifier = Modifier.height(16.dp))
@@ -514,21 +565,38 @@ fun ProcessingJobItem(job: JobDto) {
                         label = "progress_animation"
                     )
 
+                    val statusText = remember(job.status, job.logs) {
+                        when (job.status.uppercase()) {
+                            "PENDING" -> "Waiting in queue..."
+                            "QUEUED" -> "Starting job node..."
+                            "PROCESSING" -> {
+                                val lastLog = job.logs?.lastOrNull()?.message?.uppercase() ?: ""
+                                when {
+                                    lastLog.contains("ASSET") -> "Downloading assets..."
+                                    lastLog.contains("MODEL") -> "Loading model weights..."
+                                    lastLog.contains("PROGRESS") -> "Synthesizing frames..."
+                                    else -> "Generating video..."
+                                }
+                            }
+                            else -> "Processing..."
+                        }
+                    }
+
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            "Synthesizing frames ...",
+                            statusText,
                             style = MaterialTheme.typography.labelSmall,
-                            color = Color(0xFF6B7280),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                             fontWeight = FontWeight.Medium
                         )
                         Text(
                             "${(animatedProgress * 100).toInt()}%",
                             style = MaterialTheme.typography.labelSmall,
-                            color = Color(0xFF4F46E5),
+                            color = MaterialTheme.colorScheme.primary,
                             fontWeight = FontWeight.Bold
                         )
                     }
@@ -539,8 +607,8 @@ fun ProcessingJobItem(job: JobDto) {
                             .fillMaxWidth()
                             .height(8.dp)
                             .clip(RoundedCornerShape(4.dp)),
-                        color = Color(0xFF6366F1), // Should be gradient if possible, but LinearProgressIndicator doesn't support Brush easily without custom drawing
-                        trackColor = Color(0xFFF3F4F6)
+                        color = MaterialTheme.colorScheme.primary, // Should be gradient if possible, but LinearProgressIndicator doesn't support Brush easily without custom drawing
+                        trackColor = MaterialTheme.colorScheme.surfaceVariant
                     )
                 }
             }
@@ -560,7 +628,7 @@ fun JobLogConsole(logs: List<JobLogDto>) {
             .fillMaxWidth()
             .height(130.dp)
             .clip(RoundedCornerShape(12.dp))
-            .background(Color(0xFF0F172A))
+            .background(MaterialTheme.colorScheme.onSurface)
             .padding(12.dp)
     ) {
         val displayLogs = logs.takeLast(6)
@@ -568,7 +636,7 @@ fun JobLogConsole(logs: List<JobLogDto>) {
             if (displayLogs.isEmpty()) {
                 Text(
                     "Connecting to job stream...",
-                    color = Color(0xFF64748B),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.labelSmall
                 )
             } else {
@@ -585,7 +653,7 @@ fun JobLogConsole(logs: List<JobLogDto>) {
                         
                         Text(
                             text = timeStr,
-                            color = Color(0xFF475569),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                             style = MaterialTheme.typography.labelSmall,
                             fontSize = 10.sp,
                             fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
@@ -609,8 +677,8 @@ fun JobLogConsole(logs: List<JobLogDto>) {
                             color = when(tag) {
                                 "[QUEUED]" -> Color(0xFF10B981)
                                 "[ASSETS]" -> Color(0xFF38BDF8)
-                                "[MODEL]" -> Color(0xFFA855F7)
-                                else -> Color(0xFF6366F1)
+                                "[MODEL]" -> MaterialTheme.colorScheme.secondary
+                                else -> MaterialTheme.colorScheme.primary
                             },
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Bold,
@@ -620,7 +688,7 @@ fun JobLogConsole(logs: List<JobLogDto>) {
                         Spacer(modifier = Modifier.width(10.dp))
                         Text(
                             text = message,
-                            color = Color(0xFF94A3B8),
+                            color = MaterialTheme.colorScheme.outline,
                             style = MaterialTheme.typography.labelSmall,
                             fontSize = 10.sp,
                             maxLines = 2,
@@ -651,13 +719,13 @@ fun FailedJobItem(job: JobDto) {
                     modifier = Modifier
                         .size(56.dp)
                         .clip(RoundedCornerShape(12.dp))
-                        .background(Color(0xFFFEF2F2)) // Light red background
+                        .background(MaterialTheme.colorScheme.errorContainer) // Light red background
                 ) {
                     Icon(
                         painter = painterResource(if (isCancelled) Res.drawable.ic_close else Res.drawable.ic_create),
                         contentDescription = null,
                         modifier = Modifier.align(Alignment.Center).size(24.dp),
-                        tint = Color(0xFFEF4444)
+                        tint = MaterialTheme.colorScheme.error
                     )
                 }
                 Spacer(modifier = Modifier.width(16.dp))
@@ -668,19 +736,19 @@ fun FailedJobItem(job: JobDto) {
                         overflow = TextOverflow.Ellipsis,
                         fontWeight = FontWeight.Bold,
                         fontSize = 16.sp,
-                        color = Color(0xFF111827)
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
                         if (isCancelled) "Cancelled" else "Generation Failed",
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFFEF4444)
+                        color = MaterialTheme.colorScheme.error
                     )
                 }
                 Icon(
                     painter = painterResource(Res.drawable.ic_close),
                     contentDescription = null,
-                    tint = Color(0xFFEF4444),
+                    tint = MaterialTheme.colorScheme.error,
                     modifier = Modifier.size(20.dp)
                 )
             }
@@ -688,7 +756,7 @@ fun FailedJobItem(job: JobDto) {
             if (!job.errorMessage.isNullOrBlank()) {
                 Spacer(modifier = Modifier.height(12.dp))
                 Surface(
-                    color = Color(0xFFFEF2F2),
+                    color = MaterialTheme.colorScheme.errorContainer,
                     shape = RoundedCornerShape(8.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
@@ -696,7 +764,7 @@ fun FailedJobItem(job: JobDto) {
                         text = job.errorMessage,
                         modifier = Modifier.padding(12.dp),
                         style = MaterialTheme.typography.bodySmall,
-                        color = Color(0xFF991B1B)
+                        color = MaterialTheme.colorScheme.onErrorContainer
                     )
                 }
             }
@@ -708,7 +776,8 @@ fun FailedJobItem(job: JobDto) {
 fun CompletedJobItem(
     job: JobDto,
     onWatchClick: () -> Unit,
-    onDownloadClick: () -> Unit
+    onDownloadClick: () -> Unit,
+    onPublishClick: () -> Unit = {}
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -722,7 +791,7 @@ fun CompletedJobItem(
                     modifier = Modifier
                         .size(56.dp)
                         .clip(RoundedCornerShape(12.dp))
-                        .background(Color(0xFFF3F4F6))
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
                 ) {
                     if (job.thumbnail?.downloadUrl != null) {
                         AsyncImage(
@@ -748,7 +817,7 @@ fun CompletedJobItem(
                         overflow = TextOverflow.Ellipsis,
                         fontWeight = FontWeight.Bold,
                         fontSize = 16.sp,
-                        color = Color(0xFF111827)
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
                         "Completed",
@@ -758,7 +827,7 @@ fun CompletedJobItem(
                     )
                 }
                 Icon(
-                    painter = painterResource(Res.drawable.ic_for_you), // Replace with checkmark icon if available
+                    painter = painterResource(Res.drawable.ic_for_you),
                     contentDescription = null,
                     tint = Color(0xFF10B981),
                     modifier = Modifier.size(20.dp)
@@ -767,64 +836,256 @@ fun CompletedJobItem(
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // Row 1: Download + Watch
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 OutlinedButton(
                     onClick = onDownloadClick,
-                    modifier = Modifier.weight(1f).height(44.dp),
+                    modifier = Modifier.weight(1f).height(40.dp),
                     shape = RoundedCornerShape(10.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF374151)),
-                    border = BorderStroke(1.dp, Color(0xFFE5E7EB))
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.onSurfaceVariant),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
                 ) {
-                    Text("Download", fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                    Text("Download", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
                 }
 
                 OutlinedButton(
                     onClick = onWatchClick,
-                    modifier = Modifier.weight(1f).height(44.dp),
+                    modifier = Modifier.weight(1f).height(40.dp),
                     shape = RoundedCornerShape(10.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF374151)),
-                    border = BorderStroke(1.dp, Color(0xFFE5E7EB))
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.onSurfaceVariant),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
                 ) {
-                    Text("Watch", fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                    Text("Watch", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
                 }
             }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Row 2: Publish button (full-width gradient)
+            Button(
+                onClick = onPublishClick,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(44.dp)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(
+                        Brush.horizontalGradient(
+                            colors = listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.secondary)
+                        )
+                    ),
+                colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent)
+            ) {
+                Icon(
+                    painter = painterResource(Res.drawable.ic_explore),
+                    contentDescription = null,
+                    modifier = Modifier.size(16.dp)
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text("Publish to Community", fontSize = 13.sp, fontWeight = FontWeight.Bold)
+            }
+        }
+    }
+}
+
+@Composable
+fun WatchVideoOverlay(
+    videoUrl: String,
+    onDismiss: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black)
+    ) {
+        VideoPlayer(
+            videoUrl = videoUrl,
+            modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.Center)
+                .aspectRatio(16f / 9f)
+        )
+
+        // Close button
+        IconButton(
+            onClick = onDismiss,
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(16.dp)
+                .background(Color.Black.copy(alpha = 0.5f), RoundedCornerShape(50))
+        ) {
+            Icon(
+                painter = painterResource(Res.drawable.ic_close),
+                contentDescription = "Close",
+                tint = Color.White
+            )
         }
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun WatchDialog(
-    videoUrl: String,
+fun PublishDialog(
+    caption: String,
+    onCaptionChange: (String) -> Unit,
+    isPublishing: Boolean,
+    error: String?,
+    onPublish: () -> Unit,
     onDismiss: () -> Unit
 ) {
     BasicAlertDialog(
-        onDismissRequest = onDismiss,
-        properties = DialogProperties(usePlatformDefaultWidth = false),
-        content = {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.8f))
+        onDismissRequest = { if (!isPublishing) onDismiss() },
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+            .clip(RoundedCornerShape(24.dp))
+            .background(Color.White)
+    ) {
+        Column(modifier = Modifier.padding(24.dp)) {
+            // Header
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                VideoPlayer(
-                    videoUrl = videoUrl,
-                    modifier = Modifier.fillMaxWidth().align(Alignment.Center).aspectRatio(16f / 9f)
-                )
-                IconButton(
-                    onClick = onDismiss,
-                    modifier = Modifier.align(Alignment.TopEnd).padding(16.dp)
-                ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(
+                                Brush.horizontalGradient(
+                                    colors = listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.secondary)
+                                )
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            painter = painterResource(Res.drawable.ic_explore),
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        "Publish to Community",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
+                }
+                IconButton(onClick = { if (!isPublishing) onDismiss() }) {
                     Icon(
                         painter = painterResource(Res.drawable.ic_close),
                         contentDescription = "Close",
-                        tint = Color.White
+                        tint = Color.Gray
                     )
                 }
             }
+
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                "Share your AI-generated video with the Neura Gen community.",
+                style = MaterialTheme.typography.bodySmall,
+                color = Color.Gray
+            )
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // Caption input
+            Text(
+                "Caption (optional)",
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            OutlinedTextField(
+                value = caption,
+                onValueChange = { if (it.length <= 300) onCaptionChange(it) },
+                modifier = Modifier.fillMaxWidth().height(100.dp),
+                placeholder = { Text("Describe your creation...", color = Color.LightGray) },
+                shape = RoundedCornerShape(12.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                    focusedBorderColor = MaterialTheme.colorScheme.primary
+                ),
+                enabled = !isPublishing
+            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
+            ) {
+                Text(
+                    "${caption.length}/300",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Color.Gray
+                )
+            }
+
+            // Error
+            if (error != null) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Surface(
+                    color = MaterialTheme.colorScheme.errorContainer,
+                    shape = RoundedCornerShape(8.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = error,
+                        modifier = Modifier.padding(10.dp),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onErrorContainer
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Actions
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                OutlinedButton(
+                    onClick = { if (!isPublishing) onDismiss() },
+                    modifier = Modifier.weight(1f).height(48.dp),
+                    shape = RoundedCornerShape(24.dp),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                    enabled = !isPublishing
+                ) {
+                    Text("Cancel", color = Color.Gray)
+                }
+                Button(
+                    onClick = onPublish,
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(48.dp)
+                        .clip(RoundedCornerShape(24.dp))
+                        .background(
+                            if (!isPublishing) Brush.horizontalGradient(
+                                colors = listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.secondary)
+                            ) else Brush.horizontalGradient(
+                                colors = listOf(Color.Gray, Color.Gray)
+                            )
+                        ),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+                    enabled = !isPublishing
+                ) {
+                    if (isPublishing) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            color = Color.White,
+                            strokeWidth = 2.dp
+                        )
+                    } else {
+                        Text("Publish", fontWeight = FontWeight.Bold, color = Color.White)
+                    }
+                }
+            }
         }
-    )
+    }
 }

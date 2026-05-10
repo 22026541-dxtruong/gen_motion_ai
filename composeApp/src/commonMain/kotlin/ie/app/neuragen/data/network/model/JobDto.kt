@@ -145,8 +145,8 @@ data class JobSnapshotEvent(
     val estimatedDurationSeconds: Int? = null,
     val workflow: String? = null,
     val includeBackgroundAudio: Boolean? = null,
-    val createdAt: String,
-    val updatedAt: String,
+    val createdAt: String = "",
+    val updatedAt: String = "",
     val startedAt: String? = null,
     val completedAt: String? = null,
     val failedAt: String? = null,
@@ -162,20 +162,20 @@ data class JobStatusEvent(
     val startedAt: String? = null,
     val completedAt: String? = null,
     val failedAt: String? = null,
-    val occurredAt: String
+    val occurredAt: String = ""
 )
 
 @Serializable
 data class JobHeartbeatEvent(
     val jobId: String,
-    val timestamp: String
+    val timestamp: String = ""
 )
 
 @Serializable
 data class JobLogEvent(
     val jobId: String,
     val message: String,
-    val createdAt: String
+    val createdAt: String = ""
 )
 
 sealed class JobStreamEvent {

@@ -7,8 +7,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import ie.app.neuragen.data.network.model.AuthResponse
 import ie.app.neuragen.data.network.model.LoginRequest
+import ie.app.neuragen.data.network.model.JobNotificationPayload
+import ie.app.neuragen.data.network.model.UserMeDto
 import ie.app.neuragen.data.repository.AuthRepository
 import ie.app.neuragen.data.repository.SessionRepository
+import ie.app.neuragen.data.repository.UserRepository
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
@@ -26,7 +30,8 @@ sealed interface SessionStatus {
 @KoinViewModel
 class NavigationViewModel(
     @Provided private val sessionRepository: SessionRepository,
-    @Provided private val authRepository: AuthRepository
+    @Provided private val authRepository: AuthRepository,
+    @Provided private val userRepository: UserRepository
 ) : ViewModel() {
 
     val sessionStatus: StateFlow<SessionStatus> = sessionRepository.getSession()
@@ -45,6 +50,71 @@ class NavigationViewModel(
 
     var switchAccountError by mutableStateOf<String?>(null)
     var isSwitchingAccount by mutableStateOf(false)
+
+    val userProfile = MutableStateFlow<UserMeDto?>(null)
+    val notifications = MutableStateFlow<List<JobNotificationPayload>>(emptyList())
+
+    init {
+        viewModelScope.launch {
+            sessionStatus.collect { status ->
+                if (status is SessionStatus.Authenticated) {
+                    fetchMyProfile()
+                    startNotificationStream()
+                } else {
+                    userProfile.value = null
+                    notifications.value = emptyList()
+                }
+            }
+        }
+    }
+
+    private fun fetchMyProfile() {
+        viewModelScope.launch {
+            val result = userRepository.getMe()
+            if (result.isSuccess) {
+                userProfile.value = result.getOrNull()
+            }
+        }
+    }
+
+    private fun startNotificationStream() {
+        viewModelScope.launch {
+            while (true) {
+                try {
+                    userRepository.streamNotifications().collect { payload ->
+                        val current = notifications.value.toMutableList()
+                        // Generate local id from jobId + occurredAt
+                        val fallbackId = "${payload.jobId}-${payload.kind}"
+                        val p = if (payload.id.isEmpty()) payload.copy(id = payload.occurredAt?.let { "${payload.jobId}-$it" } ?: fallbackId) else payload
+                        if (!current.any { it.jobId == p.jobId && it.kind == p.kind }) {
+                            current.add(0, p)
+                            notifications.value = current.take(50)
+                        }
+                    }
+                } catch (e: Exception) {
+                    // Log error and retry
+                    println("Notification SSE Error: ${e.message}. Reconnecting in 3s...")
+                }
+                kotlinx.coroutines.delay(3000)
+            }
+        }
+    }
+
+    fun markAllNotificationsAsRead() {
+        notifications.value = notifications.value.map { it.copy(read = true) }
+    }
+
+    fun removeNotification(id: String) {
+        notifications.value = notifications.value.filter { it.id != id }
+    }
+
+    fun markNotificationAsRead(id: String) {
+        notifications.value = notifications.value.map { if (it.id == id) it.copy(read = true) else it }
+    }
+
+    fun clearNotifications() {
+        notifications.value = emptyList()
+    }
 
     fun logout() {
         viewModelScope.launch {

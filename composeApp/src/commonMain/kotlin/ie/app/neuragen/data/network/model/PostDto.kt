@@ -21,7 +21,9 @@ data class PostDto(
     val viewCount: Int,
     val createdAt: String,
     val user: UserPublicDto? = null,
-    val assetVersion: AssetVersionDto? = null
+    val assetVersion: AssetVersionDto? = null,
+    val videoUrl: String? = null,       // Backend computes this from assetVersion
+    val thumbnailUrl: String? = null    // Backend computes this from assetVersion
 )
 
 @Serializable
@@ -40,8 +42,8 @@ data class CreateCommentRequest(
 @Serializable
 data class CommentDto(
     val id: String,
-    val userId: String,
-    val postId: String,
+    val userId: String? = null,
+    val postId: String? = null,
     val content: String,
     val createdAt: String,
     val user: UserPublicDto? = null
@@ -61,8 +63,8 @@ data class CreatePostLikeRequest(
 @Serializable
 data class PostLikeDto(
     val id: String,
-    val userId: String,
-    val postId: String,
+    val userId: String? = null,
+    val postId: String? = null,
     val createdAt: String,
     val user: UserPublicDto? = null
 )
@@ -81,9 +83,9 @@ data class CreateFollowRequest(
 @Serializable
 data class FollowDto(
     val id: String,
-    val followerId: String,
-    val followingId: String,
-    val createdAt: String,
+    val followerId: String? = null,
+    val followingId: String? = null,
+    val createdAt: String? = null,
     val follower: UserPublicDto? = null,
     val following: UserPublicDto? = null
 )

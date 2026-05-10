@@ -13,6 +13,8 @@ interface NeuraGenApi {
     suspend fun register(request: RegisterRequest): AuthResponse
     suspend fun login(request: LoginRequest): AuthResponse
     suspend fun googleCallback(query: Map<String, String>): AuthResponse
+    suspend fun googleExchangeCode(code: String): AuthResponse
+    suspend fun googleTokenLogin(idToken: String, platform: String = "android"): AuthResponse
     suspend fun refreshTokens(request: RefreshRequest): AuthResponse
     suspend fun logout(request: LogoutRequest): MessageResponse
     suspend fun logoutAll(): MessageResponse
@@ -76,6 +78,13 @@ interface NeuraGenApi {
         limit: Int? = null,
         cursor: String? = null
     ): ExploreResponse
+    suspend fun searchExplore(
+        topic: String,
+        trending: Boolean? = null,
+        sort: String? = null,
+        limit: Int? = null,
+        cursor: String? = null
+    ): ExploreResponse
     suspend fun getForYou(
         topic: String? = null,
         trending: Boolean? = null,
@@ -94,6 +103,7 @@ interface NeuraGenApi {
     suspend fun getJobResult(id: String): JobResultResponse
     suspend fun cancelJob(id: String): CancelJobResponse
     fun streamJobEvents(jobId: String): Flow<JobStreamEvent>
+    fun streamNotifications(): Flow<JobNotificationPayload>
 
     // Billing
     suspend fun getBillingCatalog(): BillingCatalogResponse

@@ -1,5 +1,7 @@
 package ie.app.neuragen.ui.userprofile
 
+import androidx.compose.material3.MaterialTheme
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -22,11 +24,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.text.AnnotatedString
+import coil3.compose.AsyncImage
 import ie.app.neuragen.data.network.model.PostDto
 import ie.app.neuragen.data.network.model.UserPublicDto
 import neuragen.composeapp.generated.resources.*
@@ -54,15 +61,20 @@ fun UserProfileScreen(
             contentPadding = PaddingValues(bottom = 16.dp)
         ) {
             item {
-                UserProfileHeader(user = uiState.user)
+                UserProfileHeader(user = uiState.user, onBackClick = onBackClick)
             }
 
             item {
-                UserProfileStats(user = uiState.user)
+                UserProfileStats(uiState = uiState)
             }
 
             item {
-                UserProfileActions()
+                UserProfileActions(
+                    userId = userId,
+                    isFollowing = uiState.isFollowing,
+                    isTogglingFollow = uiState.isTogglingFollow,
+                    onToggleFollow = viewModel::toggleFollow
+                )
             }
 
             item {
@@ -112,7 +124,7 @@ fun UserProfileScreen(
 }
 
 @Composable
-fun UserProfileHeader(user: UserPublicDto?) {
+fun UserProfileHeader(user: UserPublicDto?, onBackClick: () -> Unit) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Box(
             modifier = Modifier
@@ -126,10 +138,27 @@ fun UserProfileHeader(user: UserPublicDto?) {
                     .height(140.dp)
                     .background(
                         Brush.verticalGradient(
-                            colors = listOf(Color(0xFF6366F1), Color(0xFFA855F7))
+                            colors = listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.secondary)
                         )
                     )
             )
+            
+            // Back Button
+            IconButton(
+                onClick = onBackClick,
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(top = 48.dp, start = 16.dp)
+                    .background(Color.White.copy(alpha = 0.2f), CircleShape)
+                    .size(36.dp)
+            ) {
+                Icon(
+                    painterResource(Res.drawable.ic_close),
+                    contentDescription = "Back",
+                    tint = Color.White,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
 
             // Avatar
             Box(
@@ -140,6 +169,9 @@ fun UserProfileHeader(user: UserPublicDto?) {
                     .background(Color.White)
                     .padding(4.dp)
             ) {
+                val usernameStr = user?.username ?: "U"
+                val avatarUrl = user?.avatarUrl ?: "https://ui-avatars.com/api/?name=$usernameStr&background=random"
+                
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -147,17 +179,17 @@ fun UserProfileHeader(user: UserPublicDto?) {
                         .background(Color.LightGray),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(
-                        painterResource(Res.drawable.ic_profile),
+                    AsyncImage(
+                        model = avatarUrl,
                         contentDescription = null,
-                        modifier = Modifier.size(50.dp),
-                        tint = Color.Gray
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
                     )
                 }
                 
                 // PRO Badge
                 Surface(
-                    color = Color(0xFF4F46E5),
+                    color = MaterialTheme.colorScheme.primary,
                     shape = RoundedCornerShape(8.dp),
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
@@ -181,12 +213,12 @@ fun UserProfileHeader(user: UserPublicDto?) {
             text = user?.username ?: "Alex Rivera",
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
-            color = Color(0xFF0D1B3E)
+            color = MaterialTheme.colorScheme.onBackground
         )
         Text(
             text = "@${user?.username?.lowercase() ?: "alex_vision"}",
             style = MaterialTheme.typography.bodyMedium,
-            color = Color(0xFF6366F1),
+            color = MaterialTheme.colorScheme.primary,
             fontWeight = FontWeight.Medium
         )
 
@@ -203,7 +235,7 @@ fun UserProfileHeader(user: UserPublicDto?) {
 }
 
 @Composable
-fun UserProfileStats(user: UserPublicDto?) {
+fun UserProfileStats(uiState: ie.app.neuragen.ui.userprofile.UserProfileUiState) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -211,24 +243,32 @@ fun UserProfileStats(user: UserPublicDto?) {
         horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        UserStatItem(label = "Posts", value = "1.2k")
-        VerticalDivider(modifier = Modifier.height(24.dp), color = Color(0xFFE5E7EB))
-        UserStatItem(label = "Followers", value = "45.8k")
-        VerticalDivider(modifier = Modifier.height(24.dp), color = Color(0xFFE5E7EB))
-        UserStatItem(label = "Following", value = "230")
+        UserStatItem(label = "Posts", value = uiState.posts.size.toString())
+        VerticalDivider(modifier = Modifier.height(24.dp), color = MaterialTheme.colorScheme.outline)
+        UserStatItem(label = "Followers", value = uiState.followersCount.toString())
+        VerticalDivider(modifier = Modifier.height(24.dp), color = MaterialTheme.colorScheme.outline)
+        UserStatItem(label = "Following", value = uiState.followingCount.toString())
     }
 }
 
 @Composable
 fun UserStatItem(label: String, value: String) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(value, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color(0xFF0D1B3E))
+        Text(value, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
         Text(label, style = MaterialTheme.typography.bodySmall, color = Color.Gray)
     }
 }
 
 @Composable
-fun UserProfileActions() {
+fun UserProfileActions(
+    userId: String,
+    isFollowing: Boolean = false,
+    isTogglingFollow: Boolean = false,
+    onToggleFollow: () -> Unit = {}
+) {
+    val clipboardManager = LocalClipboardManager.current
+    val uriHandler = LocalUriHandler.current
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -237,30 +277,67 @@ fun UserProfileActions() {
         verticalAlignment = Alignment.CenterVertically
     ) {
         Button(
-            onClick = {},
+            onClick = onToggleFollow,
             modifier = Modifier
                 .weight(1f)
                 .height(48.dp)
                 .clip(RoundedCornerShape(12.dp))
-                .background(
-                    Brush.horizontalGradient(
-                        colors = listOf(Color(0xFF6366F1), Color(0xFFA855F7))
-                    )
+                .then(
+                    if (!isFollowing) Modifier.background(
+                        Brush.horizontalGradient(
+                            colors = listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.secondary)
+                        )
+                    ) else Modifier.background(MaterialTheme.colorScheme.surfaceVariant)
                 ),
-            colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent)
+            colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+            enabled = !isTogglingFollow
         ) {
-            Text("Following", fontWeight = FontWeight.Bold)
+            if (isTogglingFollow) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(18.dp),
+                    color = if (isFollowing) MaterialTheme.colorScheme.primary else Color.White,
+                    strokeWidth = 2.dp
+                )
+            } else {
+                Text(
+                    if (isFollowing) "Following" else "Follow",
+                    fontWeight = FontWeight.Bold,
+                    color = if (isFollowing) MaterialTheme.colorScheme.primary else Color.White
+                )
+            }
         }
-        
+
         IconButton(
-            onClick = {},
+            onClick = {
+                clipboardManager.setText(AnnotatedString("https://neuragen.app/user/${userId}"))
+            },
             modifier = Modifier
                 .size(48.dp)
-                .border(1.dp, Color(0xFFE5E7EB), RoundedCornerShape(12.dp))
+                .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(12.dp))
         ) {
             Icon(
                 painterResource(Res.drawable.ic_share),
                 contentDescription = "Share",
+                tint = Color.Gray,
+                modifier = Modifier.size(20.dp)
+            )
+        }
+
+        IconButton(
+            onClick = {
+                try {
+                    uriHandler.openUri("mailto:?subject=Check out this Neura Gen profile&body=https://neuragen.app/user/${userId}")
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            },
+            modifier = Modifier
+                .size(48.dp)
+                .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(12.dp))
+        ) {
+            Icon(
+                painterResource(Res.drawable.ic_mail),
+                contentDescription = "Mail",
                 tint = Color.Gray,
                 modifier = Modifier.size(20.dp)
             )
@@ -273,18 +350,18 @@ fun UserProfileTabs(selectedIndex: Int, onTabSelected: (Int) -> Unit) {
     TabRow(
         selectedTabIndex = selectedIndex,
         containerColor = Color.Transparent,
-        contentColor = Color(0xFF4F46E5),
+        contentColor = MaterialTheme.colorScheme.primary,
         indicator = { tabPositions ->
             if (selectedIndex < tabPositions.size) {
                 TabRowDefaults.SecondaryIndicator(
                     Modifier.tabIndicatorOffset(tabPositions[selectedIndex]),
-                    color = Color(0xFF4F46E5),
+                    color = MaterialTheme.colorScheme.primary,
                     height = 2.dp
                 )
             }
         },
         divider = {
-            HorizontalDivider(color = Color(0xFFF3F4F6))
+            HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant)
         }
     ) {
         Tab(

@@ -1,5 +1,7 @@
 package ie.app.neuragen.ui.auth
 
+import androidx.compose.material3.MaterialTheme
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -16,6 +18,7 @@ import androidx.compose.ui.unit.dp
 import neuragen.composeapp.generated.resources.*
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
+import kotlinx.coroutines.launch
 
 @Composable
 fun RegisterScreen(
@@ -27,7 +30,8 @@ fun RegisterScreen(
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
-    val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
+    val googleSignInHelper = rememberGoogleSignInHelper()
+    val scope = rememberCoroutineScope()
 
     LaunchedEffect(uiState) {
         if (uiState is AuthUiState.Success) {
@@ -51,13 +55,13 @@ fun RegisterScreen(
                 text = "Create Account",
                 style = MaterialTheme.typography.headlineLarge,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFF0D1B3E)
+                color = MaterialTheme.colorScheme.onBackground
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = "Join the Neura Gen community today.",
                 style = MaterialTheme.typography.bodyMedium,
-                color = Color(0xFF6B7280)
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(modifier = Modifier.height(32.dp))
 
@@ -74,7 +78,7 @@ fun RegisterScreen(
                         text = "Email address",
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF374151)
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     OutlinedTextField(
@@ -91,7 +95,7 @@ fun RegisterScreen(
                         },
                         shape = RoundedCornerShape(8.dp),
                         colors = OutlinedTextFieldDefaults.colors(
-                            unfocusedBorderColor = Color(0xFFE5E7EB)
+                            unfocusedBorderColor = MaterialTheme.colorScheme.outline
                         ),
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
@@ -103,7 +107,7 @@ fun RegisterScreen(
                         text = "Password",
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF374151)
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     OutlinedTextField(
@@ -120,7 +124,7 @@ fun RegisterScreen(
                         },
                         shape = RoundedCornerShape(8.dp),
                         colors = OutlinedTextFieldDefaults.colors(
-                            unfocusedBorderColor = Color(0xFFE5E7EB)
+                            unfocusedBorderColor = MaterialTheme.colorScheme.outline
                         ),
                         visualTransformation = PasswordVisualTransformation(),
                         singleLine = true,
@@ -133,7 +137,7 @@ fun RegisterScreen(
                         text = "Confirm Password",
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF374151)
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     OutlinedTextField(
@@ -150,7 +154,7 @@ fun RegisterScreen(
                         },
                         shape = RoundedCornerShape(8.dp),
                         colors = OutlinedTextFieldDefaults.colors(
-                            unfocusedBorderColor = Color(0xFFE5E7EB)
+                            unfocusedBorderColor = MaterialTheme.colorScheme.outline
                         ),
                         visualTransformation = PasswordVisualTransformation(),
                         singleLine = true,
@@ -170,7 +174,7 @@ fun RegisterScreen(
                         },
                         modifier = Modifier.fillMaxWidth().height(48.dp),
                         shape = RoundedCornerShape(8.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4F46E5)),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                         enabled = uiState !is AuthUiState.Loading
                     ) {
                         if (uiState is AuthUiState.Loading) {
@@ -198,27 +202,33 @@ fun RegisterScreen(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        HorizontalDivider(modifier = Modifier.weight(1f), color = Color(0xFFE5E7EB))
+                        HorizontalDivider(modifier = Modifier.weight(1f), color = MaterialTheme.colorScheme.outline)
                         Text(
                             text = " OR JOIN WITH ",
                             modifier = Modifier.padding(horizontal = 8.dp),
                             style = MaterialTheme.typography.labelSmall,
-                            color = Color(0xFF9CA3AF)
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
-                        HorizontalDivider(modifier = Modifier.weight(1f), color = Color(0xFFE5E7EB))
+                        HorizontalDivider(modifier = Modifier.weight(1f), color = MaterialTheme.colorScheme.outline)
                     }
 
                     Spacer(modifier = Modifier.height(24.dp))
 
                     OutlinedButton(
                         onClick = { 
-                            val url = viewModel.getGoogleLoginUrl()
-                            uriHandler.openUri(url)
+                            scope.launch {
+                                try {
+                                    val idToken = googleSignInHelper.getIdToken()
+                                    viewModel.signInWithGoogleToken(idToken)
+                                } catch (e: Exception) {
+                                    println("Google Sign-In cancelled or failed: ${e.message}")
+                                }
+                            }
                         },
                         modifier = Modifier.fillMaxWidth().height(48.dp),
                         shape = RoundedCornerShape(8.dp),
                         border = ButtonDefaults.outlinedButtonBorder.copy(width = 1.dp),
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF374151))
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.onSurfaceVariant)
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(
@@ -240,14 +250,14 @@ fun RegisterScreen(
                 Text(
                     text = "Already have an account?",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = Color(0xFF6B7280)
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 TextButton(onClick = onLoginClick) {
                     Text(
                         text = "Log In",
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF4F46E5)
+                        color = MaterialTheme.colorScheme.primary
                     )
                 }
             }

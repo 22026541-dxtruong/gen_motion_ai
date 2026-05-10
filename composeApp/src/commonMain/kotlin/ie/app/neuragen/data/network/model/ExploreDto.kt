@@ -14,7 +14,8 @@ data class ExploreItemDto(
     val createdAt: String,
     val postId: String? = null,
     val assetVersion: AssetVersionDto? = null,
-    val post: PostDto? = null
+    val post: PostDto? = null,
+    val thumbnailUrl: String? = null
 )
 
 @Serializable
