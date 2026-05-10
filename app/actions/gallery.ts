@@ -12,6 +12,19 @@ export async function getGalleryAction() {
   }
 }
 
+export async function createGalleryItemAction(assetVersionId: string, isPublic: boolean = true) {
+  try {
+    const data = await fetchApi('/gallery', {
+      method: 'POST',
+      body: JSON.stringify({ assetVersionId, isPublic }),
+    });
+    revalidatePath('/profile');
+    return { success: true, data };
+  } catch (error: any) {
+    return { success: false, error: error.message || 'Failed to add item to gallery' };
+  }
+}
+
 export async function updateGalleryItemAction(galleryId: string, isPublic: boolean) {
   try {
     const data = await fetchApi(`/gallery/${galleryId}`, {

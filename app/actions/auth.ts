@@ -260,3 +260,43 @@ export async function resetPasswordAction(token: string, newPassword: string) {
     return { success: false, error: error.message || 'Failed to reset password' };
   }
 }
+
+export async function googleExchangeCodeAction(code: string) {
+  try {
+    const res = await fetch(`${API_URL}/auth/google/exchange-code`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || 'Google Login failed');
+    }
+
+    const data = await res.json();
+    const cookieStore = await cookies();
+    
+    cookieStore.set('accessToken', data.accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 60 * 60 * 24 * 7,
+    });
+    
+    if (data.refreshToken) {
+      cookieStore.set('refreshToken', data.refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        path: '/',
+        maxAge: 60 * 60 * 24 * 30,
+      });
+    }
+
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message || 'Google Login failed' };
+  }
+}

@@ -2,9 +2,26 @@
 
 import { fetchApi } from '@/lib/api';
 
-export async function fetchExploreAction(mode: string, cursor?: string) {
+export async function fetchExploreAction(
+  mode: string,
+  params?: {
+    topic?: string;
+    trending?: string | boolean;
+    sort?: string;
+    limit?: number;
+    cursor?: string;
+  }
+) {
   try {
-    const data = await fetchApi(`/explore?limit=10&mode=${mode}${cursor ? `&cursor=${cursor}` : ''}`);
+    const searchParams = new URLSearchParams();
+    searchParams.set('limit', (params?.limit || 10).toString());
+    if (mode && mode !== 'for_you') searchParams.set('mode', mode);
+    if (params?.topic) searchParams.set('topic', params.topic);
+    if (params?.trending !== undefined) searchParams.set('trending', String(params.trending));
+    if (params?.sort) searchParams.set('sort', params.sort);
+    if (params?.cursor) searchParams.set('cursor', params.cursor);
+
+    const data = await fetchApi(`/explore?${searchParams.toString()}`);
     return { success: true, data };
   } catch (error: any) {
     return { success: false, error: error.message || 'Failed to fetch' };
@@ -15,12 +32,50 @@ export async function fetchExploreAction(mode: string, cursor?: string) {
  * GET /explore/search
  * Search for ExploreItems by topic
  */
-export async function fetchExploreSearchAction(topic: string, cursor?: string) {
+export async function fetchExploreSearchAction(
+  topic: string,
+  params?: {
+    sort?: string;
+    trending?: string | boolean;
+    limit?: number;
+    cursor?: string;
+  }
+) {
   try {
-    const data = await fetchApi(`/explore/search?topic=${encodeURIComponent(topic)}&limit=10${cursor ? `&cursor=${cursor}` : ''}`);
+    const searchParams = new URLSearchParams();
+    searchParams.set('topic', topic);
+    searchParams.set('limit', (params?.limit || 10).toString());
+    if (params?.sort) searchParams.set('sort', params.sort);
+    if (params?.trending !== undefined) searchParams.set('trending', String(params.trending));
+    if (params?.cursor) searchParams.set('cursor', params.cursor);
+
+    const data = await fetchApi(`/explore/search?${searchParams.toString()}`);
     return { success: true, data };
   } catch (error: any) {
     return { success: false, error: error.message || 'Failed to search' };
+  }
+}
+
+/**
+ * GET /explore/for-you
+ */
+export async function fetchExploreForYouAction(
+  params?: {
+    topic?: string;
+    limit?: number;
+    cursor?: string;
+  }
+) {
+  try {
+    const searchParams = new URLSearchParams();
+    searchParams.set('limit', (params?.limit || 10).toString());
+    if (params?.topic) searchParams.set('topic', params.topic);
+    if (params?.cursor) searchParams.set('cursor', params.cursor);
+
+    const data = await fetchApi(`/explore/for-you?${searchParams.toString()}`);
+    return { success: true, data };
+  } catch (error: any) {
+    return { success: false, error: error.message || 'Failed to fetch for-you' };
   }
 }
 

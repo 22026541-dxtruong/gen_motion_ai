@@ -83,9 +83,9 @@ function LoginForm() {
                   <label className="block text-sm font-semibold text-slate-900">
                     Password
                   </label>
-                  <a href="#" className="text-xs text-indigo-600 hover:text-indigo-700 font-medium">
+                  <Link href="/forgot-password" className="text-xs text-indigo-600 hover:text-indigo-700 font-medium">
                     Forgot Password?
-                  </a>
+                  </Link>
                 </div>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -121,7 +121,7 @@ function LoginForm() {
 
               {/* Google Log In Button */}
               <a
-                href={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/auth/google`}
+                href={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/auth/google?redirectUri=${encodeURIComponent((process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3001') + '/google/callback')}`}
                 className="w-full bg-white hover:bg-gray-50 text-slate-700 font-medium py-2.5 rounded-lg border border-gray-200 flex items-center justify-center gap-2.5 transition-colors"
               >
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">

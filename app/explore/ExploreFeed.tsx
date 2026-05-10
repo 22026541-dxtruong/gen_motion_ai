@@ -2,16 +2,28 @@
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
-import { Heart, MessageSquare, Share2, Timer, Send, X } from "lucide-react";
-import { fetchExploreAction, fetchExploreSearchAction, trackExploreEventsBatchAction } from "@/app/actions/explore";
+import { Heart, MessageSquare, Share2, Timer, Send, X, Eye, MoreVertical, Sparkles, Flame } from "lucide-react";
+import { fetchExploreAction, fetchExploreSearchAction, fetchExploreForYouAction, trackExploreEventsBatchAction } from "@/app/actions/explore";
 import { likePostAction, unlikePostAction, addCommentAction, getPostLikeStatusAction } from "@/app/actions/post";
 
 type ExploreItem = {
   id: string;
   postId?: string;
   title?: string;
+  topic?: string;
+  score?: number;
+  isTrending?: boolean;
+  caption?: string;
   videoUrl?: string;
   thumbnailUrl?: string;
+  likeCount?: number;
+  commentCount?: number;
+  viewCount?: number;
+  user?: {
+    id: string;
+    username: string;
+    avatarUrl?: string;
+  };
   assetVersion?: {
     fileUrl?: string;
     mimeType?: string;
@@ -21,6 +33,7 @@ type ExploreItem = {
     id?: string;
     likeCount?: number;
     commentCount?: number;
+    viewCount?: number;
     videoUrl?: string;
     thumbnailUrl?: string;
     user?: {
@@ -50,19 +63,21 @@ function ExploreCard({
   const impressionSent = useRef(false);
 
   // IMPORTANT: Use the actual post ID for API calls (likes, comments).
-  // item.id is the ExploreItem ID — NOT the post ID.
-  const postId = item.postId || item.post?.id || '';
-  const linkId = postId || item.id; // for navigation links only
-  const title = item.title || "Untitled Video";
+  // item.id might be the ExploreItem ID or the Post ID itself if the API returns Posts directly.
+  const postId = item.postId || item.post?.id || item.id;
+  const linkId = postId;
+  const title = item.title || item.caption || "Untitled Video";
   // Prefer direct videoUrl/thumbnailUrl, fall back to assetVersion.fileUrl
   const videoUrl = item.videoUrl || item.post?.videoUrl || item.assetVersion?.fileUrl || "";
   const thumbnailUrl = item.thumbnailUrl || item.post?.thumbnailUrl || "";
   const mediaUrl = videoUrl || thumbnailUrl;
   const isVideo = isVideoSrc(videoUrl, item.assetVersion?.mimeType);
-  const authorName = item.post?.user?.username || "unknown";
-  const authorId = item.post?.user?.id || authorName;
+  
+  const userData = item.post?.user || item.user;
+  const authorName = userData?.username || "unknown";
+  const authorId = userData?.id || authorName;
   const avatarUrl =
-    item.post?.user?.avatarUrl ||
+    userData?.avatarUrl ||
     `https://ui-avatars.com/api/?name=${encodeURIComponent(authorName)}&background=e0e7ff&color=4f46e5`;
   const durationMs = item.assetVersion?.durationMs || 0;
   const fallback =
@@ -75,8 +90,8 @@ function ExploreCard({
     return `${m}:${(s % 60).toString().padStart(2, "0")}`;
   };
 
-  const [likeCount, setLikeCount] = useState(item.post?.likeCount || 0);
-  const [commentCount, setCommentCount] = useState(item.post?.commentCount || 0);
+  const [likeCount, setLikeCount] = useState(item.post?.likeCount ?? item.likeCount ?? 0);
+  const [commentCount, setCommentCount] = useState(item.post?.commentCount ?? item.commentCount ?? 0);
   const [isLiked, setIsLiked] = useState(false);
   const [isLiking, setIsLiking] = useState(false);
   const [showCommentBox, setShowCommentBox] = useState(false);
@@ -179,20 +194,36 @@ function ExploreCard({
   return (
     <div
       ref={cardRef}
-      className="relative bg-white border border-slate-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col group"
+      className="bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-md transition group flex flex-col relative"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
       <Link href={`/post/${linkId}`} className="absolute inset-0 z-10" />
 
       {/* Media */}
-      <div className="relative aspect-[4/3] bg-slate-900 overflow-hidden">
+      <div className="relative h-48 bg-slate-900 overflow-hidden group">
+        
+        {/* Badges */}
+        <div className="absolute top-3 left-3 flex flex-wrap gap-2 z-20 pointer-events-none">
+          {item.isTrending && (
+            <span className="bg-orange-500/90 backdrop-blur-sm text-white text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wider shadow-sm flex items-center gap-1">
+              <Flame size={12} /> Trending
+            </span>
+          )}
+          {item.topic && item.topic !== 'general' && (
+            <span className="bg-black/50 backdrop-blur-sm text-white text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wider shadow-sm">
+              {item.topic}
+            </span>
+          )}
+        </div>
+
+        {/* Video Player */}
         {isVideo && videoUrl ? (
           <video
             ref={videoRef}
             src={videoUrl}
-            poster={thumbnailUrl || undefined}
-            className="w-full h-full object-cover"
+            poster={thumbnailUrl || fallback}
+            className="absolute inset-0 w-full h-full object-cover z-0 transition-transform duration-500 group-hover:scale-105"
             loop
             muted
             playsInline
@@ -200,52 +231,64 @@ function ExploreCard({
           />
         ) : (
           <img
-            src={thumbnailUrl || videoUrl || fallback}
+            src={mediaUrl || fallback}
             alt={title}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 z-0 group-hover:scale-105"
           />
         )}
 
         {/* Duration */}
         {durationMs > 0 && (
-          <div className="absolute top-3 right-3 bg-black/60 backdrop-blur-sm text-white text-xs font-semibold px-2 py-1 rounded-full flex items-center gap-1 z-20 pointer-events-none">
-            <Timer className="h-3 w-3" />
+          <span className="absolute bottom-3 right-3 bg-black/60 backdrop-blur-md text-white text-xs font-semibold px-2.5 py-1 rounded-lg z-20 pointer-events-none">
             {formatDuration(durationMs)}
-          </div>
+          </span>
         )}
       </div>
 
       {/* Card body */}
-      <div className="p-4 flex flex-col flex-1 pointer-events-none">
+      <div className="p-5 flex flex-col flex-1 pointer-events-none">
+        <div className="flex justify-between items-start mb-3">
+          <h3 className="font-semibold text-gray-900 truncate pr-4 text-lg flex-1">
+            {title}
+          </h3>
+          <button className="text-gray-400 hover:text-gray-700 mt-1 pointer-events-auto relative z-20">
+            <MoreVertical size={18} />
+          </button>
+        </div>
+
         <Link
           href={`/user/${authorId}`}
-          className="flex items-center gap-2 mb-3 pointer-events-auto relative z-20 w-fit hover:opacity-80 transition-opacity"
+          className="flex items-center gap-2 mb-4 pointer-events-auto relative z-20 w-fit hover:opacity-80 transition-opacity"
         >
           <img src={avatarUrl} alt={authorName} className="h-6 w-6 rounded-full object-cover" />
-          <span className="text-sm font-medium text-slate-700">{authorName}</span>
+          <span className="text-sm font-medium text-gray-600">@{authorName}</span>
         </Link>
-        <p className="text-sm text-slate-500 line-clamp-2 mb-4 flex-1">{title}</p>
 
         {/* Actions */}
-        <div className="flex items-center justify-between text-slate-400 text-sm mt-auto border-t border-slate-50 pt-3 pointer-events-auto relative z-20">
-          <button
-            onClick={handleLike}
-            disabled={isLiking}
-            className={`flex items-center gap-1.5 transition-colors ${isLiked ? "text-red-500" : "hover:text-indigo-600"}`}
-          >
-            <Heart className={`h-4 w-4 transition-transform ${isLiked ? "fill-red-500 scale-110" : ""}`} />
-            <span>{likeCount}</span>
-          </button>
+        <div className="flex items-center justify-between mt-auto pt-2 pointer-events-auto relative z-20">
+          <div className="flex items-center gap-4 text-sm font-medium text-gray-500">
+            <span className="flex items-center gap-1.5">
+              <Eye size={16} /> {item.viewCount ?? item.post?.viewCount ?? 0}
+            </span>
+            <button
+              onClick={handleLike}
+              disabled={isLiking}
+              className={`flex items-center gap-1.5 transition-colors ${isLiked ? "text-red-500" : "hover:text-indigo-600"}`}
+            >
+              <Heart className={`h-4 w-4 transition-transform ${isLiked ? "fill-red-500 scale-110" : ""}`} />
+              <span>{likeCount}</span>
+            </button>
 
-          <button
-            onClick={handleCommentToggle}
-            className="flex items-center gap-1.5 hover:text-indigo-600 transition-colors"
-          >
-            <MessageSquare className="h-4 w-4" />
-            <span>{commentCount}</span>
-          </button>
+            <button
+              onClick={handleCommentToggle}
+              className="flex items-center gap-1.5 hover:text-indigo-600 transition-colors"
+            >
+              <MessageSquare className="h-4 w-4" />
+              <span>{commentCount}</span>
+            </button>
+          </div>
 
-          <button onClick={handleShare} className="hover:text-indigo-600 transition-colors">
+          <button onClick={handleShare} className="text-gray-400 hover:text-indigo-600 transition-colors">
             <Share2 className="h-4 w-4" />
           </button>
         </div>
@@ -253,7 +296,7 @@ function ExploreCard({
         {/* Inline comment box */}
         {showCommentBox && (
           <div
-            className="mt-3 pointer-events-auto relative z-20"
+            className="mt-4 pointer-events-auto relative z-20"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center gap-2 border border-slate-200 rounded-xl bg-slate-50 px-3 py-1.5">
@@ -290,15 +333,27 @@ export default function ExploreFeed({
   initialCursor,
   mode,
   topic,
+  sort,
+  trending,
+  signals
 }: {
   initialItems: ExploreItem[];
   initialCursor?: string | null;
   mode: string;
   topic?: string;
+  sort?: string;
+  trending?: boolean;
+  signals?: any;
 }) {
   const [items, setItems] = useState<ExploreItem[]>(initialItems);
   const [cursor, setCursor] = useState<string | null | undefined>(initialCursor);
   const [isLoading, setIsLoading] = useState(false);
+
+  // If initialItems changes (e.g. user toggles sort/mode), reset state
+  useEffect(() => {
+    setItems(initialItems);
+    setCursor(initialCursor);
+  }, [initialItems, initialCursor]);
 
   // Save current feed to session storage for infinite swiping in post detail
   useEffect(() => {
@@ -307,11 +362,13 @@ export default function ExploreFeed({
         items: items.map(item => item.postId || item.post?.id || item.id),
         cursor,
         mode,
-        topic
+        topic,
+        sort,
+        trending
       };
       sessionStorage.setItem('motion_explore_feed', JSON.stringify(feedContext));
     }
-  }, [items, cursor, mode, topic]);
+  }, [items, cursor, mode, topic, sort, trending]);
 
   const impressionQueue = useRef<string[]>([]);
   const loadMoreRef = useRef<HTMLDivElement>(null);
@@ -338,18 +395,25 @@ export default function ExploreFeed({
     setIsLoading(true);
     
     let res;
-    if (topic) {
-      res = await fetchExploreSearchAction(topic, cursor);
+    if (mode === 'for_you') {
+      res = await fetchExploreForYouAction({ topic, limit: 10, cursor });
+    } else if (topic) {
+      res = await fetchExploreSearchAction(topic, { cursor, sort, trending });
     } else {
-      res = await fetchExploreAction(mode, cursor);
+      res = await fetchExploreAction(mode, { cursor, topic, sort, trending });
     }
     
     if (res.success && res.data) {
-      setItems((prev) => [...prev, ...(res.data.data || [])]);
+      setItems((prev) => {
+        const newItems = (res.data.data || []).filter(
+          (ni: ExploreItem) => !prev.some((pi) => pi.id === ni.id)
+        );
+        return [...prev, ...newItems];
+      });
       setCursor(res.data.nextCursor);
     }
     setIsLoading(false);
-  }, [cursor, isLoading, mode, topic]);
+  }, [cursor, isLoading, mode, topic, sort, trending]);
 
   useEffect(() => {
     const currentObserver = new IntersectionObserver(
@@ -379,7 +443,26 @@ export default function ExploreFeed({
 
   return (
     <>
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+      {signals && (
+        <div className="mb-6 p-4 bg-indigo-50 border border-indigo-100 rounded-2xl flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-indigo-100 text-indigo-600 rounded-xl">
+              <Sparkles size={20} />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-slate-800">
+                Personalized for you based on your interests.
+              </p>
+              {signals.topTopics && signals.topTopics.length > 0 && (
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Top Topics: {signals.topTopics.map((t: any) => t.topic).join(', ')}
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {items.map((item, idx) => (
           <ExploreCard key={item.id || idx} item={item} onImpressionTracked={handleImpressionTracked} />
         ))}

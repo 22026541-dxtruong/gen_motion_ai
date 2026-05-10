@@ -43,3 +43,15 @@ export async function markOrderPaidAction(orderId: string, providerOrderId?: str
     return { success: false, error: error.message || 'Failed to mark order as paid' };
   }
 }
+
+export async function confirmPayosWebhookAction(webhookUrl?: string) {
+  try {
+    const data = await fetchApi('/billing/webhooks/payos/confirm', {
+      method: 'POST',
+      body: JSON.stringify({ webhookUrl }),
+    });
+    return { success: true, data };
+  } catch (error: any) {
+    return { success: false, error: error.message || 'Failed to confirm PayOS webhook' };
+  }
+}
