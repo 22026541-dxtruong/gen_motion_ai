@@ -1,7 +1,7 @@
 const DEFAULT_LOCAL_API_URL = 'http://localhost:3000';
 const DEFAULT_LOCAL_SITE_URL = 'http://localhost:5173';
-const DEFAULT_PRODUCTION_API_URL = 'https://api.neura.xyz';
-const DEFAULT_PRODUCTION_SITE_URL = 'https://neura.xyz';
+const DEFAULT_PRODUCTION_API_URL = 'https://api.neuragen.xyz';
+const DEFAULT_PRODUCTION_SITE_URL = 'https://neuragen.xyz';
 
 function trimTrailingSlash(value: string) {
   return value.replace(/\/+$/, '');

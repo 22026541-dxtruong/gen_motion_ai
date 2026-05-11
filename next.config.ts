@@ -17,7 +17,7 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: "https",
-        hostname: "api.neura.xyz",
+        hostname: "api.neuragen.xyz",
       },
     ],
   },

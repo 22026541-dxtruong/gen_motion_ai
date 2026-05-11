@@ -3,15 +3,12 @@ import React from 'react';
 import { Mail, Lock, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { registerAction } from '@/app/actions/auth';
 import { buildGoogleAuthUrl } from '@/lib/runtime-config';
 
 export default function RegisterPage() {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-
-  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -23,7 +20,8 @@ export default function RegisterPage() {
       if (result?.error) {
         setError(result.error);
       } else if (result?.success) {
-        router.push('/explore');
+        window.location.assign('/explore');
+        return;
       }
     } catch (err) {
       setError('An unexpected error occurred');

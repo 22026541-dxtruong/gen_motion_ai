@@ -165,7 +165,7 @@ export default function BillingClientView({ catalog }: { catalog: Catalog }) {
               <span className="text-gray-500 text-sm font-medium">No expiration on top-up credits</span>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
               {catalog?.topup?.map((pack, idx) => (
                 <div key={pack.code} className={`bg-white rounded-[2rem] p-8 shadow-sm hover:shadow-md transition-shadow ${idx === 1 ? 'border-2 border-[#4F46E5] relative shadow-md' : 'border border-gray-100'}`}>
                   {idx === 1 && (

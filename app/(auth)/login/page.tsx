@@ -2,7 +2,7 @@
 import { Mail, Lock, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { useState, Suspense } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { loginAction } from '@/app/actions/auth';
 import { buildGoogleAuthUrl } from '@/lib/runtime-config';
 
@@ -10,7 +10,6 @@ function LoginForm() {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const router = useRouter();
   const searchParams = useSearchParams();
   const defaultEmail = searchParams.get('email') || '';
 
@@ -24,7 +23,8 @@ function LoginForm() {
       if (result?.error) {
         setError(result.error);
       } else if (result?.success) {
-        router.push('/explore');
+        window.location.assign('/explore');
+        return;
       }
     } catch (err) {
       setError('An unexpected error occurred');

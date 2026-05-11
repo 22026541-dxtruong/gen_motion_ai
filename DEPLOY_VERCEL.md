@@ -16,14 +16,14 @@ This frontend is ready to deploy on Vercel as a standalone Next.js project.
 Set these in Vercel for both `Production` and `Preview` unless you intentionally want different values:
 
 ```env
-NEXT_PUBLIC_API_URL=https://api.neura.xyz
-NEXT_PUBLIC_SITE_URL=https://neura.xyz
+NEXT_PUBLIC_API_URL=https://api.neuragen.xyz
+NEXT_PUBLIC_SITE_URL=https://neuragen.xyz
 ```
 
 ## Domain setup
 
-- Production domain: `neura.xyz`
-- Optional redirect/alias: `www.neura.xyz`
+- Production domain: `neuragen.xyz`
+- Optional redirect/alias: `www.neuragen.xyz`
 
 If you add both domains in Vercel, pick one canonical domain and redirect the other to it.
 
@@ -31,15 +31,15 @@ If you add both domains in Vercel, pick one canonical domain and redirect the ot
 
 The backend on Railway should already allow:
 
-- `FRONTEND_URL=https://neura.xyz`
-- `CORS_ORIGINS` including `https://neura.xyz`
-- `OAUTH_ALLOWED_REDIRECT_URIS` including `https://neura.xyz/google/callback`
-- `PAYOS_RETURN_URL=https://neura.xyz/billing/payos-return`
-- `PAYOS_CANCEL_URL=https://neura.xyz/billing/payos-return`
+- `FRONTEND_URL=https://neuragen.xyz`
+- `CORS_ORIGINS` including `https://neuragen.xyz`
+- `OAUTH_ALLOWED_REDIRECT_URIS` including `https://neuragen.xyz/google/callback`
+- `PAYOS_RETURN_URL=https://neuragen.xyz/billing/payos-return`
+- `PAYOS_CANCEL_URL=https://neuragen.xyz/billing/payos-return`
 
 ## Smoke test after deploy
 
-1. Open `https://neura.xyz/login`
+1. Open `https://neuragen.xyz/login`
 2. Test email login
 3. Test Google login
 4. Test forgot password and reset password

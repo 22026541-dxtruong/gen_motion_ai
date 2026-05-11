@@ -22,7 +22,7 @@ function GoogleCallbackContent() {
     const exchangeCode = async () => {
       const res = await googleExchangeCodeAction(code);
       if (res.success) {
-        router.push("/explore");
+        window.location.replace("/explore");
       } else {
         setError(res.error || "Failed to authenticate with Google");
         setTimeout(() => router.push("/login"), 3000);

@@ -4,16 +4,63 @@ import ConfirmWebhookButton from "./ConfirmWebhookButton";
 import BillingClientView from "./BillingClientView";
 import { getBillingCatalogAction } from "../actions/billing";
 
-export default async function BillingPage() {
-  const res = await getBillingCatalogAction();
-  const catalog = res.success && res.data ? res.data : {
+type NormalizedCatalog = {
+  pro: { price: number; credits: number };
+  topup: Array<{
+    code: string;
+    name: string;
+    price: number;
+    credits: number;
+  }>;
+};
+
+function getFallbackCatalog(): NormalizedCatalog {
+  return {
     pro: { price: 14.99, credits: 1000 },
     topup: [
-      { code: "STARTER", name: "Starter Pack", price: 4.99, credits: 300 },
-      { code: "CREATOR", name: "Creator Pack", price: 12.99, credits: 1000 },
-      { code: "STUDIO", name: "Studio Pack", price: 29.99, credits: 3000 }
-    ]
+      { code: "TOPUP_STARTER_0_99", name: "Starter", price: 0.99, credits: 50 },
+      { code: "TOPUP_POPULAR_4_99", name: "Popular", price: 4.99, credits: 250 },
+      { code: "TOPUP_PRO_9_99", name: "Pro", price: 9.99, credits: 500 },
+      { code: "TOPUP_MAX_19_99", name: "Max", price: 19.99, credits: 1000 },
+    ],
   };
+}
+
+function normalizeCatalog(raw: any): NormalizedCatalog {
+  if (!raw || typeof raw !== "object") {
+    return getFallbackCatalog();
+  }
+
+  if (raw.pro && raw.topup) {
+    return raw as NormalizedCatalog;
+  }
+
+  const proPlan = raw.proPlan ?? {};
+  const topupPackages = Array.isArray(raw.creditTopupPackages)
+    ? raw.creditTopupPackages
+    : [];
+
+  if (topupPackages.length === 0) {
+    return getFallbackCatalog();
+  }
+
+  return {
+    pro: {
+      price: Number(proPlan.amountUsd ?? 14.99),
+      credits: Number(proPlan.credits ?? 1000),
+    },
+    topup: topupPackages.map((pkg: any) => ({
+      code: String(pkg.code ?? ""),
+      name: String(pkg.label ?? pkg.code ?? "Top-up"),
+      price: Number(pkg.amountUsd ?? 0),
+      credits: Number(pkg.credits ?? 0),
+    })),
+  };
+}
+
+export default async function BillingPage() {
+  const res = await getBillingCatalogAction();
+  const catalog = normalizeCatalog(res.success ? res.data : null);
 
   return (
     <MainLayout activePage="billing">
