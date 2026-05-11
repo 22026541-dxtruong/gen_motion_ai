@@ -1,6 +1,5 @@
 import { cookies } from 'next/headers';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+import { buildApiUrl } from '@/lib/runtime-config';
 
 export async function fetchApi(endpoint: string, options: RequestInit = {}) {
   const cookieStore = await cookies();
@@ -14,7 +13,7 @@ export async function fetchApi(endpoint: string, options: RequestInit = {}) {
     headers.set('Content-Type', 'application/json');
   }
 
-  let res = await fetch(`${API_URL}${endpoint}`, {
+  let res = await fetch(buildApiUrl(endpoint), {
     ...options,
     headers,
   });

@@ -1,4 +1,5 @@
 import { cookies } from 'next/headers';
+import { buildApiUrl } from '@/lib/runtime-config';
 
 export async function GET() {
   const cookieStore = await cookies();
@@ -8,7 +9,7 @@ export async function GET() {
     return new Response('Unauthorized', { status: 401 });
   }
 
-  const backendUrl = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/jobs/events/me`;
+  const backendUrl = buildApiUrl('/jobs/events/me');
   
   try {
     const response = await fetch(backendUrl, {

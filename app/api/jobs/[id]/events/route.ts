@@ -1,7 +1,6 @@
 import { cookies } from 'next/headers';
 import { NextRequest } from 'next/server';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+import { buildApiUrl } from '@/lib/runtime-config';
 
 /**
  * SSE Proxy for GET /jobs/:id/events
@@ -25,7 +24,7 @@ export async function GET(
     });
   }
 
-  const backendUrl = `${API_URL}/jobs/${jobId}/events`;
+  const backendUrl = buildApiUrl(`/jobs/${jobId}/events`);
 
   try {
     const backendRes = await fetch(backendUrl, {

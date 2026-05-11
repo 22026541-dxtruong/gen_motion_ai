@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { buildApiUrl } from '@/lib/runtime-config';
 
 function isTokenValid(token: string | undefined) {
   if (!token) return false;
@@ -23,7 +24,7 @@ function isTokenValid(token: string | undefined) {
   }
 }
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   const accessToken = request.cookies.get('accessToken')?.value;
@@ -38,9 +39,8 @@ export async function middleware(request: NextRequest) {
 
   // Proactively refresh token if access is expired but refresh is valid
   if (!hasValidAccess && hasValidRefresh && refreshToken) {
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
     try {
-      const refreshRes = await fetch(`${API_URL}/auth/refresh`, {
+      const refreshRes = await fetch(buildApiUrl('/auth/refresh'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ refreshToken }),

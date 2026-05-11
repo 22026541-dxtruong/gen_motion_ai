@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { googleExchangeCodeAction } from "@/app/actions/auth";
 import { Loader2 } from "lucide-react";
 
-export default function GoogleCallbackPage() {
+function GoogleCallbackContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
@@ -51,5 +51,13 @@ export default function GoogleCallbackPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function GoogleCallbackPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#F8F9FE]" />}>
+      <GoogleCallbackContent />
+    </Suspense>
   );
 }

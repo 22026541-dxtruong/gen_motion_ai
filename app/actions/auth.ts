@@ -3,14 +3,13 @@
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { fetchApi } from '@/lib/api';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+import { buildApiUrl } from '@/lib/runtime-config';
 
 export async function loginAction(formData: FormData) {
   const email = formData.get('email');
   const password = formData.get('password');
 
-  const res = await fetch(`${API_URL}/auth/login`, {
+  const res = await fetch(buildApiUrl('/auth/login'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, password }),
@@ -71,7 +70,7 @@ export async function registerAction(formData: FormData) {
   const password = formData.get('password');
   // Optional: username if your backend requires it in register, though the spec says email and password only.
   
-  const res = await fetch(`${API_URL}/auth/register`, {
+  const res = await fetch(buildApiUrl('/auth/register'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, password }),
@@ -132,7 +131,7 @@ export async function logoutAction() {
 
   if (refreshToken) {
     const token = cookieStore.get('accessToken')?.value;
-    await fetch(`${API_URL}/auth/logout`, {
+    await fetch(buildApiUrl('/auth/logout'), {
       method: 'POST',
       headers: { 
         'Content-Type': 'application/json',
@@ -170,7 +169,7 @@ export async function switchAccountAction(email: string) {
 
   if (accountAccess) {
     // Validate the token against the API to ensure it hasn't expired or been revoked
-    const res = await fetch(`${API_URL}/users/me`, {
+    const res = await fetch(buildApiUrl('/users/me'), {
       headers: {
         'Authorization': `Bearer ${accountAccess}`,
         'Content-Type': 'application/json'
@@ -229,7 +228,7 @@ export async function logoutAllAction() {
 
 export async function forgotPasswordAction(email: string) {
   try {
-    const res = await fetch(`${API_URL}/auth/forgot-password`, {
+    const res = await fetch(buildApiUrl('/auth/forgot-password'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email }),
@@ -246,7 +245,7 @@ export async function forgotPasswordAction(email: string) {
 
 export async function resetPasswordAction(token: string, newPassword: string) {
   try {
-    const res = await fetch(`${API_URL}/auth/reset-password`, {
+    const res = await fetch(buildApiUrl('/auth/reset-password'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ token, newPassword }),
@@ -263,7 +262,7 @@ export async function resetPasswordAction(token: string, newPassword: string) {
 
 export async function googleExchangeCodeAction(code: string) {
   try {
-    const res = await fetch(`${API_URL}/auth/google/exchange-code`, {
+    const res = await fetch(buildApiUrl('/auth/google/exchange-code'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ code }),

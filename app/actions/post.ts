@@ -2,8 +2,7 @@
 
 import { fetchApi } from '@/lib/api';
 import { revalidatePath } from 'next/cache';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+import { buildApiUrl } from '@/lib/runtime-config';
 
 /**
  * GET /posts/:id — Auth: Bearer JWT (token optional for public posts)
@@ -184,7 +183,7 @@ export async function deletePostAction(postId: string) {
  */
 export async function getPostsAction() {
   try {
-    const res = await fetch(`${API_URL}/posts`, {
+    const res = await fetch(buildApiUrl('/posts'), {
       headers: { 'Content-Type': 'application/json' },
       cache: 'no-store',
     });

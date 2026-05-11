@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { registerAction } from '@/app/actions/auth';
+import { buildGoogleAuthUrl } from '@/lib/runtime-config';
 
 export default function RegisterPage() {
   const [error, setError] = useState<string | null>(null);
@@ -116,7 +117,7 @@ export default function RegisterPage() {
 
             {/* Google Sign Up Button */}
             <a
-              href={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/auth/google?redirectUri=${encodeURIComponent((process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3001') + '/google/callback')}`}
+              href={buildGoogleAuthUrl()}
               className="w-full bg-white hover:bg-gray-50 text-slate-800 font-semibold py-2.5 rounded-lg border border-gray-200 flex items-center justify-center gap-2.5 transition-colors shadow-sm"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">

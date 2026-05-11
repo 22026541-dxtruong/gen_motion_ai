@@ -11,8 +11,17 @@ interface PostLikesModalProps {
   onClose: () => void;
 }
 
+type PostLike = {
+  id: string;
+  user: {
+    id: string;
+    username: string;
+    avatarUrl?: string | null;
+  };
+};
+
 export default function PostLikesModal({ postId, isOpen, onClose }: PostLikesModalProps) {
-  const [likes, setLikes] = useState<any[]>([]);
+  const [likes, setLikes] = useState<PostLike[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -30,10 +39,10 @@ export default function PostLikesModal({ postId, isOpen, onClose }: PostLikesMod
       if (res.success && res.data && res.data.data) {
         setLikes(res.data.data);
       } else {
-        setError(res.error || "Failed to load likes");
+        setError("Failed to load likes");
       }
-    } catch (err: any) {
-      setError(err.message || "An error occurred");
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "An error occurred");
     } finally {
       setIsLoading(false);
     }
