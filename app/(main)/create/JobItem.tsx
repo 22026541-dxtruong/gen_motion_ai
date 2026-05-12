@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { CheckCircle2, Download, Image as ImageIcon, Play, Send, XCircle, Loader2 } from "lucide-react";
-import Dialog from "../../component/Dialog";
-import PublishDialog from "../../component/PublishDialog";
+import Dialog from "@/component/Dialog";
+import PublishDialog from "@/component/PublishDialog";
 import { useRouter } from "next/navigation";
 import { createGalleryItemAction } from "@/app/actions/gallery";
 
@@ -21,68 +21,95 @@ export default function JobItem({ job }: { job: any }) {
 
   const isProcessing = PROCESSING_STATUSES.includes(currentJob.status);
 
-  // SSE real-time updates for processing jobs
+  // SSE real-time updates for processing jobs — auto-reconnect on disconnect
   useEffect(() => {
     if (!isProcessing) return;
 
-    const es = new EventSource(`/api/jobs/${currentJob.id}/events`);
-    eventSourceRef.current = es;
+    let retryCount = 0;
+    let retryTimer: ReturnType<typeof setTimeout> | null = null;
+    let cancelled = false;
 
-    es.addEventListener("snapshot", (e) => {
-      try {
-        const data = JSON.parse(e.data);
-        setCurrentJob((prev: any) => ({
-          ...prev,
-          status: data.status,
-          progress: data.progress ?? prev.progress,
-          errorMessage: data.errorMessage ?? prev.errorMessage,
-          startedAt: data.startedAt ?? prev.startedAt,
-          completedAt: data.completedAt ?? prev.completedAt,
-          failedAt: data.failedAt ?? prev.failedAt,
-        }));
-        if (data.logs?.length) {
-          setLatestLog(data.logs[data.logs.length - 1].message);
-        }
-      } catch { /* ignore parse errors */ }
-    });
+    function connect() {
+      if (cancelled) return;
 
-    es.addEventListener("status", (e) => {
-      try {
-        const data = JSON.parse(e.data);
-        setCurrentJob((prev: any) => ({
-          ...prev,
-          status: data.status,
-          progress: data.progress ?? prev.progress,
-          errorMessage: data.errorMessage ?? prev.errorMessage,
-          startedAt: data.startedAt ?? prev.startedAt,
-          completedAt: data.completedAt ?? prev.completedAt,
-          failedAt: data.failedAt ?? prev.failedAt,
-        }));
+      const es = new EventSource(`/api/jobs/${currentJob.id}/events`);
+      eventSourceRef.current = es;
 
-        // When terminal, close the stream and refresh the page data
-        if (TERMINAL_STATUSES.includes(data.status)) {
-          es.close();
-          // Small delay to let backend finalize output/thumbnail links
-          setTimeout(() => router.refresh(), 1500);
-        }
-      } catch { /* ignore parse errors */ }
-    });
+      es.addEventListener("snapshot", (e) => {
+        try {
+          retryCount = 0; // Reset backoff on successful message
+          const data = JSON.parse(e.data);
+          setCurrentJob((prev: any) => ({
+            ...prev,
+            status: data.status,
+            progress: data.progress ?? prev.progress,
+            errorMessage: data.errorMessage ?? prev.errorMessage,
+            startedAt: data.startedAt ?? prev.startedAt,
+            completedAt: data.completedAt ?? prev.completedAt,
+            failedAt: data.failedAt ?? prev.failedAt,
+          }));
+          if (data.logs?.length) {
+            setLatestLog(data.logs[data.logs.length - 1].message);
+          }
+          // If snapshot shows terminal status, close and refresh
+          if (TERMINAL_STATUSES.includes(data.status)) {
+            es.close();
+            setTimeout(() => router.refresh(), 1500);
+          }
+        } catch { /* ignore parse errors */ }
+      });
 
-    es.addEventListener("log", (e) => {
-      try {
-        const data = JSON.parse(e.data);
-        setLatestLog(data.message);
-      } catch { /* ignore */ }
-    });
+      es.addEventListener("status", (e) => {
+        try {
+          retryCount = 0;
+          const data = JSON.parse(e.data);
+          setCurrentJob((prev: any) => ({
+            ...prev,
+            status: data.status,
+            progress: data.progress ?? prev.progress,
+            errorMessage: data.errorMessage ?? prev.errorMessage,
+            startedAt: data.startedAt ?? prev.startedAt,
+            completedAt: data.completedAt ?? prev.completedAt,
+            failedAt: data.failedAt ?? prev.failedAt,
+          }));
 
-    es.onerror = () => {
-      // On error, close and stop retrying. A page refresh will pick up the final state.
-      es.close();
-    };
+          // When terminal, close the stream and refresh the page data
+          if (TERMINAL_STATUSES.includes(data.status)) {
+            es.close();
+            setTimeout(() => router.refresh(), 1500);
+          }
+        } catch { /* ignore parse errors */ }
+      });
+
+      es.addEventListener("log", (e) => {
+        try {
+          retryCount = 0;
+          const data = JSON.parse(e.data);
+          setLatestLog(data.message);
+        } catch { /* ignore */ }
+      });
+
+      es.onerror = () => {
+        es.close();
+        eventSourceRef.current = null;
+        if (cancelled) return;
+
+        // Exponential backoff: 1s, 2s, 4s, 8s, max 15s
+        const delay = Math.min(1000 * Math.pow(2, retryCount), 15000);
+        retryCount++;
+        retryTimer = setTimeout(connect, delay);
+      };
+    }
+
+    connect();
 
     return () => {
-      es.close();
-      eventSourceRef.current = null;
+      cancelled = true;
+      if (retryTimer) clearTimeout(retryTimer);
+      if (eventSourceRef.current) {
+        eventSourceRef.current.close();
+        eventSourceRef.current = null;
+      }
     };
     // Only re-run when the job ID changes or it transitions to processing
     // eslint-disable-next-line react-hooks/exhaustive-deps

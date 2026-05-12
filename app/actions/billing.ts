@@ -1,6 +1,7 @@
 'use server';
 
 import { fetchApi } from '@/lib/api';
+import { revalidatePath } from 'next/cache';
 
 export async function getBillingCatalogAction() {
   try {
@@ -38,6 +39,7 @@ export async function markOrderPaidAction(orderId: string, providerOrderId?: str
       method: 'POST',
       body: JSON.stringify({ providerOrderId }),
     });
+    revalidatePath('/', 'layout');
     return { success: true, data };
   } catch (error: any) {
     return { success: false, error: error.message || 'Failed to mark order as paid' };

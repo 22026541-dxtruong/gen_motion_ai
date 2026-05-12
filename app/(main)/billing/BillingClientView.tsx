@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { createOrderAction, getMyOrdersAction } from "../actions/billing";
-import { Loader2 } from "lucide-react";
+import React, { useState } from "react";
+import { createOrderAction } from "@/app/actions/billing";
+import { Loader2, Zap, CreditCard, ArrowUpRight } from "lucide-react";
+import { useMyOrders } from "@/lib/swr";
 
 type PackageInfo = {
   code: string;
@@ -19,47 +20,69 @@ type Catalog = {
 type Order = {
   id: string;
   amountUsd: string | number;
-  amountVnd?: number;
+  creditAmount?: number;
   status: string;
   type: string;
+  provider?: string;
+  packageCode?: string;
+  paidAt?: string;
   createdAt: string;
+  metadata?: any;
 };
 
 export default function BillingClientView({ catalog }: { catalog: Catalog }) {
   const [activeTab, setActiveTab] = useState<"plans" | "orders">("plans");
   const [loadingOrderId, setLoadingOrderId] = useState<string | null>(null);
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [loadingOrders, setLoadingOrders] = useState(false);
-
-  useEffect(() => {
-    if (activeTab === "orders") {
-      fetchOrders();
-    }
-  }, [activeTab]);
-
-  const fetchOrders = async () => {
-    setLoadingOrders(true);
-    const res = await getMyOrdersAction();
-    if (res.success && res.data) {
-      setOrders(res.data);
-    }
-    setLoadingOrders(false);
-  };
+  const { orders, isLoading: loadingOrders } = useMyOrders();
 
   const handlePurchase = async (type: "CREDIT_TOPUP" | "PRO_SUBSCRIPTION", packageCode?: string) => {
     setLoadingOrderId(packageCode || type);
     try {
       const res = await createOrderAction(type, "PAYOS", packageCode);
-      const url = res.data?.payUrl || res.data?.checkoutUrl;
-      if (res.success && url) {
-        window.location.href = url;
+      if (res.success && res.data) {
+        // Save pending order info for payos-return page to track
+        try {
+          localStorage.setItem("pending_order_id", res.data.id);
+        } catch {}
+
+        // Backend returns payUrl for both MoMo and PayOS
+        const url = res.data.payUrl;
+        if (url) {
+          window.location.href = url;
+        } else {
+          alert("Failed to get payment URL. Please try again.");
+        }
       } else {
-        alert("Failed to initiate payment. Please try again.");
+        alert(res.error || "Failed to initiate payment. Please try again.");
       }
     } catch (err) {
       alert("Error initiating payment.");
     } finally {
       setLoadingOrderId(null);
+    }
+  };
+
+  const getProviderLabel = (provider?: string) => {
+    switch (provider) {
+      case "PAYOS": return "PayOS";
+      case "MOMO": return "MoMo";
+      case "BANK_TRANSFER": return "Bank Transfer";
+      default: return provider || "—";
+    }
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "PAID":
+        return "bg-emerald-50 text-emerald-700 border border-emerald-200";
+      case "PENDING":
+        return "bg-amber-50 text-amber-700 border border-amber-200";
+      case "FAILED":
+        return "bg-red-50 text-red-700 border border-red-200";
+      case "CANCELLED":
+        return "bg-slate-50 text-slate-500 border border-slate-200";
+      default:
+        return "bg-slate-50 text-slate-500 border border-slate-200";
     }
   };
 
@@ -210,20 +233,61 @@ export default function BillingClientView({ catalog }: { catalog: Catalog }) {
             ) : (
               <div className="divide-y divide-gray-100">
                 {orders.map((order) => (
-                  <div key={order.id} className="p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 hover:bg-gray-50 transition-colors">
-                    <div>
-                      <div className="font-semibold text-slate-900">
-                        {order.type === 'PRO_SUBSCRIPTION' ? 'Pro Monthly Subscription' : 'Credit Top-up'}
+                  <div key={order.id} className="p-6 hover:bg-gray-50/50 transition-colors">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-3 mb-1">
+                          <span className="font-semibold text-slate-900">
+                            {order.type === 'PRO_SUBSCRIPTION' ? 'Pro Monthly Subscription' : 'Credit Top-up'}
+                          </span>
+                          <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider ${getStatusBadge(order.status)}`}>
+                            {order.status}
+                          </span>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-sm text-slate-500">
+                          {/* Credit amount */}
+                          {order.creditAmount && order.creditAmount > 0 && (
+                            <span className="flex items-center gap-1">
+                              <Zap size={13} className="text-amber-500" />
+                              <span className="font-medium text-slate-700">{order.creditAmount} credits</span>
+                            </span>
+                          )}
+
+                          {/* Provider */}
+                          {order.provider && (
+                            <span className="flex items-center gap-1">
+                              <CreditCard size={13} />
+                              {getProviderLabel(order.provider)}
+                            </span>
+                          )}
+
+                          {/* Package code */}
+                          {order.packageCode && (
+                            <span className="font-mono text-xs bg-slate-100 px-2 py-0.5 rounded">
+                              {order.packageCode}
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="flex items-center gap-3 mt-2 text-xs text-slate-400">
+                          <span>
+                            {order.paidAt
+                              ? `Paid ${new Date(order.paidAt).toLocaleDateString()} at ${new Date(order.paidAt).toLocaleTimeString()}`
+                              : `Created ${new Date(order.createdAt).toLocaleDateString()} at ${new Date(order.createdAt).toLocaleTimeString()}`
+                            }
+                          </span>
+                          <span className="font-mono">#{order.id.substring(0, 8)}</span>
+                        </div>
                       </div>
-                      <div className="text-sm text-slate-500 mt-1">
-                        {new Date(order.createdAt).toLocaleDateString()} at {new Date(order.createdAt).toLocaleTimeString()}
-                      </div>
-                      <div className="text-xs text-slate-400 font-mono mt-1 mt-1">#{order.id}</div>
-                    </div>
-                    <div className="flex flex-col items-end">
-                      <div className="font-bold text-lg text-slate-900">${Number(order.amountUsd || 0).toFixed(2)}</div>
-                      <div className={`text-xs font-semibold px-2 py-1 rounded-full mt-2 uppercase ${order.status === 'PAID' ? 'bg-green-100 text-green-700' : order.status === 'PENDING' ? 'bg-amber-100 text-amber-700' : order.status === 'CANCELLED' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-700'}`}>
-                        {order.status}
+
+                      <div className="text-right shrink-0">
+                        <div className="font-bold text-xl text-slate-900">${Number(order.amountUsd || 0).toFixed(2)}</div>
+                        {order.metadata?.amountVnd && (
+                          <div className="text-xs text-slate-400 mt-0.5">
+                            ≈ {Number(order.metadata.amountVnd).toLocaleString()}₫
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>

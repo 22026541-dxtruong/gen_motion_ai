@@ -31,8 +31,8 @@ export async function createVideoJobAction(data: {
       body: JSON.stringify(payload),
     });
 
-    // Refresh the page to show the new job
-    revalidatePath('/create');
+    // Refresh create page + layout (credits may have changed)
+    revalidatePath('/', 'layout');
 
     return { success: true, job };
   } catch (error: any) {
@@ -70,9 +70,18 @@ export async function getJobResultAction(jobId: string) {
 export async function cancelJobAction(jobId: string) {
   try {
     const data = await fetchApi(`/jobs/${jobId}/cancel`, { method: 'POST' });
-    revalidatePath('/create');
+    revalidatePath('/', 'layout');
     return { success: true, data };
   } catch (error: any) {
     return { success: false, error: error.message || 'Failed to cancel job' };
+  }
+}
+
+export async function getAssetDownloadUrlAction(assetId: string) {
+  try {
+    const data = await fetchApi(`/assets/download/${assetId}`);
+    return { success: true, data };
+  } catch (error: any) {
+    return { success: false, error: error.message || 'Failed to get download URL' };
   }
 }

@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Wand2, Image as ImageIcon, X } from 'lucide-react';
 import { uploadAssetAction, createVideoJobAction } from '@/app/actions/job';
+import { useSWRConfig } from 'swr';
 
 const PRESETS = [
   { id: 'preview_ltx_i2v', label: 'Preview', duration: '2s', cost: 1 },
@@ -12,6 +13,7 @@ const PRESETS = [
 ];
 
 export default function CreateForm({ credits }: { credits: number }) {
+  const { mutate } = useSWRConfig();
   const [prompt, setPrompt] = useState('');
   const [negativePrompt, setNegativePrompt] = useState('');
   const [presetId, setPresetId] = useState(PRESETS[1].id); // Default to Standard
@@ -90,10 +92,12 @@ export default function CreateForm({ credits }: { credits: number }) {
         throw new Error(jobRes.error);
       }
 
-      // Success: clear form
+      // Success: clear form, refresh caches
       setPrompt('');
       setNegativePrompt('');
       removeImage();
+      mutate('/api/proxy/jobs');
+      mutate('/api/proxy/users/me');
     } catch (err: any) {
       setError(err.message || 'An unexpected error occurred');
     } finally {

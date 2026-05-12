@@ -10,7 +10,7 @@ export async function updateUserProfileAction(data: { username?: string; bio?: s
       body: JSON.stringify(data),
     });
     
-    revalidatePath('/profile');
+    revalidatePath('/', 'layout');
     
     return { success: true, user: updatedUser };
   } catch (error: any) {
@@ -88,7 +88,7 @@ export async function topupCreditsAction(amount: number, note?: string) {
       method: 'POST',
       body: JSON.stringify({ amount, note }),
     });
-    revalidatePath('/profile');
+    revalidatePath('/', 'layout');
     return { success: true, data };
   } catch (error: any) {
     return { success: false, error: error.message || 'Failed to topup credits' };

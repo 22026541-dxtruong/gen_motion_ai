@@ -1,17 +1,27 @@
+'use client';
+
 import React from 'react';
 import { Compass, Clapperboard, User, Wallet, HelpCircle } from 'lucide-react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
-interface SidebarProps {
-  activePage?: 'explore' | 'create' | 'profile' | 'billing';
-}
+export default function Sidebar() {
+  const pathname = usePathname();
 
-export default function Sidebar({ activePage = 'explore' }: SidebarProps) {
+  const getActivePage = () => {
+    if (pathname.startsWith('/create')) return 'create';
+    if (pathname.startsWith('/profile')) return 'profile';
+    if (pathname.startsWith('/billing')) return 'billing';
+    return 'explore';
+  };
+
+  const activePage = getActivePage();
+
   return (
     <aside className="w-60 bg-[#f8f9fa] border-r border-slate-100 flex flex-col justify-between overflow-y-auto">
       <nav className="p-4 space-y-2 mt-2">
         <Link
-          href="/"
+          href="/explore"
           className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${
             activePage === 'explore'
               ? 'text-indigo-700 bg-white shadow-sm'

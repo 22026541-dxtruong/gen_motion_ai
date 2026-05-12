@@ -6,8 +6,10 @@ import Link from 'next/link';
 import ChangePasswordDialog from './ChangePasswordDialog';
 import SwitchAccountDialog from './SwitchAccountDialog';
 import NotificationBell from './NotificationBell';
+import { useUser } from '@/lib/swr';
 
-export default function Topbar({ user }: { user?: any }) {
+export default function Topbar() {
+  const { user } = useUser();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
   const [isSwitchAccountOpen, setIsSwitchAccountOpen] = useState(false);

@@ -72,7 +72,7 @@ function ExploreCard({
   const thumbnailUrl = item.thumbnailUrl || item.post?.thumbnailUrl || "";
   const mediaUrl = videoUrl || thumbnailUrl;
   const isVideo = isVideoSrc(videoUrl, item.assetVersion?.mimeType);
-  
+
   const userData = item.post?.user || item.user;
   const authorName = userData?.username || "unknown";
   const authorId = userData?.id || authorName;
@@ -126,7 +126,7 @@ function ExploreCard({
   // Hover-play
   const handleMouseEnter = () => {
     if (isVideo && videoRef.current) {
-      videoRef.current.play().catch(() => {});
+      videoRef.current.play().catch(() => { });
     }
   };
   const handleMouseLeave = () => {
@@ -187,7 +187,7 @@ function ExploreCard({
     e.preventDefault();
     e.stopPropagation();
     const url = `${window.location.origin}/post/${postId}`;
-    if (navigator.share) navigator.share({ title, url }).catch(() => {});
+    if (navigator.share) navigator.share({ title, url }).catch(() => { });
     else navigator.clipboard.writeText(url);
   };
 
@@ -202,7 +202,7 @@ function ExploreCard({
 
       {/* Media */}
       <div className="relative h-48 bg-slate-900 overflow-hidden group">
-        
+
         {/* Badges */}
         <div className="absolute top-3 left-3 flex flex-wrap gap-2 z-20 pointer-events-none">
           {item.isTrending && (
@@ -393,7 +393,7 @@ export default function ExploreFeed({
   const loadMore = useCallback(async () => {
     if (!cursor || isLoading) return;
     setIsLoading(true);
-    
+
     let res;
     if (mode === 'for_you') {
       res = await fetchExploreForYouAction({ topic, limit: 10, cursor });
@@ -402,7 +402,7 @@ export default function ExploreFeed({
     } else {
       res = await fetchExploreAction(mode, { cursor, topic, sort, trending });
     }
-    
+
     if (res.success && res.data) {
       setItems((prev) => {
         const newItems = (res.data.data || []).filter(

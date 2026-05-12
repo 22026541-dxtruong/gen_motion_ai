@@ -3,8 +3,8 @@
 import React, { useState } from "react";
 import { Film } from "lucide-react";
 import { useRouter } from "next/navigation";
-import SelectJobDialog from "../../component/SelectJobDialog";
-import PublishDialog from "../../component/PublishDialog";
+import SelectJobDialog from "@/component/SelectJobDialog";
+import PublishDialog from "@/component/PublishDialog";
 
 type DialogState =
   | { step: "idle" }

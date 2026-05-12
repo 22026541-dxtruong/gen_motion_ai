@@ -14,14 +14,15 @@ import {
   Send,
   Loader2,
 } from "lucide-react";
-import Dialog from "../../component/Dialog";
-import PublishDialog from "../../component/PublishDialog";
+import Dialog from "@/component/Dialog";
+import PublishDialog from "@/component/PublishDialog";
 import { updateUserProfileAction } from "@/app/actions/user";
-import { uploadAssetAction } from "@/app/actions/job";
+import { uploadAssetAction, getAssetDownloadUrlAction } from "@/app/actions/job";
 import { deleteGalleryItemAction } from "@/app/actions/gallery";
 import { updatePostAction, deletePostAction } from "@/app/actions/post";
-import FollowsModal from "../component/FollowsModal";
-import ShareButtons from "../../component/ShareButtons";
+import FollowsModal from "@/app/component/FollowsModal";
+import ShareButtons from "@/component/ShareButtons";
+import { useSWRConfig } from 'swr';
 
 // ─── GalleryCard — video plays on hover ──────────────────────────────────────
 function GalleryCard({
@@ -147,7 +148,7 @@ function GalleryCard({
           </h3>
           {!item.isJob && (
             <div ref={menuRef} className="relative z-30">
-              <button 
+              <button
                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); setIsMenuOpen(!isMenuOpen); }}
                 className="text-gray-400 hover:text-gray-700 mt-1 p-1 rounded-md hover:bg-gray-100 transition-colors"
               >
@@ -155,13 +156,13 @@ function GalleryCard({
               </button>
               {isMenuOpen && (
                 <div className="absolute right-0 mt-1 w-40 bg-white rounded-xl shadow-lg border border-gray-100 py-1 overflow-hidden z-50">
-                  <button 
+                  <button
                     onClick={handleEdit}
                     className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                   >
                     Edit
                   </button>
-                  <button 
+                  <button
                     onClick={handleDelete}
                     disabled={isDeleting}
                     className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50"
@@ -218,6 +219,7 @@ export default function ProfileView({
   galleryItems: any[];
   jobs?: any[];
 }) {
+  const { mutate } = useSWRConfig();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isFollowersDialogOpen, setIsFollowersDialogOpen] = useState(false);
   const [isFollowingsDialogOpen, setIsFollowingsDialogOpen] = useState(false);
@@ -264,6 +266,9 @@ export default function ProfileView({
 
   const visibleGallery = displayedGallery.filter(item => !deletedIds.has(item.id));
 
+  // Store the pending file for upload on submit
+  const pendingAvatarFileRef = useRef<File | null>(null);
+
   const handleUpdateProfile = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsUpdating(true);
@@ -275,38 +280,71 @@ export default function ProfileView({
         username: formData.get("username") as string,
         bio: formData.get("bio") as string,
       };
-      if (avatarPreview && avatarPreview.startsWith("http")) {
-        payload.avatarUrl = avatarPreview;
+
+      // Upload avatar to S3 if user selected a new file
+      if (pendingAvatarFileRef.current) {
+        setIsUploadingAvatar(true);
+        const uploadFormData = new FormData();
+        uploadFormData.append("file", pendingAvatarFileRef.current);
+        const uploadRes = await uploadAssetAction(uploadFormData);
+
+        if (uploadRes.success && uploadRes.asset) {
+          const version = uploadRes.asset.versions?.[0];
+          const url =
+            version?.fileUrl ||
+            (uploadRes.asset.id ? await getSignedAvatarUrl(uploadRes.asset.id) : null);
+
+          if (url) {
+            payload.avatarUrl = url;
+          } else {
+            setUpdateError("Avatar uploaded but could not get image URL. Try again.");
+            setIsUpdating(false);
+            setIsUploadingAvatar(false);
+            return;
+          }
+        } else {
+          setUpdateError("Failed to upload avatar: " + (uploadRes.error || "Unknown error"));
+          setIsUpdating(false);
+          setIsUploadingAvatar(false);
+          return;
+        }
+        setIsUploadingAvatar(false);
       }
 
       const res = await updateUserProfileAction(payload);
       if (!res.success) throw new Error(res.error);
+
+      // Refresh SWR cache so Topbar + Profile update immediately
+      mutate('/api/proxy/users/me');
+
+      // Clear pending file and close dialog
+      pendingAvatarFileRef.current = null;
+      setAvatarPreview(null);
       setIsEditDialogOpen(false);
     } catch (err: any) {
       setUpdateError(err.message);
     } finally {
       setIsUpdating(false);
+      setIsUploadingAvatar(false);
     }
   };
 
-  const handleAvatarFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    setIsUploadingAvatar(true);
+    // Just preview locally — no upload yet
+    const localPreview = URL.createObjectURL(file);
+    setAvatarPreview(localPreview);
+    pendingAvatarFileRef.current = file;
+  };
+
+  const getSignedAvatarUrl = async (assetId: string): Promise<string | null> => {
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-      const res = await uploadAssetAction(formData);
-      if (res.success && res.asset?.versions?.[0]?.fileUrl) {
-        setAvatarPreview(res.asset.versions[0].fileUrl);
-      } else {
-        alert("Failed to upload avatar: " + (res.error || "Unknown error"));
-      }
-    } catch (err) {
-      alert("Error uploading file");
-    } finally {
-      setIsUploadingAvatar(false);
+      const res = await getAssetDownloadUrlAction(assetId);
+      return res.success ? res.data?.url : null;
+    } catch {
+      return null;
     }
   };
 
@@ -431,9 +469,12 @@ export default function ProfileView({
             </div>
           </div>
         </div>
-        <button className="bg-indigo-50 text-indigo-700 px-6 py-3 rounded-full font-semibold hover:bg-indigo-100 transition">
+        <Link
+          href="/billing"
+          className="bg-indigo-50 text-indigo-700 px-6 py-3 rounded-full font-semibold hover:bg-indigo-100 transition inline-block"
+        >
           Buy Credits
-        </button>
+        </Link>
       </div>
 
       {/* Tabs & Filters */}
@@ -458,9 +499,6 @@ export default function ProfileView({
             <Lock size={18} /> Private Workspace
           </button>
         </div>
-        <button className="flex items-center gap-2 text-gray-500 pb-4 font-medium hover:text-gray-800 transition">
-          <ListFilter size={18} /> Filter
-        </button>
       </div>
 
       {/* Gallery Grid */}
