@@ -5,6 +5,7 @@ import { Suspense, useEffect, useState, useRef, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { getMyOrdersAction } from "@/app/actions/billing";
 import { Loader2, CheckCircle2, XCircle, Clock, Zap } from "lucide-react";
+import { useSWRConfig } from "swr";
 
 type VerifiedOrder = {
   id: string;
@@ -18,6 +19,7 @@ type VerifiedOrder = {
 function PayosReturnContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { mutate } = useSWRConfig();
   const [verifiedOrder, setVerifiedOrder] = useState<VerifiedOrder | null>(null);
   const [isPolling, setIsPolling] = useState(false);
   const pollRef = useRef<NodeJS.Timeout | null>(null);
@@ -38,6 +40,13 @@ function PayosReturnContent() {
       pollRef.current = null;
     }
   }, []);
+
+  const refreshUserBillingState = useCallback(async () => {
+    await Promise.all([
+      mutate("/api/proxy/users/me"),
+      mutate("/api/proxy/billing/orders/me"),
+    ]);
+  }, [mutate]);
 
   // Background poll to detect when backend webhook confirms payment → update Topbar
   useEffect(() => {
@@ -74,6 +83,7 @@ function PayosReturnContent() {
             if (found.status === "PAID") {
               stopPolling();
               try { localStorage.removeItem("pending_order_id"); } catch {}
+              await refreshUserBillingState();
               setTimeout(() => router.refresh(), 100);
               return true; // confirmed
             }
@@ -107,7 +117,7 @@ function PayosReturnContent() {
     return () => {
       if (pollRef.current) clearInterval(pollRef.current);
     };
-  }, [isCancelled, orderCode, router, stopPolling, urlSaysSuccess]);
+  }, [isCancelled, orderCode, refreshUserBillingState, router, stopPolling, urlSaysSuccess]);
 
   // Display state — trust URL params for immediate feedback
   const getDisplayState = () => {
