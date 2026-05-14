@@ -33,6 +33,18 @@ export async function getMyOrdersAction() {
   }
 }
 
+export async function syncMyOrderAction(orderId: string) {
+  try {
+    const data = await fetchApi(`/billing/orders/${orderId}/sync`, {
+      method: 'POST',
+    });
+    revalidatePath('/', 'layout');
+    return { success: true, data };
+  } catch (error: any) {
+    return { success: false, error: error.message || 'Failed to sync payment order' };
+  }
+}
+
 export async function markOrderPaidAction(orderId: string, providerOrderId?: string) {
   try {
     const data = await fetchApi(`/billing/orders/${orderId}/mark-paid`, {

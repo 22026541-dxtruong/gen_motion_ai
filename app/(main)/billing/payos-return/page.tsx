@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Suspense, useEffect, useState, useRef, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { getMyOrdersAction } from "@/app/actions/billing";
+import { getMyOrdersAction, syncMyOrderAction } from "@/app/actions/billing";
 import { Loader2, CheckCircle2, XCircle, Clock, Zap } from "lucide-react";
 import { useSWRConfig } from "swr";
 
@@ -59,6 +59,10 @@ function PayosReturnContent() {
     // Fetch order info once for display
     const fetchOrder = async () => {
       try {
+        if (pendingOrderId) {
+          await syncMyOrderAction(pendingOrderId);
+        }
+
         const res = await getMyOrdersAction();
         if (res.success && Array.isArray(res.data)) {
           let found: any = null;
