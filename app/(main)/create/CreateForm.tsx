@@ -6,10 +6,11 @@ import { uploadAssetAction, createVideoJobAction } from '@/app/actions/job';
 import { useSWRConfig } from 'swr';
 
 const PRESETS = [
-  { id: 'preview_ltx_i2v', label: 'Preview', duration: '2s', cost: 1 },
-  { id: 'standard_wan22_ti2v', label: 'Standard', duration: '4s', cost: 5 },
-  { id: 'quality_hunyuan_i2v', label: 'Quality', duration: '8s', cost: 12 },
-  { id: 'turbo_wan22_i2v_a14b', label: 'Turbo', duration: '4s', cost: 8 },
+  { id: 'preview_ltx_i2v', label: 'Preview', duration: '5s', cost: 5, workflow: 'I2V' },
+  { id: 'standard_wan22_ti2v', label: 'Standard', duration: '5s', cost: 10, workflow: 'TI2V' },
+  { id: 'standard_wan22_ti2v_8s', label: 'Standard 8s', duration: '8s', cost: 14, workflow: 'TI2V' },
+  { id: 'quality_hunyuan_i2v', label: 'Quality', duration: '5s', cost: 20, workflow: 'I2V' },
+  { id: 'turbo_wan22_i2v_a14b', label: 'Turbo', duration: '5s', cost: 15, workflow: 'I2V' },
 ];
 
 export default function CreateForm({ credits }: { credits: number }) {
@@ -59,6 +60,12 @@ export default function CreateForm({ credits }: { credits: number }) {
       return;
     }
     
+    const selectedPreset = PRESETS.find((preset) => preset.id === presetId);
+    if (selectedPreset?.workflow === 'I2V' && !imageFile) {
+      setError('This preset requires an input image. Please upload an image first.');
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
     let inputAssetId: string | undefined;
@@ -162,7 +169,7 @@ export default function CreateForm({ credits }: { credits: number }) {
           type="file" 
           ref={fileInputRef} 
           onChange={handleImageChange} 
-          accept="image/jpeg, image/png, image/webp" 
+          accept="image/*" 
           className="hidden" 
         />
         
@@ -191,7 +198,7 @@ export default function CreateForm({ credits }: { credits: number }) {
       {/* Generation Preset */}
       <div className="mb-8">
         <label className="block text-sm font-medium text-slate-700 mb-2">Generation Preset</label>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           {PRESETS.map((preset) => {
             const isSelected = presetId === preset.id;
             return (
@@ -209,6 +216,9 @@ export default function CreateForm({ credits }: { credits: number }) {
                 </span>
                 <span className={`text-xs ${isSelected ? 'text-indigo-500' : 'text-slate-400'}`}>
                   {preset.duration} • {preset.cost} {preset.cost === 1 ? 'Credit' : 'Credits'}
+                </span>
+                <span className={`text-[10px] mt-1 ${isSelected ? 'text-indigo-400' : 'text-slate-400'}`}>
+                  {preset.workflow}
                 </span>
               </button>
             )
