@@ -323,3 +323,27 @@ export async function googleExchangeCodeAction(code: string) {
     return { success: false, error: getErrorMessage(error, 'Google Login failed') };
   }
 }
+
+export async function linkGoogleAccountAction(idToken: string) {
+  try {
+    const response = await fetchApi('/auth/google/link', {
+      method: 'POST',
+      body: JSON.stringify({
+        idToken,
+        platform: 'web',
+      }),
+    });
+
+    const message =
+      typeof response === 'object' &&
+      response !== null &&
+      'message' in response &&
+      typeof (response as { message?: unknown }).message === 'string'
+        ? (response as { message: string }).message
+        : 'Google account linked successfully';
+
+    return { success: true, message };
+  } catch (error: unknown) {
+    return { success: false, error: getErrorMessage(error, 'Failed to link Google account') };
+  }
+}

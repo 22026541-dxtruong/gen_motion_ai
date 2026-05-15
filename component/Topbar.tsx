@@ -1,18 +1,20 @@
 'use client';
 import React, { useState, useRef, useEffect } from 'react';
-import { Search, Bell, CreditCard, LogOut, Key, Users } from 'lucide-react';
+import { Search, Bell, CreditCard, LogOut, Key, Users, Link2 } from 'lucide-react';
 import { logoutAction } from '@/app/actions/auth';
 import Link from 'next/link';
 import ChangePasswordDialog from './ChangePasswordDialog';
 import SwitchAccountDialog from './SwitchAccountDialog';
 import NotificationBell from './NotificationBell';
 import { useUser } from '@/lib/swr';
+import GoogleLinkDialog from './GoogleLinkDialog';
 
 export default function Topbar() {
-  const { user } = useUser();
+  const { user, mutateUser } = useUser();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
   const [isSwitchAccountOpen, setIsSwitchAccountOpen] = useState(false);
+  const [isGoogleLinkOpen, setIsGoogleLinkOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const [savedAccounts, setSavedAccounts] = useState<any[]>([]);
@@ -130,6 +132,17 @@ export default function Topbar() {
                       <Users className="h-[18px] w-[18px]" />
                       <span>Switch Account</span>
                     </button>
+
+                    <button
+                      onClick={() => {
+                        setIsDropdownOpen(false);
+                        setIsGoogleLinkOpen(true);
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 transition-colors text-left mt-1"
+                    >
+                      <Link2 className="h-[18px] w-[18px]" />
+                      <span>{user?.isGoogleLinked ? 'Google Linked' : 'Link Google'}</span>
+                    </button>
                   </div>
                   
                   <div className="h-px bg-slate-100 my-1"></div>
@@ -183,6 +196,17 @@ export default function Topbar() {
         onClose={() => setIsSwitchAccountOpen(false)}
         currentUserEmail={user?.email}
       />
+
+      {isGoogleLinkOpen && (
+        <GoogleLinkDialog
+          isOpen={isGoogleLinkOpen}
+          onClose={() => setIsGoogleLinkOpen(false)}
+          isLinked={Boolean(user?.isGoogleLinked)}
+          onLinked={() => {
+            void mutateUser();
+          }}
+        />
+      )}
     </>
   );
 }
