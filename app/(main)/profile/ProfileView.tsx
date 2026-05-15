@@ -17,12 +17,13 @@ import {
 import Dialog from "@/component/Dialog";
 import PublishDialog from "@/component/PublishDialog";
 import { updateUserProfileAction } from "@/app/actions/user";
-import { uploadAssetAction, getAssetDownloadUrlAction } from "@/app/actions/job";
+import { uploadAssetAction } from "@/app/actions/job";
 import { deleteGalleryItemAction } from "@/app/actions/gallery";
 import { updatePostAction, deletePostAction } from "@/app/actions/post";
 import FollowsModal from "@/app/component/FollowsModal";
 import ShareButtons from "@/component/ShareButtons";
 import { useSWRConfig } from 'swr';
+import { buildApiUrl } from "@/lib/runtime-config";
 
 // ─── GalleryCard — video plays on hover ──────────────────────────────────────
 function GalleryCard({
@@ -289,10 +290,9 @@ export default function ProfileView({
         const uploadRes = await uploadAssetAction(uploadFormData);
 
         if (uploadRes.success && uploadRes.asset) {
-          const version = uploadRes.asset.versions?.[0];
-          const url =
-            version?.fileUrl ||
-            (uploadRes.asset.id ? await getSignedAvatarUrl(uploadRes.asset.id) : null);
+          const url = uploadRes.asset.id
+            ? buildApiUrl(`/assets/view/${uploadRes.asset.id}`)
+            : null;
 
           if (url) {
             payload.avatarUrl = url;
@@ -337,15 +337,6 @@ export default function ProfileView({
     const localPreview = URL.createObjectURL(file);
     setAvatarPreview(localPreview);
     pendingAvatarFileRef.current = file;
-  };
-
-  const getSignedAvatarUrl = async (assetId: string): Promise<string | null> => {
-    try {
-      const res = await getAssetDownloadUrlAction(assetId);
-      return res.success ? res.data?.url : null;
-    } catch {
-      return null;
-    }
   };
 
   const formatDuration = (ms: number) => {
