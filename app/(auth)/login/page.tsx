@@ -122,7 +122,7 @@ function LoginForm() {
 
               {/* Google Log In Button */}
               <a
-                href={buildGoogleAuthUrl()}
+                href={buildGoogleAuthUrl('login')}
                 className="w-full bg-white hover:bg-gray-50 text-slate-700 font-medium py-2.5 rounded-lg border border-gray-200 flex items-center justify-center gap-2.5 transition-colors"
               >
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">

@@ -38,7 +38,10 @@ export function buildSiteUrl(path: string) {
   return `${siteBaseUrl}${path.startsWith('/') ? path : `/${path}`}`;
 }
 
-export function buildGoogleAuthUrl() {
-  const redirectUri = buildSiteUrl('/google/callback');
-  return `${buildApiUrl('/auth/google')}?redirectUri=${encodeURIComponent(redirectUri)}`;
+export type GoogleAuthIntent = 'login' | 'register';
+
+export function buildGoogleAuthUrl(intent: GoogleAuthIntent = 'login') {
+  const endpoint = intent === 'register' ? '/auth/google/register' : '/auth/google/login';
+  const redirectUri = buildSiteUrl(`/google/callback?intent=${intent}`);
+  return `${buildApiUrl(endpoint)}?platform=web&redirectUri=${encodeURIComponent(redirectUri)}`;
 }

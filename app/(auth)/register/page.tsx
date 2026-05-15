@@ -115,7 +115,7 @@ export default function RegisterPage() {
 
             {/* Google Sign Up Button */}
             <a
-              href={buildGoogleAuthUrl()}
+              href={buildGoogleAuthUrl('register')}
               className="w-full bg-white hover:bg-gray-50 text-slate-800 font-semibold py-2.5 rounded-lg border border-gray-200 flex items-center justify-center gap-2.5 transition-colors shadow-sm"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">

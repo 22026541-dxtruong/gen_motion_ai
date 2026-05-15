@@ -5,6 +5,10 @@ import { redirect } from 'next/navigation';
 import { fetchApi } from '@/lib/api';
 import { buildApiUrl } from '@/lib/runtime-config';
 
+function getErrorMessage(error: unknown, fallback: string): string {
+  return error instanceof Error ? error.message : fallback;
+}
+
 export async function loginAction(formData: FormData) {
   const email = formData.get('email');
   const password = formData.get('password');
@@ -157,8 +161,8 @@ export async function changePasswordAction(formData: FormData) {
       body: JSON.stringify({ oldPassword, newPassword }),
     });
     return { success: true };
-  } catch (error: any) {
-    return { error: error.message || 'Change password failed' };
+  } catch (error: unknown) {
+    return { error: getErrorMessage(error, 'Change password failed') };
   }
 }
 
@@ -221,8 +225,8 @@ export async function logoutAllAction() {
     cookieStore.delete('accessToken');
     cookieStore.delete('refreshToken');
     return { success: true };
-  } catch (error: any) {
-    return { success: false, error: error.message || 'Logout all failed' };
+  } catch (error: unknown) {
+    return { success: false, error: getErrorMessage(error, 'Logout all failed') };
   }
 }
 
@@ -238,8 +242,8 @@ export async function forgotPasswordAction(email: string) {
       throw new Error(err.message || 'Failed to request password reset');
     }
     return { success: true };
-  } catch (error: any) {
-    return { success: false, error: error.message || 'Failed to request password reset' };
+  } catch (error: unknown) {
+    return { success: false, error: getErrorMessage(error, 'Failed to request password reset') };
   }
 }
 
@@ -255,8 +259,8 @@ export async function resetPasswordAction(token: string, newPassword: string) {
       throw new Error(err.message || 'Failed to reset password');
     }
     return { success: true };
-  } catch (error: any) {
-    return { success: false, error: error.message || 'Failed to reset password' };
+  } catch (error: unknown) {
+    return { success: false, error: getErrorMessage(error, 'Failed to reset password') };
   }
 }
 
@@ -294,8 +298,28 @@ export async function googleExchangeCodeAction(code: string) {
       });
     }
 
+    if (data.email && typeof data.email === 'string') {
+      cookieStore.set(`access_${data.email}`, data.accessToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        path: '/',
+        maxAge: 60 * 60 * 24 * 7,
+      });
+
+      if (data.refreshToken) {
+        cookieStore.set(`refresh_${data.email}`, data.refreshToken, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'lax',
+          path: '/',
+          maxAge: 60 * 60 * 24 * 30,
+        });
+      }
+    }
+
     return { success: true };
-  } catch (error: any) {
-    return { success: false, error: error.message || 'Google Login failed' };
+  } catch (error: unknown) {
+    return { success: false, error: getErrorMessage(error, 'Google Login failed') };
   }
 }
