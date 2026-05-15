@@ -1,13 +1,10 @@
 import {
   ArrowLeft,
-  Search,
   BadgeCheck,
+  ShieldCheck,
   Rocket,
   Bot,
-  Link as LinkIcon,
-  Mail,
   LayoutGrid,
-  Library
 } from 'lucide-react';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
@@ -16,6 +13,12 @@ import { fetchApi } from '@/lib/api';
 import UserVideoCard from './UserVideoCard';
 import FollowButton from './FollowButton';
 import ShareButtons from "../../../component/ShareButtons";
+
+type PublicPost = {
+  id: string;
+  userId: string;
+  [key: string]: unknown;
+};
 
 export default async function UserProfile({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = await params;
@@ -30,7 +33,7 @@ export default async function UserProfile({ params }: { params: Promise<{ id: st
   let currentUser = null;
   try {
     currentUser = await fetchApi('/users/me');
-  } catch (error) {
+  } catch {
     // Guest user
   }
 
@@ -45,11 +48,17 @@ export default async function UserProfile({ params }: { params: Promise<{ id: st
     isFollowing = followStatus.isFollowing;
   }
 
-  let userPosts = [];
+  let userPosts: PublicPost[] = [];
   try {
     const allPosts = await fetchApi('/posts');
     if (Array.isArray(allPosts)) {
-      userPosts = allPosts.filter((p: any) => p.userId === user.id);
+      userPosts = allPosts.filter((p): p is PublicPost => (
+        typeof p === 'object' &&
+        p !== null &&
+        typeof (p as PublicPost).id === 'string' &&
+        typeof (p as PublicPost).userId === 'string' &&
+        (p as PublicPost).userId === user.id
+      ));
     }
   } catch (error) {
     console.error("Failed to fetch posts:", error);
@@ -81,6 +90,11 @@ export default async function UserProfile({ params }: { params: Promise<{ id: st
               {user.role === 'PRO' && (
                 <div className="absolute bottom-1 right-1 bg-white rounded-full p-0.5">
                   <BadgeCheck className="w-7 h-7 text-indigo-600 fill-indigo-600" color="white" />
+                </div>
+              )}
+              {user.role === 'ADMIN' && (
+                <div className="absolute bottom-1 right-1 bg-white rounded-full p-0.5">
+                  <ShieldCheck className="w-7 h-7 text-rose-600 fill-rose-600" color="white" />
                 </div>
               )}
             </div>
@@ -157,7 +171,7 @@ export default async function UserProfile({ params }: { params: Promise<{ id: st
               No public videos available.
             </div>
           ) : (
-            userPosts.map((post: any) => (
+            userPosts.map((post) => (
               <UserVideoCard key={post.id} post={post} />
             ))
           )}

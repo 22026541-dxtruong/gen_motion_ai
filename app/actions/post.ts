@@ -53,10 +53,15 @@ export async function likePostAction(postId: string) {
  * Auth: Bearer JWT
  * Response: { id, userId, postId, createdAt }
  */
-export async function unlikePostAction(postId: string) {
+export async function unlikePostAction(postId: string, likedUserId?: string) {
   if (!postId) return { success: false, error: 'Missing postId' };
   try {
-    const data = await fetchApi(`/posts/${postId}/post-likes`, {
+    const params = new URLSearchParams();
+    if (likedUserId?.trim()) {
+      params.set('userId', likedUserId.trim());
+    }
+    const query = params.toString();
+    const data = await fetchApi(`/posts/${postId}/post-likes${query ? `?${query}` : ''}`, {
       method: 'DELETE',
     });
     return { success: true, data };

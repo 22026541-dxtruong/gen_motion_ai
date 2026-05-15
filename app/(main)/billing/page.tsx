@@ -3,6 +3,7 @@
 import React from "react";
 import BillingClientView from "./BillingClientView";
 import BillingAdminPanel from "./BillingAdminPanel";
+import AdminModerationPanel from "./AdminModerationPanel";
 import { useBillingCatalog, useUser } from "@/lib/swr";
 import { Loader2 } from "lucide-react";
 
@@ -117,7 +118,12 @@ export default function BillingPage() {
 
       {/* Dynamic Billing UI (Plans & Orders) */}
       <BillingClientView catalog={catalog} />
-      {isAdmin && <BillingAdminPanel />}
+      {isAdmin && (
+        <>
+          <BillingAdminPanel />
+          <AdminModerationPanel />
+        </>
+      )}
 
       {/* Secure Payment Methods */}
       <div className="bg-[#F8FAFC] rounded-3xl p-8 text-center mt-12">

@@ -108,9 +108,14 @@ export async function followUserAction(userId: string) {
   }
 }
 
-export async function unfollowUserAction(userId: string) {
+export async function unfollowUserAction(userId: string, followerId?: string) {
   try {
-    const data = await fetchApi(`/follows/${userId}`, {
+    const params = new URLSearchParams();
+    if (followerId?.trim()) {
+      params.set('followerId', followerId.trim());
+    }
+    const query = params.toString();
+    const data = await fetchApi(`/follows/${userId}${query ? `?${query}` : ''}`, {
       method: 'DELETE',
     });
     revalidatePath(`/user/${userId}`);

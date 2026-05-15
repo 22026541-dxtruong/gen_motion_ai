@@ -14,9 +14,14 @@ export async function followUserAction(followingId: string, sourcePostId?: strin
   }
 }
 
-export async function unfollowUserAction(userId: string) {
+export async function unfollowUserAction(userId: string, followerId?: string) {
   try {
-    await fetchApi(`/follows/${userId}`, { method: 'DELETE' });
+    const params = new URLSearchParams();
+    if (followerId?.trim()) {
+      params.set('followerId', followerId.trim());
+    }
+    const query = params.toString();
+    await fetchApi(`/follows/${userId}${query ? `?${query}` : ''}`, { method: 'DELETE' });
     return { success: true };
   } catch (error: any) {
     return { success: false, error: error.message || 'Failed to unfollow user' };
