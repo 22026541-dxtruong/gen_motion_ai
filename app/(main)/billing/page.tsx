@@ -2,9 +2,7 @@
 
 import React from "react";
 import BillingClientView from "./BillingClientView";
-import BillingAdminPanel from "./BillingAdminPanel";
-import AdminModerationPanel from "./AdminModerationPanel";
-import { useBillingCatalog, useUser } from "@/lib/swr";
+import { useBillingCatalog } from "@/lib/swr";
 import { Loader2 } from "lucide-react";
 
 type NormalizedCatalog = {
@@ -93,11 +91,9 @@ function normalizeCatalog(raw: unknown): NormalizedCatalog {
 
 export default function BillingPage() {
   const { catalog: rawCatalog, isLoading } = useBillingCatalog();
-  const { user, isLoading: loadingUser } = useUser();
   const catalog = normalizeCatalog(rawCatalog);
-  const isAdmin = user?.role === "ADMIN";
 
-  if (isLoading || loadingUser) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />
@@ -118,12 +114,6 @@ export default function BillingPage() {
 
       {/* Dynamic Billing UI (Plans & Orders) */}
       <BillingClientView catalog={catalog} />
-      {isAdmin && (
-        <>
-          <BillingAdminPanel />
-          <AdminModerationPanel />
-        </>
-      )}
 
       {/* Secure Payment Methods */}
       <div className="bg-[#F8FAFC] rounded-3xl p-8 text-center mt-12">
