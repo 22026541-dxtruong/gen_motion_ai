@@ -1,9 +1,9 @@
 'use client';
 
 import React from "react";
-import ConfirmWebhookButton from "./ConfirmWebhookButton";
 import BillingClientView from "./BillingClientView";
-import { useBillingCatalog } from "@/lib/swr";
+import BillingAdminPanel from "./BillingAdminPanel";
+import { useBillingCatalog, useUser } from "@/lib/swr";
 import { Loader2 } from "lucide-react";
 
 type NormalizedCatalog = {
@@ -13,6 +13,23 @@ type NormalizedCatalog = {
     name: string;
     price: number;
     credits: number;
+  }>;
+};
+
+type BillingCatalogPayload = {
+  pro?: { price?: number; credits?: number };
+  topup?: Array<{
+    code?: string;
+    name?: string;
+    price?: number;
+    credits?: number;
+  }>;
+  proPlan?: { amountUsd?: number; credits?: number };
+  creditTopupPackages?: Array<{
+    code?: string;
+    label?: string;
+    amountUsd?: number;
+    credits?: number;
   }>;
 };
 
@@ -28,18 +45,31 @@ function getFallbackCatalog(): NormalizedCatalog {
   };
 }
 
-function normalizeCatalog(raw: any): NormalizedCatalog {
+function normalizeCatalog(raw: unknown): NormalizedCatalog {
   if (!raw || typeof raw !== "object") {
     return getFallbackCatalog();
   }
 
-  if (raw.pro && raw.topup) {
-    return raw as NormalizedCatalog;
+  const payload = raw as BillingCatalogPayload;
+
+  if (payload.pro && payload.topup) {
+    return {
+      pro: {
+        price: Number(payload.pro.price ?? 14.99),
+        credits: Number(payload.pro.credits ?? 1000),
+      },
+      topup: payload.topup.map((item) => ({
+        code: String(item.code ?? ""),
+        name: String(item.name ?? item.code ?? "Top-up"),
+        price: Number(item.price ?? 0),
+        credits: Number(item.credits ?? 0),
+      })),
+    };
   }
 
-  const proPlan = raw.proPlan ?? {};
-  const topupPackages = Array.isArray(raw.creditTopupPackages)
-    ? raw.creditTopupPackages
+  const proPlan = payload.proPlan ?? {};
+  const topupPackages = Array.isArray(payload.creditTopupPackages)
+    ? payload.creditTopupPackages
     : [];
 
   if (topupPackages.length === 0) {
@@ -51,7 +81,7 @@ function normalizeCatalog(raw: any): NormalizedCatalog {
       price: Number(proPlan.amountUsd ?? 14.99),
       credits: Number(proPlan.credits ?? 1000),
     },
-    topup: topupPackages.map((pkg: any) => ({
+    topup: topupPackages.map((pkg) => ({
       code: String(pkg.code ?? ""),
       name: String(pkg.label ?? pkg.code ?? "Top-up"),
       price: Number(pkg.amountUsd ?? 0),
@@ -62,9 +92,11 @@ function normalizeCatalog(raw: any): NormalizedCatalog {
 
 export default function BillingPage() {
   const { catalog: rawCatalog, isLoading } = useBillingCatalog();
+  const { user, isLoading: loadingUser } = useUser();
   const catalog = normalizeCatalog(rawCatalog);
+  const isAdmin = user?.role === "ADMIN";
 
-  if (isLoading) {
+  if (isLoading || loadingUser) {
     return (
       <div className="flex items-center justify-center h-64">
         <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />
@@ -85,6 +117,7 @@ export default function BillingPage() {
 
       {/* Dynamic Billing UI (Plans & Orders) */}
       <BillingClientView catalog={catalog} />
+      {isAdmin && <BillingAdminPanel />}
 
       {/* Secure Payment Methods */}
       <div className="bg-[#F8FAFC] rounded-3xl p-8 text-center mt-12">
@@ -115,7 +148,6 @@ export default function BillingPage() {
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
           All transactions are encrypted and secured by industrial-grade SSL standards.
         </div>
-        <ConfirmWebhookButton />
       </div>
     </div>
   );
