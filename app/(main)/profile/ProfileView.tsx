@@ -230,6 +230,8 @@ export default function ProfileView({
   const [previewMediaUrl, setPreviewMediaUrl] = useState<string | null>(null);
   const [editingPost, setEditingPost] = useState<any | null>(null);
   const [editCaption, setEditCaption] = useState<string>("");
+  const [editTopic, setEditTopic] = useState<string>("");
+  const [editPostError, setEditPostError] = useState<string | null>(null);
   const [isSavingEdit, setIsSavingEdit] = useState(false);
 
   // Avatar Upload State
@@ -523,6 +525,8 @@ export default function ProfileView({
                 onEdit={(item) => {
                   setEditingPost(item);
                   setEditCaption(item.caption || item.title || "");
+                  setEditTopic("");
+                  setEditPostError(null);
                 }}
               />
             );
@@ -664,10 +668,19 @@ export default function ProfileView({
       {editingPost && (
         <Dialog
           isOpen={!!editingPost}
-          onClose={() => setEditingPost(null)}
+          onClose={() => {
+            setEditingPost(null);
+            setEditPostError(null);
+            setEditTopic("");
+          }}
           title="Edit Post"
         >
           <div className="p-1">
+            {editPostError && (
+              <div className="p-3 mb-3 bg-red-50 text-red-600 text-sm rounded-lg border border-red-100">
+                {editPostError}
+              </div>
+            )}
             <label className="block text-sm font-semibold text-gray-900 mb-2">
               Caption
             </label>
@@ -678,10 +691,27 @@ export default function ProfileView({
               className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition resize-none text-gray-900"
               placeholder="Write a caption for your post..."
             />
+            <label className="block text-sm font-semibold text-gray-900 mb-2 mt-4">
+              Topic (Optional)
+            </label>
+            <input
+              value={editTopic}
+              onChange={(e) => setEditTopic(e.target.value)}
+              maxLength={40}
+              className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition text-gray-900"
+              placeholder="e.g. cinematic, anime, travel_vlog"
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Để giữ topic hiện tại, để trống ô này.
+            </p>
             <div className="flex justify-end gap-3 mt-6">
               <button
                 type="button"
-                onClick={() => setEditingPost(null)}
+                onClick={() => {
+                  setEditingPost(null);
+                  setEditPostError(null);
+                  setEditTopic("");
+                }}
                 className="px-5 py-2 border border-gray-200 text-gray-700 hover:bg-gray-50 rounded-full font-medium transition"
               >
                 Cancel
@@ -690,10 +720,25 @@ export default function ProfileView({
                 type="button"
                 disabled={isSavingEdit}
                 onClick={async () => {
+                  const normalizedTopic = editTopic.trim().replace(/^#+/, "").toLowerCase();
+                  if (normalizedTopic && !/^[a-z0-9_-]{1,40}$/.test(normalizedTopic)) {
+                    setEditPostError("Topic chỉ chứa chữ/số và ký tự '-' hoặc '_' (tối đa 40 ký tự).");
+                    return;
+                  }
+
                   setIsSavingEdit(true);
-                  await updatePostAction(editingPost.id, { caption: editCaption });
+                  setEditPostError(null);
+                  const res = await updatePostAction(editingPost.id, {
+                    caption: editCaption,
+                    topic: normalizedTopic || undefined,
+                  });
                   setIsSavingEdit(false);
+                  if (!res.success) {
+                    setEditPostError(res.error || "Failed to update post");
+                    return;
+                  }
                   setEditingPost(null);
+                  setEditTopic("");
                   window.location.reload();
                 }}
                 className="px-5 py-2 bg-indigo-600 text-white rounded-full font-medium hover:bg-indigo-700 transition shadow-sm disabled:opacity-70"

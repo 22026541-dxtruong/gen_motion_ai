@@ -20,14 +20,26 @@ export default function PublishDialog({
   defaultCaption?: string;
 }) {
   const [caption, setCaption] = useState(defaultCaption);
+  const [topic, setTopic] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
   const handlePublish = async () => {
+    const normalizedTopic = topic.trim().replace(/^#+/, "").toLowerCase();
+    if (normalizedTopic && !/^[a-z0-9_-]{1,40}$/.test(normalizedTopic)) {
+      setError("Topic chỉ chứa chữ/số và ký tự '-' hoặc '_' (tối đa 40 ký tự).");
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
 
-    const res = await publishVideoAction(assetId || null, assetVersionId || null, caption, jobId || null);
+    const res = await publishVideoAction(
+      assetId || null,
+      assetVersionId || null,
+      caption,
+      normalizedTopic || undefined,
+      jobId || null
+    );
 
     if (res.success) {
       setIsLoading(false);
@@ -62,6 +74,20 @@ export default function PublishDialog({
           />
         </div>
 
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-2">Topic (Optional)</label>
+          <input
+            className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow bg-slate-50"
+            placeholder="e.g. cinematic, anime, travel_vlog"
+            value={topic}
+            maxLength={40}
+            onChange={(e) => setTopic(e.target.value)}
+          />
+          <p className="text-xs text-slate-500 mt-1">
+            Topic giúp bài viết dễ được tìm thấy hơn trong Explore.
+          </p>
+        </div>
+
         <div className="flex gap-3 justify-end pt-2">
           <button
             onClick={onClose}
@@ -82,3 +108,4 @@ export default function PublishDialog({
     </Dialog>
   );
 }
+

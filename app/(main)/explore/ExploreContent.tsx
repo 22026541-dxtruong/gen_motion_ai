@@ -42,12 +42,14 @@ export default function ExploreContent({
   initialSort,
   initialTrending,
 }: ExploreContentProps) {
+  const resolvedMode =
+    initialMode === "for_you" && !isAuthenticated ? "trending" : initialMode;
   const [activeMode, setActiveMode] = useState(
-    initialMode === "for_you" && !isAuthenticated ? "trending" : initialMode
+    resolvedMode
   );
-  const [topic] = useState(initialTopic);
-  const [sort] = useState(initialSort);
-  const [trending] = useState(initialTrending);
+  const topic = initialTopic;
+  const sort = initialSort;
+  const trending = initialTrending;
 
   // ── Per-tab cache ─────────────────────────────────────────────────────────
   const cacheRef = useRef<Record<string, TabCache>>({});
@@ -60,6 +62,10 @@ export default function ExploreContent({
   const [isPageLoading, setIsPageLoading] = useState(true);
 
   const showFeatured = !topic && activeMode !== "for_you";
+
+  useEffect(() => {
+    setActiveMode(resolvedMode);
+  }, [resolvedMode]);
 
   const tabs = [
     ...(isAuthenticated
@@ -79,8 +85,10 @@ export default function ExploreContent({
 
   const fetchData = useCallback(
     async (mode: string) => {
+      const cacheKey = `${mode}|topic:${topic}|sort:${sort}|trending:${trending}|auth:${isAuthenticated}`;
+
       // ── Check cache first → instant display ──
-      const cached = cacheRef.current[mode];
+      const cached = cacheRef.current[cacheKey];
       if (cached) {
         applyCachedData(cached);
         setIsPageLoading(false);
@@ -131,7 +139,7 @@ export default function ExploreContent({
           const newSignals = exploreRes.data.signals || null;
 
           // Save to cache
-          cacheRef.current[mode] = {
+          cacheRef.current[cacheKey] = {
             items: newItems,
             nextCursor: newCursor,
             signals: newSignals,
@@ -185,7 +193,7 @@ export default function ExploreContent({
         </div>
 
         <div className="flex flex-col sm:flex-row items-center gap-4">
-          <ExploreSearch />
+          <ExploreSearch key={`${topic}|${sort}|${trending}`} />
         </div>
       </div>
 

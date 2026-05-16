@@ -122,6 +122,7 @@ export async function publishVideoAction(
   assetId: string | null,
   assetVersionId: string | null,
   caption: string,
+  topic?: string | null,
   jobId: string | null = null
 ) {
   try {
@@ -149,7 +150,12 @@ export async function publishVideoAction(
 
     const post = await fetchApi('/posts', {
       method: 'POST',
-      body: JSON.stringify({ assetVersionId: resolvedVersionId, caption, isPublic: true }),
+      body: JSON.stringify({
+        assetVersionId: resolvedVersionId,
+        caption,
+        topic: topic?.trim() ? topic.trim().toLowerCase() : undefined,
+        isPublic: true,
+      }),
     });
 
     try {
@@ -207,7 +213,10 @@ export async function getPostsAction() {
 /**
  * PATCH /posts/:id — Auth: Bearer JWT
  */
-export async function updatePostAction(postId: string, payload: { assetVersionId?: string; caption?: string; isPublic?: boolean }) {
+export async function updatePostAction(
+  postId: string,
+  payload: { assetVersionId?: string; caption?: string; topic?: string; isPublic?: boolean },
+) {
   try {
     const data = await fetchApi(`/posts/${postId}`, {
       method: 'PATCH',

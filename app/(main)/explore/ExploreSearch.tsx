@@ -43,7 +43,8 @@ export default function ExploreSearch() {
       currentParams.delete("trending");
     }
     
-    router.push(`/explore?${currentParams.toString()}`);
+    const query = currentParams.toString();
+    router.push(query ? `/explore?${query}` : "/explore");
   };
 
   const handleSortChange = (newSort: string) => {
