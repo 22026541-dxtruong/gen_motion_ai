@@ -13,6 +13,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -32,16 +33,26 @@ import coil3.compose.AsyncImage
 import ie.app.neuragen.data.network.model.UserMeDto
 import ie.app.neuragen.ui.common.rememberFileBytesLoader
 import ie.app.neuragen.ui.common.rememberImagePickerLauncher
+import ie.app.neuragen.util.UserSessionState
 import neuragen.composeapp.generated.resources.*
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun ProfileScreen(
-    viewModel: ProfileViewModel = koinViewModel()
+    viewModel: ProfileViewModel = koinViewModel(),
+    onNavigateToBilling: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val gallery = if (uiState.selectedTab == 0) uiState.publicGallery else uiState.privateGallery
+
+    // Observe shared session for real-time avatar/credit updates (from Topbar singleton)
+    val sharedUser by UserSessionState.user.collectAsState()
+
+    // Refresh profile when screen regains focus (e.g., returning from billing)
+    LaunchedEffect(Unit) {
+        viewModel.loadProfile()
+    }
 
     Box(Modifier.fillMaxSize()) {
         if (uiState.isLoading && uiState.user == null) {
@@ -51,10 +62,10 @@ fun ProfileScreen(
                 modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
                 contentPadding = PaddingValues(bottom = 16.dp)
             ) {
-                item { ProfileHeader(user = uiState.user, onEditClick = viewModel::onEditProfileClick) }
-                item { UserStatsSection(user = uiState.user, onFollowersClick = viewModel::onFollowersClick, onFollowingsClick = viewModel::onFollowingsClick) }
-                item { BioSection(user = uiState.user) }
-                item { CreditBalanceCard(user = uiState.user) }
+                item { ProfileHeader(user = sharedUser ?: uiState.user, onEditClick = viewModel::onEditProfileClick) }
+                item { UserStatsSection(user = sharedUser ?: uiState.user, onFollowersClick = viewModel::onFollowersClick, onFollowingsClick = viewModel::onFollowingsClick) }
+                item { BioSection(user = sharedUser ?: uiState.user) }
+                item { CreditBalanceCard(user = sharedUser ?: uiState.user, onBuyCredits = onNavigateToBilling) }
                 item { ProfileTabs(selectedIndex = uiState.selectedTab, onTabSelected = viewModel::onTabSelected) }
 
                 if (gallery.isEmpty()) {
@@ -174,7 +185,7 @@ fun BioSection(user: UserMeDto?) {
 }
 
 @Composable
-fun CreditBalanceCard(user: UserMeDto?) {
+fun CreditBalanceCard(user: UserMeDto?, onBuyCredits: () -> Unit = {}) {
     Card(Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 8.dp), shape = RoundedCornerShape(20.dp), colors = CardDefaults.cardColors(containerColor = Color.White), elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)) {
         Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
             Surface(Modifier.size(40.dp), shape = RoundedCornerShape(12.dp), color = MaterialTheme.colorScheme.primary) {
@@ -188,7 +199,7 @@ fun CreditBalanceCard(user: UserMeDto?) {
                     Text(" Available Credits", style = MaterialTheme.typography.bodySmall, color = Color.Gray, modifier = Modifier.padding(bottom = 2.dp, start = 4.dp))
                 }
             }
-            Button(onClick = {}, shape = RoundedCornerShape(12.dp), colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primaryContainer, contentColor = MaterialTheme.colorScheme.primary), contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)) {
+            Button(onClick = onBuyCredits, shape = RoundedCornerShape(12.dp), colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primaryContainer, contentColor = MaterialTheme.colorScheme.primary), contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)) {
                 Text("Buy Credits", fontWeight = FontWeight.Bold, fontSize = 12.sp)
             }
         }
@@ -308,8 +319,14 @@ fun ProfileGalleryCard(item: GalleryItem, onPublish: (GalleryItem) -> Unit, onEd
 @Composable
 fun EditProfileDialog(user: UserMeDto?, username: String, onUsernameChange: (String) -> Unit, bio: String, onBioChange: (String) -> Unit, onClose: () -> Unit, onSave: () -> Unit, isUpdating: Boolean, avatarPreview: String?, isUploadingAvatar: Boolean, onAvatarUpload: (ByteArray, String) -> Unit) {
     val loadFileBytes = rememberFileBytesLoader()
+    // Local preview — shows immediately after picking (matches web's URL.createObjectURL)
+    var localPreviewUri by remember { mutableStateOf<String?>(null) }
+
     val launchPicker = rememberImagePickerLauncher { uri ->
         if (uri != null) {
+            // Show local preview immediately
+            localPreviewUri = uri
+            // Store bytes for deferred upload on Save (no upload yet!)
             val bytes = loadFileBytes(uri)
             if (bytes != null) onAvatarUpload(bytes, "avatar.jpg")
         }
@@ -323,12 +340,13 @@ fun EditProfileDialog(user: UserMeDto?, username: String, onUsernameChange: (Str
             }
             Spacer(Modifier.height(24.dp))
             Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
-                val displayAvatar = avatarPreview ?: user?.avatarUrl ?: "https://ui-avatars.com/api/?name=${username.ifBlank { "U" }}&background=e0e7ff&color=4f46e5"
+                // Priority: local file preview → current server avatar → fallback placeholder
+                val displayAvatar = localPreviewUri ?: user?.avatarUrl ?: "https://ui-avatars.com/api/?name=${username.ifBlank { "U" }}&background=e0e7ff&color=4f46e5"
                 Box(Modifier.size(80.dp).clip(CircleShape).background(Color.LightGray), contentAlignment = Alignment.Center) {
-                    AsyncImage(model = displayAvatar, contentDescription = null, modifier = Modifier.fillMaxSize().let { if (isUploadingAvatar) it else it }, contentScale = ContentScale.Crop)
+                    AsyncImage(model = displayAvatar, contentDescription = null, modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
                     if (isUploadingAvatar) CircularProgressIndicator(Modifier.size(28.dp), color = MaterialTheme.colorScheme.primary, strokeWidth = 2.dp)
                 }
-                TextButton(onClick = { launchPicker() }, enabled = !isUploadingAvatar) {
+                TextButton(onClick = { launchPicker() }, enabled = !isUpdating) {
                     Text("Change Photo", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                 }
             }

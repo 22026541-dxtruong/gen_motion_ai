@@ -17,14 +17,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.ChatBubble
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Send
+import androidx.compose.material.icons.filled.Close
 import ie.app.neuragen.data.network.model.ExploreItemDto
 import ie.app.neuragen.data.network.model.JobDto
 import neuragen.composeapp.generated.resources.*
@@ -90,39 +96,73 @@ fun ExploreScreen(
                 )
             }
 
-            if (uiState.searchQuery.isBlank() && uiState.activeMode == "for_you" && uiState.forYouItems.isNotEmpty()) {
+            // Initial loading indicator
+            if (uiState.isLoading && uiState.recentDiscoveries.isEmpty()) {
                 item {
-                    SectionHeader(
-                        title = "For You",
-                        icon = Res.drawable.ic_for_you
-                    )
-
-                    ForYouCarousel(
-                        items = uiState.forYouItems,
-                        onItemClick = onPostClick
-                    )
+                    Box(
+                        modifier = Modifier.fillMaxWidth().height(300.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(40.dp),
+                                color = MaterialTheme.colorScheme.primary,
+                                strokeWidth = 3.dp
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text(
+                                "Loading discoveries...",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = Color.Gray
+                            )
+                        }
+                    }
                 }
             }
 
-            item {
-                SectionHeader(
-                    title = if (uiState.searchQuery.isNotBlank()) "Search Results" else "Recent Discoveries",
-                    icon = Res.drawable.ic_recent_discoveries,
-                    showSeeAll = false
-                )
-            }
+            if (!uiState.isLoading || uiState.recentDiscoveries.isNotEmpty()) {
+                if (uiState.searchQuery.isBlank() && uiState.activeMode == "for_you" && uiState.forYouItems.isNotEmpty()) {
+                    item {
+                        SectionHeader(
+                            title = "For You",
+                            icon = Res.drawable.ic_for_you
+                        )
 
-            itemsIndexed(uiState.recentDiscoveries) { index, item ->
-                RecentDiscoveryItem(
-                    item = item,
-                    onItemClick = onPostClick,
-                    onUserClick = onUserClick
-                )
+                        ForYouCarousel(
+                            items = uiState.forYouItems,
+                            onItemClick = { postId ->
+                                viewModel.trackClick(postId)
+                                onPostClick(postId)
+                            },
+                            viewModel = viewModel
+                        )
+                    }
+                }
 
-                // Infinite Scroll trigger
-                if (index == uiState.recentDiscoveries.lastIndex && !uiState.isLoading && !uiState.isFetchingMore && uiState.nextCursor != null) {
-                    LaunchedEffect(Unit) {
-                        viewModel.loadMore()
+                item {
+                    SectionHeader(
+                        title = if (uiState.searchQuery.isNotBlank()) "Search Results" else "Recent Discoveries",
+                        icon = Res.drawable.ic_recent_discoveries,
+                        showSeeAll = false
+                    )
+                }
+
+                itemsIndexed(uiState.recentDiscoveries) { index, item ->
+                    RecentDiscoveryItem(
+                        item = item,
+                        onItemClick = { postId ->
+                            viewModel.trackClick(postId)
+                            onPostClick(postId)
+                        },
+                        onUserClick = onUserClick,
+                        viewModel = viewModel
+                    )
+
+                    // Infinite Scroll trigger
+                    if (index == uiState.recentDiscoveries.lastIndex && !uiState.isLoading && !uiState.isFetchingMore && uiState.nextCursor != null) {
+                        LaunchedEffect(Unit) {
+                            viewModel.loadMore()
+                        }
                     }
                 }
             }
@@ -394,7 +434,8 @@ fun SectionHeader(
 @Composable
 fun ForYouCarousel(
     items: List<ExploreItemDto>,
-    onItemClick: (String) -> Unit
+    onItemClick: (String) -> Unit,
+    viewModel: ExploreViewModel
 ) {
     LazyRow(
         contentPadding = PaddingValues(horizontal = 16.dp),
@@ -402,7 +443,7 @@ fun ForYouCarousel(
         modifier = Modifier.fillMaxWidth()
     ) {
         items(items) { item ->
-            ForYouItem(item = item, onClick = { onItemClick(item.postId ?: "") })
+            ForYouItem(item = item, onClick = { onItemClick(item.postId ?: "") }, viewModel = viewModel)
         }
     }
 }
@@ -410,8 +451,20 @@ fun ForYouCarousel(
 @Composable
 fun ForYouItem(
     item: ExploreItemDto,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    viewModel: ExploreViewModel
 ) {
+    val uiState by viewModel.uiState.collectAsState()
+    val postId = item.postId ?: ""
+    val isLiked = uiState.likedPostIds.contains(postId)
+    val likeCount = uiState.likeCounts[postId] ?: (item.post?.likeCount ?: 0)
+    val commentCount = uiState.commentCounts[postId] ?: (item.post?.commentCount ?: 0)
+    val clipboardManager = LocalClipboardManager.current
+
+    // Track impression when visible
+    LaunchedEffect(postId) {
+        if (postId.isNotEmpty()) viewModel.trackImpression(postId)
+    }
     Card(
         modifier = Modifier
             .width(320.dp)
@@ -545,23 +598,29 @@ fun ForYouItem(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.clickable { if (postId.isNotEmpty()) viewModel.toggleLike(postId) }
+                        ) {
                             Icon(
-                                imageVector = Icons.Default.Favorite,
+                                imageVector = if (isLiked) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
                                 contentDescription = "Like",
                                 modifier = Modifier.size(20.dp),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                tint = if (isLiked) Color.Red else MaterialTheme.colorScheme.onSurfaceVariant
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
-                                (item.post?.likeCount ?: 0).toString(),
+                                likeCount.toString(),
                                 style = MaterialTheme.typography.labelMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 fontWeight = FontWeight.Bold
                             )
                         }
 
-                        Row(verticalAlignment = Alignment.CenterVertically) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.clickable { if (postId.isNotEmpty()) viewModel.toggleCommentExpansion(postId) }
+                        ) {
                             Icon(
                                 imageVector = Icons.Default.ChatBubble,
                                 contentDescription = "Comment",
@@ -570,7 +629,7 @@ fun ForYouItem(
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
-                                (item.post?.commentCount ?: 0).toString(),
+                                commentCount.toString(),
                                 style = MaterialTheme.typography.labelMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 fontWeight = FontWeight.Bold
@@ -581,7 +640,9 @@ fun ForYouItem(
                     Icon(
                         imageVector = Icons.Default.Share,
                         contentDescription = "Share",
-                        modifier = Modifier.size(20.dp),
+                        modifier = Modifier.size(20.dp).clickable {
+                            clipboardManager.setText(AnnotatedString("https://neuragen.xyz/post/$postId"))
+                        },
                         tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
@@ -594,13 +655,28 @@ fun ForYouItem(
 fun RecentDiscoveryItem(
     item: ExploreItemDto,
     onItemClick: (String) -> Unit,
-    onUserClick: (String) -> Unit
+    onUserClick: (String) -> Unit,
+    viewModel: ExploreViewModel
 ) {
+    val uiState by viewModel.uiState.collectAsState()
+    val postId = item.postId ?: ""
+    val isLiked = uiState.likedPostIds.contains(postId)
+    val likeCount = uiState.likeCounts[postId] ?: (item.post?.likeCount ?: 0)
+    val commentCount = uiState.commentCounts[postId] ?: (item.post?.commentCount ?: 0)
+    val isCommentExpanded = uiState.expandedCommentPostId == postId
+    var commentText by remember { mutableStateOf("") }
+    val clipboardManager = LocalClipboardManager.current
+
+    // Track impression
+    LaunchedEffect(postId) {
+        if (postId.isNotEmpty()) viewModel.trackImpression(postId)
+    }
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 12.dp)
-            .clickable { onItemClick(item.postId ?: "") },
+            .clickable { onItemClick(postId) },
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
@@ -732,23 +808,29 @@ fun RecentDiscoveryItem(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.clickable { if (postId.isNotEmpty()) viewModel.toggleLike(postId) }
+                        ) {
                             Icon(
-                                imageVector = Icons.Default.Favorite,
+                                imageVector = if (isLiked) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
                                 contentDescription = "Like",
                                 modifier = Modifier.size(20.dp),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                tint = if (isLiked) Color.Red else MaterialTheme.colorScheme.onSurfaceVariant
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
-                                (item.post?.likeCount ?: 0).toString(),
+                                likeCount.toString(),
                                 style = MaterialTheme.typography.labelMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 fontWeight = FontWeight.Bold
                             )
                         }
 
-                        Row(verticalAlignment = Alignment.CenterVertically) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.clickable { if (postId.isNotEmpty()) viewModel.toggleCommentExpansion(postId) }
+                        ) {
                             Icon(
                                 imageVector = Icons.Default.ChatBubble,
                                 contentDescription = "Comment",
@@ -757,7 +839,7 @@ fun RecentDiscoveryItem(
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
-                                (item.post?.commentCount ?: 0).toString(),
+                                commentCount.toString(),
                                 style = MaterialTheme.typography.labelMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 fontWeight = FontWeight.Bold
@@ -768,9 +850,46 @@ fun RecentDiscoveryItem(
                     Icon(
                         imageVector = Icons.Default.Share,
                         contentDescription = "Share",
-                        modifier = Modifier.size(20.dp),
+                        modifier = Modifier.size(20.dp).clickable {
+                            clipboardManager.setText(AnnotatedString("https://neuragen.xyz/post/$postId"))
+                        },
                         tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
+                }
+
+                // Inline comment box
+                if (isCommentExpanded) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(12.dp))
+                            .padding(horizontal = 12.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        OutlinedTextField(
+                            value = commentText,
+                            onValueChange = { commentText = it },
+                            placeholder = { Text("Write a comment...", style = MaterialTheme.typography.bodySmall) },
+                            modifier = Modifier.weight(1f),
+                            singleLine = true,
+                            shape = RoundedCornerShape(8.dp),
+                            textStyle = MaterialTheme.typography.bodySmall
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        IconButton(
+                            onClick = {
+                                viewModel.addComment(postId, commentText)
+                                commentText = ""
+                            },
+                            enabled = commentText.isNotBlank()
+                        ) {
+                            Icon(Icons.Default.Send, "Send", modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
+                        }
+                        IconButton(onClick = { viewModel.toggleCommentExpansion(postId) }) {
+                            Icon(Icons.Default.Close, "Close", modifier = Modifier.size(18.dp))
+                        }
+                    }
                 }
             }
         }

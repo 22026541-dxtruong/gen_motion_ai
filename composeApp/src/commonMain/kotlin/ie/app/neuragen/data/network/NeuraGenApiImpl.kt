@@ -81,7 +81,7 @@ class NeuraGenApiImpl(
 
     // Users
     override suspend fun updateMe(request: UserUpdateDto): UserDto =
-        client.patch("/users/me") { setBody(request) }.body()
+        client.patch("/users/me") { setBody(request) }.bodyOrThrow()
 
     override suspend fun getMe(cursor: String?, take: Int?): UserMeDto =
         client.get("/users/me") {

@@ -12,6 +12,8 @@ import ie.app.neuragen.data.network.model.UserMeDto
 import ie.app.neuragen.data.repository.AuthRepository
 import ie.app.neuragen.data.repository.SessionRepository
 import ie.app.neuragen.data.repository.UserRepository
+import ie.app.neuragen.util.AppLifecycleObserver
+import ie.app.neuragen.util.UserSessionState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -51,7 +53,7 @@ class NavigationViewModel(
     var switchAccountError by mutableStateOf<String?>(null)
     var isSwitchingAccount by mutableStateOf(false)
 
-    val userProfile = MutableStateFlow<UserMeDto?>(null)
+    val userProfile: StateFlow<UserMeDto?> = UserSessionState.user
     val notifications = MutableStateFlow<List<JobNotificationPayload>>(emptyList())
 
     init {
@@ -61,8 +63,17 @@ class NavigationViewModel(
                     fetchMyProfile()
                     startNotificationStream()
                 } else {
-                    userProfile.value = null
+                    UserSessionState.clear()
                     notifications.value = emptyList()
+                }
+            }
+        }
+
+        // Auto-refresh profile (credits, subscription status) when app returns to foreground
+        viewModelScope.launch {
+            AppLifecycleObserver.resumeCount.collect { count ->
+                if (count > 0 && sessionStatus.value is SessionStatus.Authenticated) {
+                    fetchMyProfile()
                 }
             }
         }
@@ -72,9 +83,17 @@ class NavigationViewModel(
         viewModelScope.launch {
             val result = userRepository.getMe()
             if (result.isSuccess) {
-                userProfile.value = result.getOrNull()
+                UserSessionState.update(result.getOrNull())
             }
         }
+    }
+
+    /**
+     * Public refresh — called after payment confirmation or profile edit
+     * to immediately update credit balance in Topbar.
+     */
+    fun refreshProfile() {
+        fetchMyProfile()
     }
 
     private fun startNotificationStream() {

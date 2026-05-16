@@ -187,7 +187,9 @@ fun AppNav(modifier: Modifier = Modifier) {
                 }
 
                 entry<Profile> {
-                    ProfileScreen()
+                    ProfileScreen(
+                        onNavigateToBilling = { backStack.add(Billing) }
+                    )
                 }
 
                 entry<Billing> {
@@ -296,8 +298,9 @@ fun NeuraGenTopBar(
             }
             Box {
                 IconButton(onClick = { expanded = true }) {
-                    val usernameStr = session?.username ?: "U"
-                    val avatarUrl = "https://ui-avatars.com/api/?name=$usernameStr&background=random"
+                    val usernameStr = userProfile?.username ?: session?.username ?: "U"
+                    val avatarUrl = userProfile?.avatarUrl 
+                        ?: "https://ui-avatars.com/api/?name=$usernameStr&background=e0e7ff&color=4f46e5"
                     
                     AsyncImage(
                         model = avatarUrl,

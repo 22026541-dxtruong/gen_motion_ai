@@ -2,6 +2,7 @@ package ie.app.neuragen.ui.explore
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import ie.app.neuragen.data.network.model.ExploreEventRequest
 import ie.app.neuragen.data.network.model.ExploreItemDto
 import ie.app.neuragen.data.network.model.JobDto
 import ie.app.neuragen.data.repository.ExploreRepository
@@ -9,13 +10,14 @@ import ie.app.neuragen.data.repository.JobRepository
 import ie.app.neuragen.data.repository.PostRepository
 import ie.app.neuragen.data.repository.UserRepository
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import org.koin.core.annotation.KoinViewModel
 import org.koin.core.annotation.Provided
 
@@ -41,7 +43,15 @@ data class ExploreUiState(
     val userJobs: List<JobDto> = emptyList(),
     val isPublishing: Boolean = false,
     val publishError: String? = null,
-    val publishSuccess: Boolean = false
+    val publishSuccess: Boolean = false,
+
+    // Inline Interaction State (optimistic updates)
+    val likedPostIds: Set<String> = emptySet(),
+    val likeCounts: Map<String, Int> = emptyMap(),
+    val commentCounts: Map<String, Int> = emptyMap(),
+
+    // Inline comment expansion
+    val expandedCommentPostId: String? = null
 )
 
 @KoinViewModel
@@ -57,10 +67,181 @@ class ExploreViewModel(
 
     private var searchJob: Job? = null
 
+    // Impression batch queue — mirrors web's 5s batch interval
+    private val impressionQueue = mutableListOf<String>()
+    private var impressionFlushJob: Job? = null
+
     init {
         refresh()
         checkAuthAndLoadJobs()
+        startImpressionFlushLoop()
     }
+
+    // ──────────────────────────────────────────────────────────────
+    // Inline Interactions (Like / Comment / Share)
+    // ──────────────────────────────────────────────────────────────
+
+    /**
+     * Toggle like on a post with optimistic UI update.
+     * Mirrors web's ExploreCard handleLike logic.
+     */
+    fun toggleLike(postId: String) {
+        val currentlyLiked = _uiState.value.likedPostIds.contains(postId)
+        val currentCount = getLikeCount(postId)
+
+        // Optimistic update
+        if (currentlyLiked) {
+            _uiState.update {
+                it.copy(
+                    likedPostIds = it.likedPostIds - postId,
+                    likeCounts = it.likeCounts + (postId to maxOf(0, currentCount - 1))
+                )
+            }
+        } else {
+            _uiState.update {
+                it.copy(
+                    likedPostIds = it.likedPostIds + postId,
+                    likeCounts = it.likeCounts + (postId to currentCount + 1)
+                )
+            }
+        }
+
+        // Fire API
+        viewModelScope.launch {
+            val result = if (currentlyLiked) {
+                postRepository.unlikePost(postId)
+            } else {
+                postRepository.likePost(postId)
+            }
+
+            if (result.isFailure) {
+                // Revert optimistic update on failure
+                if (currentlyLiked) {
+                    _uiState.update {
+                        it.copy(
+                            likedPostIds = it.likedPostIds + postId,
+                            likeCounts = it.likeCounts + (postId to currentCount)
+                        )
+                    }
+                } else {
+                    _uiState.update {
+                        it.copy(
+                            likedPostIds = it.likedPostIds - postId,
+                            likeCounts = it.likeCounts + (postId to currentCount)
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Submit a comment on a post from the inline comment box.
+     */
+    fun addComment(postId: String, content: String) {
+        if (content.isBlank()) return
+        viewModelScope.launch {
+            val result = postRepository.createComment(postId, content.trim())
+            if (result.isSuccess) {
+                val currentCount = getCommentCount(postId)
+                _uiState.update {
+                    it.copy(
+                        commentCounts = it.commentCounts + (postId to currentCount + 1),
+                        expandedCommentPostId = null // Close inline comment
+                    )
+                }
+            }
+        }
+    }
+
+    fun toggleCommentExpansion(postId: String) {
+        _uiState.update {
+            it.copy(
+                expandedCommentPostId = if (it.expandedCommentPostId == postId) null else postId
+            )
+        }
+    }
+
+    // ──────────────────────────────────────────────────────────────
+    // Event Tracking (Impressions & Clicks)
+    // ──────────────────────────────────────────────────────────────
+
+    /**
+     * Queue an impression event for batch sending.
+     * Mirrors web's IntersectionObserver → 5s batch interval.
+     */
+    fun trackImpression(postId: String) {
+        synchronized(impressionQueue) {
+            if (!impressionQueue.contains(postId)) {
+                impressionQueue.add(postId)
+            }
+        }
+    }
+
+    /**
+     * Track a click/open event immediately.
+     */
+    fun trackClick(postId: String) {
+        viewModelScope.launch {
+            exploreRepository.recordEvent(
+                ExploreEventRequest(
+                    postId = postId,
+                    eventType = "OPEN_POST",
+                    metadata = JsonObject(mapOf("surface" to JsonPrimitive("explore_mobile")))
+                )
+            )
+        }
+    }
+
+    private fun startImpressionFlushLoop() {
+        impressionFlushJob = viewModelScope.launch {
+            while (true) {
+                delay(5000) // 5s interval — matches web
+                val batch: List<String>
+                synchronized(impressionQueue) {
+                    batch = impressionQueue.toList()
+                    impressionQueue.clear()
+                }
+                if (batch.isNotEmpty()) {
+                    exploreRepository.recordEventsBatch(
+                        batch.map { postId ->
+                            ExploreEventRequest(
+                                postId = postId,
+                                eventType = "IMPRESSION",
+                                metadata = JsonObject(mapOf("surface" to JsonPrimitive("explore_mobile")))
+                            )
+                        }
+                    )
+                }
+            }
+        }
+    }
+
+    // ──────────────────────────────────────────────────────────────
+    // Helper — resolve counts with optimistic overrides
+    // ──────────────────────────────────────────────────────────────
+
+    private fun getLikeCount(postId: String): Int {
+        return _uiState.value.likeCounts[postId]
+            ?: findPost(postId)?.post?.likeCount
+            ?: 0
+    }
+
+    private fun getCommentCount(postId: String): Int {
+        return _uiState.value.commentCounts[postId]
+            ?: findPost(postId)?.post?.commentCount
+            ?: 0
+    }
+
+    private fun findPost(postId: String): ExploreItemDto? {
+        val state = _uiState.value
+        return state.recentDiscoveries.find { it.postId == postId }
+            ?: state.forYouItems.find { it.postId == postId }
+    }
+
+    // ──────────────────────────────────────────────────────────────
+    // Existing: Feed Loading, Search, Modes, Publish
+    // ──────────────────────────────────────────────────────────────
 
     fun refresh(query: String = _uiState.value.searchQuery) {
         viewModelScope.launch {
@@ -124,7 +305,11 @@ class ExploreViewModel(
                         forYouItems = forYouResult?.getOrNull()?.data ?: emptyList(),
                         recentDiscoveries = fetchedData,
                         nextCursor = fetchedNextCursor,
-                        isLoading = false
+                        isLoading = false,
+                        // Reset interaction state on refresh
+                        likedPostIds = emptySet(),
+                        likeCounts = emptyMap(),
+                        commentCounts = emptyMap()
                     )
                 }
                 SharedFeedState.updateState(fetchedData, fetchedNextCursor, topicParam)
@@ -281,5 +466,10 @@ class ExploreViewModel(
 
     fun resetPublishState() {
         _uiState.update { it.copy(publishError = null, publishSuccess = false) }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        impressionFlushJob?.cancel()
     }
 }

@@ -68,12 +68,44 @@ fun BillingScreen(
         }
     }
 
+    // Payment confirmed snackbar
+    val snackbarHostState = remember { SnackbarHostState() }
+    LaunchedEffect(uiState.paymentConfirmed) {
+        if (uiState.paymentConfirmed) {
+            val credits = uiState.confirmedCredits
+            val msg = if (credits != null && credits > 0) "+$credits credits added to your account!" else "Payment confirmed!"
+            snackbarHostState.showSnackbar(msg, duration = SnackbarDuration.Short)
+            viewModel.dismissPaymentConfirmation()
+        }
+    }
+
+    Box(modifier = Modifier.fillMaxSize()) {
+
     LazyColumn(
         modifier = Modifier.fillMaxSize().background(Color(0xFFF8F9FE)),
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        // Payment syncing indicator
+        if (uiState.isPollingPayment) {
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFFF0F9FF))
+                ) {
+                    Row(
+                        modifier = Modifier.padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text("Syncing payment with server...", style = MaterialTheme.typography.bodySmall, color = GrayText)
+                    }
+                }
+            }
+        }
         // Header
         item {
             Column(
@@ -192,6 +224,13 @@ fun BillingScreen(
             }
         }
     }
+
+    // Snackbar for payment confirmation
+    SnackbarHost(
+        hostState = snackbarHostState,
+        modifier = Modifier.align(Alignment.BottomCenter).padding(16.dp)
+    )
+    } // end Box
 }
 
 @Composable
@@ -556,8 +595,28 @@ fun OrderRow(order: OrderResponse) {
                 color = SlateText
             )
             Spacer(modifier = Modifier.height(2.dp))
+            // Provider label
+            if (!order.provider.isNullOrBlank()) {
+                Text(
+                    "via ${order.provider}",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Indigo600,
+                    fontWeight = FontWeight.Medium
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+            }
+            // Credit amount
+            if (order.creditAmount != null && order.creditAmount > 0) {
+                Text(
+                    "⚡ +${order.creditAmount} credits",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = GreenText,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+            }
             Text(
-                formatDate(order.createdAt),
+                formatDate(order.paidAt ?: order.createdAt),
                 style = MaterialTheme.typography.bodySmall,
                 color = GrayText
             )
@@ -578,6 +637,15 @@ fun OrderRow(order: OrderResponse) {
                 fontWeight = FontWeight.Bold,
                 color = SlateText
             )
+            // VND equivalent
+            val vndAmount = order.metadata?.get("amountVnd")
+            if (vndAmount != null) {
+                Text(
+                    "${vndAmount}₫",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = GrayText
+                )
+            }
             Spacer(modifier = Modifier.height(6.dp))
             OrderStatusChip(order.status)
         }

@@ -99,7 +99,28 @@ fun CreateScreen(
                     RecentJobsHeader()
                 }
 
-                if (uiState.recentJobs.isEmpty() && !uiState.isLoadingJobs) {
+                if (uiState.isLoadingJobs && uiState.recentJobs.isEmpty()) {
+                    item {
+                        Box(
+                            modifier = Modifier.fillMaxWidth().height(200.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(36.dp),
+                                    color = MaterialTheme.colorScheme.primary,
+                                    strokeWidth = 3.dp
+                                )
+                                Spacer(modifier = Modifier.height(12.dp))
+                                Text(
+                                    "Loading your jobs...",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = Color.Gray
+                                )
+                            }
+                        }
+                    }
+                } else if (uiState.recentJobs.isEmpty() && !uiState.isLoadingJobs) {
                     item {
                         Text(
                             "No recent jobs found.",

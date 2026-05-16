@@ -385,7 +385,18 @@ fun VideoThumbnail(modifier: Modifier = Modifier, post: PostDto) {
             .clip(RoundedCornerShape(12.dp))
             .background(Color.Black)
     ) {
-        // Placeholder for thumbnail
+        // Load actual thumbnail image
+        val thumbnailUrl = post.thumbnailUrl ?: post.videoUrl ?: post.assetVersion?.fileUrl
+        if (!thumbnailUrl.isNullOrBlank()) {
+            AsyncImage(
+                model = thumbnailUrl,
+                contentDescription = post.caption,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop
+            )
+        }
+
+        // Gradient overlay
         Box(
             modifier = Modifier
                 .fillMaxSize()

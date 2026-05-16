@@ -12,6 +12,7 @@ import ie.app.neuragen.data.repository.AssetRepository
 import ie.app.neuragen.data.repository.JobRepository
 import ie.app.neuragen.data.repository.PostRepository
 import ie.app.neuragen.data.repository.UserRepository
+import ie.app.neuragen.util.UserSessionState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -55,6 +56,9 @@ data class ProfileUiState(
     val isUpdating: Boolean = false,
     val isUploadingAvatar: Boolean = false,
     val avatarPreview: String? = null,
+    // Pending avatar file (deferred upload — same as web's pendingAvatarFileRef)
+    val pendingAvatarBytes: ByteArray? = null,
+    val pendingAvatarFileName: String? = null,
 
     // Followers/Followings Dialog
     val isFollowersOpen: Boolean = false,
@@ -167,6 +171,9 @@ class ProfileViewModel(
                     isLoading = false
                 )
             }
+
+            // Broadcast to all observers (Topbar, BillingScreen, etc.)
+            UserSessionState.update(user)
         }
     }
 
@@ -208,47 +215,83 @@ class ProfileViewModel(
             println("ProfileViewModel: Saving profile changes for ${currentState.editUsername}...")
             _uiState.update { it.copy(isUpdating = true) }
 
-            val update = UserUpdateDto(
-                username = currentState.editUsername,
-                bio = currentState.editBio,
-                avatarUrl = currentState.avatarPreview
-            )
+            try {
+                var avatarUrl = currentState.user?.avatarUrl // keep existing avatar by default
 
-            val result = userRepository.updateMe(update)
-            result.onSuccess {
-                println("ProfileViewModel: Profile updated successfully")
-                _uiState.update { it.copy(isUpdating = false, isEditProfileOpen = false) }
+                // Step 1: Upload avatar if user selected a new file (mirrors web's pendingAvatarFileRef flow)
+                if (currentState.pendingAvatarBytes != null) {
+                    println("ProfileViewModel: Uploading pending avatar...")
+                    _uiState.update { it.copy(isUploadingAvatar = true) }
+
+                    val asset = assetRepository.uploadAsset(
+                        currentState.pendingAvatarBytes,
+                        currentState.pendingAvatarFileName ?: "avatar.jpg",
+                        type = "IMAGE",
+                        role = "INPUT"
+                    ).getOrThrow()
+
+                    // Try fileUrl first, then fallback to signed download URL
+                    // (Backend doesn't store fileUrl in Prisma — web uses same fallback)
+                    val uploadedUrl = asset.versions?.firstOrNull()?.fileUrl
+                        ?: if (asset.id != null) {
+                            println("ProfileViewModel: fileUrl is null, fetching signed URL for asset ${asset.id}...")
+                            val downloadResult = assetRepository.getDownloadUrl(asset.id)
+                            downloadResult.getOrNull()?.url
+                        } else null
+
+                    if (uploadedUrl != null) {
+                        println("ProfileViewModel: Avatar URL resolved: $uploadedUrl")
+                        avatarUrl = uploadedUrl
+                    } else {
+                        throw Exception("Avatar uploaded but could not get image URL")
+                    }
+                    _uiState.update { it.copy(isUploadingAvatar = false) }
+                }
+
+                // Step 2: PATCH /users/me with username, bio, avatarUrl
+                println("ProfileViewModel: Updating profile with avatarUrl=$avatarUrl")
+                val update = UserUpdateDto(
+                    username = currentState.editUsername,
+                    bio = currentState.editBio,
+                    avatarUrl = avatarUrl
+                )
+                userRepository.updateMe(update).getOrThrow()
+
+                println("ProfileViewModel: Profile updated successfully!")
+                _uiState.update {
+                    it.copy(
+                        isUpdating = false,
+                        isUploadingAvatar = false,
+                        isEditProfileOpen = false,
+                        pendingAvatarBytes = null,
+                        pendingAvatarFileName = null,
+                        avatarPreview = null
+                    )
+                }
+
+                // Step 3: Reload full profile & broadcast to all screens (Topbar, etc.)
                 loadProfile()
-            }.onFailure { error ->
-                println("ProfileViewModel: Failed to update profile: ${error.message}")
-                _uiState.update { it.copy(isUpdating = false) }
+
+            } catch (e: Exception) {
+                println("ProfileViewModel: Save failed: ${e.message}")
+                e.printStackTrace()
+                _uiState.update { it.copy(isUpdating = false, isUploadingAvatar = false) }
             }
         }
     }
 
     // ──────────────────────────────────────────────────────────────
-    // Avatar Upload
+    // Avatar — store pending file for deferred upload (matches web's pendingAvatarFileRef)
     // ──────────────────────────────────────────────────────────────
 
     fun onAvatarUpload(fileBytes: ByteArray, fileName: String) {
-        viewModelScope.launch {
-            println("ProfileViewModel: Uploading avatar $fileName (${fileBytes.size} bytes)...")
-            _uiState.update { it.copy(isUploadingAvatar = true) }
-
-            val result = assetRepository.uploadAsset(fileBytes, fileName, type = "IMAGE", role = "INPUT")
-            result.onSuccess { asset ->
-                val uploadedUrl = asset.versions?.firstOrNull()?.fileUrl
-                if (uploadedUrl != null) {
-                    println("ProfileViewModel: Avatar uploaded: $uploadedUrl")
-                    _uiState.update { it.copy(avatarPreview = uploadedUrl, isUploadingAvatar = false) }
-                } else {
-                    println("ProfileViewModel: Avatar upload succeeded but no URL returned")
-                    _uiState.update { it.copy(isUploadingAvatar = false) }
-                }
-            }.onFailure { error ->
-                println("ProfileViewModel: Avatar upload failed: ${error.message}")
-                _uiState.update { it.copy(isUploadingAvatar = false) }
-            }
+        // Just store the bytes — upload happens on Save
+        println("ProfileViewModel: Avatar file selected: $fileName (${fileBytes.size} bytes) — will upload on Save")
+        _uiState.update {
+            it.copy(
+                pendingAvatarBytes = fileBytes,
+                pendingAvatarFileName = fileName
+            )
         }
     }
 
@@ -293,8 +336,30 @@ class ProfileViewModel(
     }
 
     fun onToggleFollow(userId: String) {
-        println("ProfileViewModel: Toggling follow status for $userId")
-        // Placeholder — follow/unfollow toggle
+        viewModelScope.launch {
+            println("ProfileViewModel: Toggling follow status for $userId")
+            val currentFollowings = _uiState.value.followings
+            val isFollowing = currentFollowings.any { it.following?.id == userId }
+
+            val result = if (isFollowing) {
+                postRepository.unfollowUser(userId)
+            } else {
+                postRepository.followUser(userId)
+            }
+
+            result.onSuccess {
+                println("ProfileViewModel: Follow toggle success")
+                // Reload followers/followings to update counts
+                _uiState.value.user?.id?.let { myId ->
+                    loadFollowers(myId)
+                    loadFollowings(myId)
+                }
+                // Refresh profile to update follower/following counts
+                loadProfile()
+            }.onFailure { error ->
+                println("ProfileViewModel: Follow toggle failed: ${error.message}")
+            }
+        }
     }
 
     // ──────────────────────────────────────────────────────────────
@@ -405,7 +470,11 @@ class ProfileViewModel(
                 isFollowersOpen = false,
                 isFollowingsOpen = false,
                 editingPost = null,
-                publishingItem = null
+                publishingItem = null,
+                // Clear pending avatar data
+                pendingAvatarBytes = null,
+                pendingAvatarFileName = null,
+                avatarPreview = null
             )
         }
     }

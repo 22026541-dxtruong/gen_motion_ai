@@ -6,6 +6,11 @@ import ie.app.neuragen.data.network.model.CreditTopupPackageDto
 import ie.app.neuragen.data.network.model.OrderResponse
 import ie.app.neuragen.data.network.model.ProPlanDto
 import ie.app.neuragen.data.repository.BillingRepository
+import ie.app.neuragen.data.repository.UserRepository
+import ie.app.neuragen.util.AppLifecycleObserver
+import ie.app.neuragen.util.UserSessionState
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -23,21 +28,47 @@ data class BillingUiState(
     val loadingOrderId: String? = null,
     val error: String? = null,
     val paymentUrl: String? = null,
-    val activeTab: BillingTab = BillingTab.PLANS
+    val activeTab: BillingTab = BillingTab.PLANS,
+
+    // Payment return polling
+    val pendingOrderId: String? = null,
+    val isPollingPayment: Boolean = false,
+    val paymentConfirmed: Boolean = false,
+    val confirmedCredits: Int? = null
 )
 
 enum class BillingTab { PLANS, ORDERS }
 
 @KoinViewModel
 class BillingViewModel(
-    @Provided private val billingRepository: BillingRepository
+    @Provided private val billingRepository: BillingRepository,
+    @Provided private val userRepository: UserRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(BillingUiState())
     val uiState: StateFlow<BillingUiState> = _uiState.asStateFlow()
 
+    private var pollingJob: Job? = null
+
     init {
         loadCatalog()
+
+        // Auto-refresh when app returns to foreground (e.g., from payment browser)
+        viewModelScope.launch {
+            AppLifecycleObserver.resumeCount.collect { count ->
+                if (count > 0) {
+                    val pendingId = _uiState.value.pendingOrderId
+                    if (pendingId != null) {
+                        // Returning from payment — start polling
+                        startPaymentPolling(pendingId)
+                    }
+                    // Always reload orders on resume
+                    if (_uiState.value.activeTab == BillingTab.ORDERS) {
+                        loadOrders()
+                    }
+                }
+            }
+        }
     }
 
     fun loadCatalog() {
@@ -94,7 +125,13 @@ class BillingViewModel(
             val result = billingRepository.createOrder(type, provider, packageCode)
             result.onSuccess { order ->
                 val url = order.payUrl ?: order.shortLink ?: order.deeplink
-                _uiState.update { it.copy(loadingOrderId = null, paymentUrl = url) }
+                _uiState.update {
+                    it.copy(
+                        loadingOrderId = null,
+                        paymentUrl = url,
+                        pendingOrderId = order.id // Track for polling on return
+                    )
+                }
             }.onFailure {
                 _uiState.update { it.copy(loadingOrderId = null, error = "Failed to create order") }
             }
@@ -105,7 +142,78 @@ class BillingViewModel(
         _uiState.update { it.copy(paymentUrl = null) }
     }
 
+    /**
+     * Poll the backend every 5s to check if the pending order has been marked PAID.
+     * Mirrors the web's payos-return page polling logic.
+     * Max 10 attempts (50s total), then stops.
+     */
+    private fun startPaymentPolling(orderId: String) {
+        // Don't start multiple polling loops
+        if (_uiState.value.isPollingPayment) return
+
+        pollingJob?.cancel()
+        pollingJob = viewModelScope.launch {
+            _uiState.update { it.copy(isPollingPayment = true) }
+
+            repeat(10) { attempt ->
+                delay(5000) // 5s intervals
+
+                val result = billingRepository.getMyOrders()
+                result.onSuccess { orders ->
+                    val order = orders.find { it.id == orderId }
+                    if (order?.status == "PAID") {
+                        _uiState.update {
+                            it.copy(
+                                orders = orders,
+                                isPollingPayment = false,
+                                paymentConfirmed = true,
+                                confirmedCredits = order.creditAmount,
+                                pendingOrderId = null,
+                                activeTab = BillingTab.ORDERS
+                            )
+                        }
+                        // Refresh user profile to update credit balance globally
+                        refreshUserProfile()
+                        return@launch // Stop polling — confirmed!
+                    }
+                    // Update orders list in case status changed to FAILED etc.
+                    _uiState.update { it.copy(orders = orders) }
+                }
+            }
+
+            // Max attempts reached — stop polling
+            _uiState.update {
+                it.copy(
+                    isPollingPayment = false,
+                    pendingOrderId = null
+                )
+            }
+        }
+    }
+
+    fun dismissPaymentConfirmation() {
+        _uiState.update { it.copy(paymentConfirmed = false, confirmedCredits = null) }
+    }
+
+    /**
+     * Fetch fresh user profile after payment and broadcast to all screens.
+     * This ensures Topbar credits, ProfileScreen balance, etc. update in real-time.
+     */
+    private fun refreshUserProfile() {
+        viewModelScope.launch {
+            val result = userRepository.getMe()
+            if (result.isSuccess) {
+                UserSessionState.update(result.getOrNull())
+            }
+        }
+    }
+
     fun clearError() {
         _uiState.update { it.copy(error = null) }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        pollingJob?.cancel()
     }
 }
