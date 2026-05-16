@@ -23,6 +23,7 @@ type TabCache = {
   items: any[];
   nextCursor: string | null;
   signals: any;
+  updatedAt: number;
 };
 
 type ExploreContentProps = {
@@ -35,6 +36,7 @@ type ExploreContentProps = {
 };
 
 const EXPLORE_PAGE_SIZE = 20;
+const TAB_CACHE_FRESH_MS = 8_000;
 
 export default function ExploreContent({
   isAuthenticated,
@@ -91,13 +93,21 @@ export default function ExploreContent({
 
       // ── Check cache first → instant display ──
       const cached = cacheRef.current[cacheKey];
+      const hasCached = Boolean(cached);
+      let shouldBackgroundRefresh = false;
       if (cached) {
         applyCachedData(cached);
         setIsPageLoading(false);
-        return;
+        shouldBackgroundRefresh =
+          Date.now() - cached.updatedAt >= TAB_CACHE_FRESH_MS;
+        if (!shouldBackgroundRefresh) {
+          return;
+        }
       }
 
-      setIsPageLoading(true);
+      if (!hasCached) {
+        setIsPageLoading(true);
+      }
       try {
         let exploreRes: any;
 
@@ -145,22 +155,27 @@ export default function ExploreContent({
             items: newItems,
             nextCursor: newCursor,
             signals: newSignals,
+            updatedAt: Date.now(),
           };
 
           setItems(newItems);
           setNextCursor(newCursor);
           setSignals(newSignals);
-        } else {
+        } else if (!hasCached) {
           setItems([]);
           setNextCursor(null);
           setSignals(null);
         }
       } catch (error) {
         console.error("Failed to fetch explore data:", error);
-        setItems([]);
-        setNextCursor(null);
+        if (!hasCached) {
+          setItems([]);
+          setNextCursor(null);
+        }
       }
-      setIsPageLoading(false);
+      if (!hasCached) {
+        setIsPageLoading(false);
+      }
     },
     [topic, sort, trending, isAuthenticated, applyCachedData]
   );

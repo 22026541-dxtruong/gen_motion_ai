@@ -4,7 +4,6 @@ import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { googleExchangeCodeAction } from "@/app/actions/auth";
 import { Loader2 } from "lucide-react";
-import { buildGoogleAuthUrl } from "@/lib/runtime-config";
 
 function GoogleCallbackContent() {
   const searchParams = useSearchParams();
@@ -15,10 +14,6 @@ function GoogleCallbackContent() {
   const fallbackRoute = intent === "register" ? "/register" : "/login";
   const intentLabel = intent === "register" ? "sign up" : "login";
   const resolvedError = error ?? (!code ? "Invalid Google OAuth code" : null);
-  const shouldSuggestRegister =
-    intent === "login" &&
-    typeof resolvedError === "string" &&
-    resolvedError.toLowerCase().includes("not registered");
 
   useEffect(() => {
     if (!code) {
@@ -33,13 +28,6 @@ function GoogleCallbackContent() {
       } else {
         const errorMessage = res.error || "Failed to authenticate with Google";
         setError(errorMessage);
-
-        const requiresRegister =
-          intent === "login" && errorMessage.toLowerCase().includes("not registered");
-        if (requiresRegister) {
-          return;
-        }
-
         setTimeout(() => router.push(fallbackRoute), 3000);
       }
     };
@@ -56,19 +44,6 @@ function GoogleCallbackContent() {
           </div>
           <h2 className="text-xl font-bold text-slate-900 mb-2">Authentication Failed</h2>
           <p className="text-slate-500 mb-6">{resolvedError}</p>
-          {shouldSuggestRegister && (
-            <div className="mb-4 p-3 bg-amber-50 text-amber-700 text-sm rounded-lg border border-amber-200 text-left">
-              Chưa có tài khoản. Vui lòng đăng ký bằng Google trước.
-            </div>
-          )}
-          {shouldSuggestRegister && (
-            <a
-              href={buildGoogleAuthUrl("register")}
-              className="inline-flex items-center justify-center mb-3 w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2.5 rounded-lg transition-colors"
-            >
-              Đăng ký với Google
-            </a>
-          )}
           <p className="text-sm text-slate-400">Redirecting to {intentLabel}...</p>
         </div>
       ) : (

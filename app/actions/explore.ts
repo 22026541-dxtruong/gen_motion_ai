@@ -23,7 +23,9 @@ export async function fetchExploreAction(
     if (params?.sort) searchParams.set('sort', params.sort);
     if (params?.cursor) searchParams.set('cursor', params.cursor);
 
-    const data = await fetchApi(`/explore?${searchParams.toString()}`);
+    const data = await fetchApi(`/explore?${searchParams.toString()}`, {
+      cache: 'no-store',
+    });
     return { success: true, data };
   } catch (error: any) {
     return { success: false, error: error.message || 'Failed to fetch' };
@@ -51,7 +53,9 @@ export async function fetchExploreSearchAction(
     if (params?.trending !== undefined) searchParams.set('trending', String(params.trending));
     if (params?.cursor) searchParams.set('cursor', params.cursor);
 
-    const data = await fetchApi(`/explore/search?${searchParams.toString()}`);
+    const data = await fetchApi(`/explore/search?${searchParams.toString()}`, {
+      cache: 'no-store',
+    });
     return { success: true, data };
   } catch (error: any) {
     return { success: false, error: error.message || 'Failed to search' };
@@ -74,7 +78,9 @@ export async function fetchExploreForYouAction(
     if (params?.topic) searchParams.set('topic', params.topic);
     if (params?.cursor) searchParams.set('cursor', params.cursor);
 
-    const data = await fetchApi(`/explore/for-you?${searchParams.toString()}`);
+    const data = await fetchApi(`/explore/for-you?${searchParams.toString()}`, {
+      cache: 'no-store',
+    });
     return { success: true, data };
   } catch (error: any) {
     return { success: false, error: error.message || 'Failed to fetch for-you' };

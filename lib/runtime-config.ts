@@ -41,7 +41,8 @@ export function buildSiteUrl(path: string) {
 export type GoogleAuthIntent = 'login' | 'register';
 
 export function buildGoogleAuthUrl(intent: GoogleAuthIntent = 'login') {
-  const endpoint = intent === 'register' ? '/auth/google/register' : '/auth/google/login';
+  // Backend now supports auto-register on Google login when account does not exist.
+  const endpoint = '/auth/google/login';
   const redirectUri = buildSiteUrl(`/google/callback?intent=${intent}`);
   return `${buildApiUrl(endpoint)}?platform=web&redirectUri=${encodeURIComponent(redirectUri)}`;
 }

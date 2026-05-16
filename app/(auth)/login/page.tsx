@@ -9,10 +9,6 @@ import { buildGoogleAuthUrl } from '@/lib/runtime-config';
 function LoginForm() {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const shouldSuggestRegister =
-    typeof error === 'string' &&
-    (error.toLowerCase().includes('invalid credentials') ||
-      error.toLowerCase().includes('not registered'));
 
   const searchParams = useSearchParams();
   const defaultEmail = searchParams.get('email') || '';
@@ -58,14 +54,6 @@ function LoginForm() {
             {error && (
               <div className="mb-4 p-3 bg-red-50 text-red-600 text-sm rounded-lg border border-red-100">
                 {error}
-              </div>
-            )}
-            {shouldSuggestRegister && (
-              <div className="mb-4 p-3 bg-amber-50 text-amber-700 text-sm rounded-lg border border-amber-200">
-                Chưa có tài khoản? Vui lòng đăng ký trước khi đăng nhập.
-                <Link href="/register" className="ml-1 font-semibold underline">
-                  Đăng ký ngay
-                </Link>
               </div>
             )}
             <form className="space-y-5" onSubmit={handleSubmit} method="POST">
