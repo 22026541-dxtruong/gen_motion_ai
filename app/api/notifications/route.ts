@@ -14,8 +14,10 @@ export async function GET() {
   try {
     const response = await fetch(backendUrl, {
       headers: {
-        Authorization: `Bearer ${token}`
-      }
+        Authorization: `Bearer ${token}`,
+        Accept: 'text/event-stream',
+      },
+      cache: 'no-store',
     });
 
     if (!response.ok) {
@@ -25,11 +27,14 @@ export async function GET() {
     return new Response(response.body, {
       headers: {
         'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache, no-transform',
+        'Cache-Control': 'no-cache, no-store, must-revalidate, no-transform',
+        'Pragma': 'no-cache',
+        'Expires': '0',
         'Connection': 'keep-alive',
+        'X-Accel-Buffering': 'no',
       }
     });
-  } catch (error) {
+  } catch {
     return new Response('Internal Server Error', { status: 500 });
   }
 }

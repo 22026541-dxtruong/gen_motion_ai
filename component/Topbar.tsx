@@ -78,7 +78,7 @@ export default function Topbar() {
         </div>
 
         <div className="flex items-center gap-6 justify-end w-64">
-          {user && <NotificationBell />}
+          {user?.id && <NotificationBell key={user.id} userId={user.id} />}
           <div className="flex items-center gap-2 text-indigo-600 font-medium text-sm cursor-pointer">
             <CreditCard className="h-5 w-5" />
             <span>{user?.credits?.balance || 0}</span>

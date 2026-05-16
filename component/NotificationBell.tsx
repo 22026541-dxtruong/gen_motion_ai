@@ -15,28 +15,48 @@ export type JobNotificationPayload = {
   read: boolean;
 };
 
-export default function NotificationBell() {
-  const [notifications, setNotifications] = useState<JobNotificationPayload[]>([]);
+type NotificationBellProps = {
+  userId: string;
+};
+
+const LEGACY_STORAGE_KEY = "neura_gen_notifications";
+
+export default function NotificationBell({ userId }: NotificationBellProps) {
+  const storageKey = `${LEGACY_STORAGE_KEY}:${userId}`;
+  const [notifications, setNotifications] = useState<JobNotificationPayload[]>(() => {
+    if (typeof window === "undefined") {
+      return [];
+    }
+
+    localStorage.removeItem(LEGACY_STORAGE_KEY);
+    const saved = localStorage.getItem(storageKey);
+    if (!saved) {
+      return [];
+    }
+
+    try {
+      return JSON.parse(saved) as JobNotificationPayload[];
+    } catch {
+      return [];
+    }
+  });
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Load from local storage
-    const saved = localStorage.getItem("neura_gen_notifications");
-    if (saved) {
-      try {
-        setNotifications(JSON.parse(saved));
-      } catch (e) {}
-    }
-
     const sse = new EventSource('/api/notifications');
 
     sse.addEventListener('notification', (e) => {
       try {
         const data = JSON.parse(e.data);
+        if (typeof data?.userId === "string" && data.userId !== userId) {
+          return;
+        }
+
         const newNotification: JobNotificationPayload = {
           ...data,
           id: data.jobId + '-' + Date.now(),
+          timestamp: data.occurredAt ?? new Date().toISOString(),
           read: false
         };
         
@@ -46,7 +66,7 @@ export default function NotificationBell() {
             return prev;
           }
           const updated = [newNotification, ...prev].slice(0, 50); // Keep last 50
-          localStorage.setItem("neura_gen_notifications", JSON.stringify(updated));
+          localStorage.setItem(storageKey, JSON.stringify(updated));
           return updated;
         });
       } catch (err) {
@@ -54,7 +74,7 @@ export default function NotificationBell() {
       }
     });
 
-    sse.onerror = (error) => {
+    sse.onerror = () => {
       // EventSource automatically tries to reconnect
       // Removing console.error to prevent console spam
     };
@@ -62,7 +82,7 @@ export default function NotificationBell() {
     return () => {
       sse.close();
     };
-  }, []);
+  }, [storageKey, userId]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -82,20 +102,20 @@ export default function NotificationBell() {
   const markAllAsRead = () => {
     const updated = notifications.map(n => ({ ...n, read: true }));
     setNotifications(updated);
-    localStorage.setItem("neura_gen_notifications", JSON.stringify(updated));
+    localStorage.setItem(storageKey, JSON.stringify(updated));
   };
 
   const removeNotification = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     const updated = notifications.filter(n => n.id !== id);
     setNotifications(updated);
-    localStorage.setItem("neura_gen_notifications", JSON.stringify(updated));
+    localStorage.setItem(storageKey, JSON.stringify(updated));
   };
 
   const markAsRead = (id: string) => {
     const updated = notifications.map(n => n.id === id ? { ...n, read: true } : n);
     setNotifications(updated);
-    localStorage.setItem("neura_gen_notifications", JSON.stringify(updated));
+    localStorage.setItem(storageKey, JSON.stringify(updated));
   };
 
   const getIcon = (severity: string) => {
@@ -129,7 +149,7 @@ export default function NotificationBell() {
             {notifications.length > 0 && (
               <button onClick={() => {
                   setNotifications([]);
-                  localStorage.removeItem("neura_gen_notifications");
+                  localStorage.removeItem(storageKey);
                 }} 
                 className="text-xs text-gray-500 hover:text-gray-900 font-medium"
               >
