@@ -492,8 +492,8 @@ fun VideoThumbnail(modifier: Modifier = Modifier, post: PostDto, onClick: () -> 
 
 private fun formatViewCount(count: Int): String {
     return when {
-        count >= 1_000_000 -> "${"%.1f".format(count / 1_000_000f)}M"
-        count >= 1_000 -> "${"%.1f".format(count / 1_000f)}k"
+        count >= 1_000_000 -> "${((count / 1_000_000.0 * 10).toInt() / 10.0)}M"
+        count >= 1_000 -> "${((count / 1_000.0 * 10).toInt() / 10.0)}k"
         else -> count.toString()
     }
 }

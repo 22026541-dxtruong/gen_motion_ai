@@ -13,7 +13,7 @@ import org.koin.core.annotation.Module
 import org.koin.core.annotation.Single
 
 @Module
-@ComponentScan("ie.app.neuragen.data.local", "ie.app.neuragen.data.sync")
+@ComponentScan("ie.app.neuragen.data.local")
 object LocalModule {
     @Single
     fun provideDataStore(factory: DataStoreFactory): DataStore<Preferences> = factory.create()

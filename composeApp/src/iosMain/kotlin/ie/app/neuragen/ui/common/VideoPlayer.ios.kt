@@ -8,15 +8,15 @@ import androidx.compose.ui.viewinterop.UIKitView
 import kotlinx.cinterop.ExperimentalForeignApi
 import platform.AVFoundation.AVLayerVideoGravityResizeAspect
 import platform.AVFoundation.AVPlayer
-import platform.AVFoundation.AVPlayerItem
 import platform.AVFoundation.AVPlayerLayer
 import platform.AVFoundation.currentItem
 import platform.AVFoundation.play
+import platform.AVFoundation.AVPlayerItemDidPlayToEndTimeNotification
 import platform.AVFoundation.seekToTime
-import platform.CoreMedia.kCMTimeZero
+import platform.AVFoundation.setRate
+import platform.CoreMedia.CMTimeMakeWithSeconds
 import platform.Foundation.NSNotificationCenter
 import platform.Foundation.NSURL
-import platform.QuartzCore.CALayer
 import platform.UIKit.UIView
 import platform.darwin.NSObjectProtocol
 
@@ -37,11 +37,12 @@ actual fun VideoPlayer(videoUrl: String, modifier: Modifier) {
     // Loop: observe end of playback → seek to start
     DisposableEffect(player) {
         val observer: NSObjectProtocol = NSNotificationCenter.defaultCenter.addObserverForName(
-            name = platform.AVFoundation.AVPlayerItemDidPlayToEndTimeNotification,
+            name = AVPlayerItemDidPlayToEndTimeNotification,
             `object` = player.currentItem,
             queue = null
         ) { _ ->
-            player.seekToTime(kCMTimeZero)
+            // Seek to time 0 (beginning)
+            player.seekToTime(CMTimeMakeWithSeconds(0.0, preferredTimescale = 600))
             player.play()
         }
 
@@ -49,7 +50,7 @@ actual fun VideoPlayer(videoUrl: String, modifier: Modifier) {
 
         onDispose {
             NSNotificationCenter.defaultCenter.removeObserver(observer)
-            player.pause()
+            player.setRate(0.0f) // pause equivalent
         }
     }
 

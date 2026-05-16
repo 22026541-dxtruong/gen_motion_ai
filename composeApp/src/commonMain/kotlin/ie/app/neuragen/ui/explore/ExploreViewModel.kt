@@ -16,6 +16,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import org.koin.core.annotation.KoinViewModel
@@ -183,10 +185,14 @@ class ExploreViewModel(
      * Queue an impression event for batch sending.
      * Mirrors web's IntersectionObserver → 5s batch interval.
      */
+    private val impressionMutex = Mutex()
+
     fun trackImpression(postId: String) {
-        synchronized(impressionQueue) {
-            if (!impressionQueue.contains(postId)) {
-                impressionQueue.add(postId)
+        viewModelScope.launch {
+            impressionMutex.withLock {
+                if (!impressionQueue.contains(postId)) {
+                    impressionQueue.add(postId)
+                }
             }
         }
     }
@@ -210,10 +216,10 @@ class ExploreViewModel(
         impressionFlushJob = viewModelScope.launch {
             while (true) {
                 delay(5000) // 5s interval — matches web
-                val batch: List<String>
-                synchronized(impressionQueue) {
-                    batch = impressionQueue.toList()
+                val batch = impressionMutex.withLock {
+                    val snapshot = impressionQueue.toList()
                     impressionQueue.clear()
+                    snapshot
                 }
                 if (batch.isNotEmpty()) {
                     exploreRepository.recordEventsBatch(

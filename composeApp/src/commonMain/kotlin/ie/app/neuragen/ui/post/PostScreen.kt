@@ -559,7 +559,14 @@ fun CommentItem(
 // --- Helpers ---
 
 private fun formatCount(n: Int): String {
-    if (n >= 1000) return "${(n / 1000f).let { if (it % 1 == 0f) it.toInt().toString() else "%.1f".format(it) }}k"
+    if (n >= 1_000_000) {
+        val v = n / 1_000_000.0
+        return "${((v * 10).toInt() / 10.0)}M"
+    }
+    if (n >= 1000) {
+        val v = n / 1000.0
+        return "${((v * 10).toInt() / 10.0)}k"
+    }
     return n.toString()
 }
 

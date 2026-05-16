@@ -30,6 +30,11 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.PlayArrow
 import ie.app.neuragen.data.network.model.UserMeDto
 import ie.app.neuragen.ui.common.rememberFileBytesLoader
 import ie.app.neuragen.ui.common.rememberImagePickerLauncher
@@ -249,63 +254,233 @@ fun ProfileTabs(selectedIndex: Int, onTabSelected: (Int) -> Unit) {
 }
 
 @Composable
-fun ProfileGalleryCard(item: GalleryItem, onPublish: (GalleryItem) -> Unit, onEdit: (GalleryItem) -> Unit, onDelete: (GalleryItem) -> Unit) {
+fun ProfileGalleryCard(
+    item: GalleryItem,
+    onPublish: (GalleryItem) -> Unit,
+    onEdit: (GalleryItem) -> Unit,
+    onDelete: (GalleryItem) -> Unit
+) {
     var menuExpanded by remember { mutableStateOf(false) }
     val mediaUrl = item.thumbnailUrl ?: item.mediaUrl
 
     fun formatDuration(ms: Int): String {
         if (ms <= 0) return "0:00"
-        val totalSec = ms / 1000; val m = totalSec / 60; val s = totalSec % 60
+        val totalSec = ms / 1000
+        val m = totalSec / 60
+        val s = totalSec % 60
         return "$m:${s.toString().padStart(2, '0')}"
     }
 
-    Card(Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 12.dp), shape = RoundedCornerShape(20.dp), colors = CardDefaults.cardColors(containerColor = Color.White), elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)) {
-        Column {
-            Box(Modifier.fillMaxWidth().height(180.dp)) {
+    fun formatCount(n: Int): String {
+        return when {
+            n >= 1_000_000 -> "${((n / 1_000_000.0 * 10).toInt() / 10.0)}M"
+            n >= 1_000 -> "${((n / 1_000.0 * 10).toInt() / 10.0)}k"
+            else -> n.toString()
+        }
+    }
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(modifier = Modifier.fillMaxWidth()) {
+            // ── Thumbnail ──
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(200.dp)
+                    .background(Color.DarkGray)
+            ) {
                 if (mediaUrl != null) {
-                    AsyncImage(model = mediaUrl, contentDescription = item.title, modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+                    AsyncImage(
+                        model = mediaUrl,
+                        contentDescription = item.title,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
                 } else {
-                    Box(Modifier.fillMaxSize().background(Color.LightGray))
+                    Box(
+                        Modifier.fillMaxSize().background(Color(0xFF2A2A2A)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.PlayArrow,
+                            contentDescription = null,
+                            tint = Color.White.copy(alpha = 0.5f),
+                            modifier = Modifier.size(48.dp)
+                        )
+                    }
                 }
-                Surface(color = Color.Black.copy(alpha = 0.5f), shape = RoundedCornerShape(8.dp), modifier = Modifier.align(Alignment.BottomEnd).padding(8.dp)) {
-                    Text(formatDuration(item.durationMs), color = Color.White, modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp), fontSize = 10.sp)
+
+                // Duration badge
+                if (item.durationMs > 0) {
+                    Surface(
+                        color = Color.Black.copy(alpha = 0.7f),
+                        shape = RoundedCornerShape(6.dp),
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .padding(12.dp)
+                    ) {
+                        Text(
+                            formatDuration(item.durationMs),
+                            color = Color.White,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+
+                // Visibility badge
+                Surface(
+                    color = if (item.isPublic) MaterialTheme.colorScheme.primary.copy(alpha = 0.9f)
+                    else Color.Black.copy(alpha = 0.6f),
+                    shape = RoundedCornerShape(6.dp),
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .padding(12.dp)
+                ) {
+                    Text(
+                        if (item.isPublic) "PUBLIC" else "PRIVATE",
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
-            Column(Modifier.padding(16.dp)) {
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                    Text(item.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
-                    if (!item.isJob) {
-                        Box {
-                            IconButton(onClick = { menuExpanded = true }, modifier = Modifier.size(24.dp)) {
-                                Icon(painterResource(Res.drawable.ic_search), contentDescription = "Menu", tint = Color.Gray, modifier = Modifier.size(18.dp))
-                            }
-                            DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }, shape = RoundedCornerShape(12.dp), containerColor = Color.White) {
-                                DropdownMenuItem(text = { Text("Edit") }, onClick = { menuExpanded = false; onEdit(item) })
-                                DropdownMenuItem(text = { Text("Delete", color = Color.Red) }, onClick = { menuExpanded = false; onDelete(item) })
-                            }
+
+            // ── Content ──
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(20.dp)
+            ) {
+                // Title + View count
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.Top
+                ) {
+                    Text(
+                        item.title,
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f).padding(end = 8.dp)
+                    )
+                    if (item.isPublic) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .background(
+                                    MaterialTheme.colorScheme.surfaceVariant,
+                                    RoundedCornerShape(6.dp)
+                                )
+                                .padding(horizontal = 8.dp, vertical = 4.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Visibility,
+                                contentDescription = "Views",
+                                modifier = Modifier.size(14.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                formatCount(item.viewCount),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                fontWeight = FontWeight.Bold
+                            )
                         }
                     }
                 }
-                Spacer(Modifier.height(8.dp))
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Stats + Actions row
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Like count
                     if (item.isPublic && !item.isJob) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(painterResource(Res.drawable.ic_play), contentDescription = null, modifier = Modifier.size(14.dp), tint = Color.Gray)
-                            Spacer(Modifier.width(4.dp))
-                            Text(item.viewCount.toString(), style = MaterialTheme.typography.bodySmall, color = Color.Gray)
-                            Spacer(Modifier.width(12.dp))
-                            Icon(painterResource(Res.drawable.ic_like), contentDescription = null, modifier = Modifier.size(14.dp), tint = Color.Gray)
-                            Spacer(Modifier.width(4.dp))
-                            Text(item.likeCount.toString(), style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    imageVector = Icons.Default.Favorite,
+                                    contentDescription = "Likes",
+                                    modifier = Modifier.size(20.dp),
+                                    tint = Color.Red.copy(alpha = 0.7f)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    formatCount(item.likeCount),
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
                         }
                     } else {
-                        Surface(color = Color(0xFFF5F5F5), shape = RoundedCornerShape(8.dp)) {
-                            Text("Private", modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp), style = MaterialTheme.typography.labelSmall, color = Color.Gray, fontWeight = FontWeight.Bold)
-                        }
+                        Spacer(Modifier.width(1.dp))
                     }
-                    if (!item.isPublic || item.isJob) {
-                        Button(onClick = { onPublish(item) }, shape = RoundedCornerShape(8.dp), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEEF2FF), contentColor = MaterialTheme.colorScheme.primary), contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp), modifier = Modifier.height(30.dp)) {
-                            Text("Publish", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+
+                    // Action buttons
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        if (!item.isPublic || item.isJob) {
+                            Button(
+                                onClick = { onPublish(item) },
+                                shape = RoundedCornerShape(12.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = MaterialTheme.colorScheme.primary,
+                                    contentColor = Color.White
+                                ),
+                                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
+                                modifier = Modifier.height(34.dp)
+                            ) {
+                                Text("Publish", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                            }
+                        }
+
+                        if (!item.isJob) {
+                            Box {
+                                IconButton(
+                                    onClick = { menuExpanded = true },
+                                    modifier = Modifier.size(34.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.MoreVert,
+                                        contentDescription = "Menu",
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                                DropdownMenu(
+                                    expanded = menuExpanded,
+                                    onDismissRequest = { menuExpanded = false },
+                                    shape = RoundedCornerShape(12.dp),
+                                    containerColor = MaterialTheme.colorScheme.surface
+                                ) {
+                                    DropdownMenuItem(
+                                        text = { Text("Edit") },
+                                        onClick = { menuExpanded = false; onEdit(item) }
+                                    )
+                                    DropdownMenuItem(
+                                        text = { Text("Delete", color = MaterialTheme.colorScheme.error) },
+                                        onClick = { menuExpanded = false; onDelete(item) }
+                                    )
+                                }
+                            }
                         }
                     }
                 }

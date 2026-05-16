@@ -2,8 +2,8 @@ package ie.app.neuragen.data.sync
 
 /**
  * Platform-specific background data sync scheduler.
- * Android: WorkManager
- * iOS: stub (BGTaskScheduler not implemented yet)
+ * Android: WorkManager (30 min periodic)
+ * iOS: BGTaskScheduler / BGAppRefreshTask (30 min periodic)
  */
 expect class BackgroundSyncScheduler {
     fun schedulePeriodicSync()

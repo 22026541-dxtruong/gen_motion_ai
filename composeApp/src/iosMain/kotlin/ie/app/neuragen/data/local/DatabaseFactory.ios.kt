@@ -1,6 +1,7 @@
 package ie.app.neuragen.data.local
 
 import androidx.room.Room
+import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import kotlinx.cinterop.ExperimentalForeignApi
 import org.koin.core.annotation.Single
 import platform.Foundation.NSDocumentDirectory
@@ -19,6 +20,8 @@ actual class DatabaseFactory {
             error = null
         )
         val dbPath = requireNotNull(documentDirectory).path + "/neuragen.db"
-        return Room.databaseBuilder<AppDatabase>(name = dbPath).build()
+        return Room.databaseBuilder<AppDatabase>(name = dbPath)
+            .setDriver(BundledSQLiteDriver())
+            .build()
     }
 }
