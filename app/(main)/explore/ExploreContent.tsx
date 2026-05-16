@@ -34,6 +34,8 @@ type ExploreContentProps = {
   initialTrending: boolean;
 };
 
+const EXPLORE_PAGE_SIZE = 20;
+
 export default function ExploreContent({
   isAuthenticated,
   userJobs,
@@ -103,15 +105,15 @@ export default function ExploreContent({
           exploreRes = await fetchExploreSearchAction(topic, {
             sort,
             trending,
-            limit: 10,
+            limit: EXPLORE_PAGE_SIZE,
           });
         } else if (mode === "for_you") {
-          exploreRes = await fetchExploreForYouAction({ limit: 10 });
+          exploreRes = await fetchExploreForYouAction({ limit: EXPLORE_PAGE_SIZE });
         } else {
           exploreRes = await fetchExploreAction(mode, {
             sort,
             trending,
-            limit: 10,
+            limit: EXPLORE_PAGE_SIZE,
           });
         }
 

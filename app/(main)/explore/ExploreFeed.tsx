@@ -50,6 +50,8 @@ function isVideoSrc(url?: string, mimeType?: string): boolean {
   return /\.(mp4|webm|mov|m4v|ogg|ogv)(\?|$)/i.test(url);
 }
 
+const EXPLORE_LOAD_MORE_SIZE = 20;
+
 // ─── ExploreCard ───────────────────────────────────────────────────────────────
 function ExploreCard({
   item,
@@ -396,11 +398,26 @@ export default function ExploreFeed({
 
     let res;
     if (mode === 'for_you') {
-      res = await fetchExploreForYouAction({ topic, limit: 10, cursor });
+      res = await fetchExploreForYouAction({
+        topic,
+        limit: EXPLORE_LOAD_MORE_SIZE,
+        cursor,
+      });
     } else if (topic) {
-      res = await fetchExploreSearchAction(topic, { cursor, sort, trending });
+      res = await fetchExploreSearchAction(topic, {
+        cursor,
+        sort,
+        trending,
+        limit: EXPLORE_LOAD_MORE_SIZE,
+      });
     } else {
-      res = await fetchExploreAction(mode, { cursor, topic, sort, trending });
+      res = await fetchExploreAction(mode, {
+        cursor,
+        topic,
+        sort,
+        trending,
+        limit: EXPLORE_LOAD_MORE_SIZE,
+      });
     }
 
     if (res.success && res.data) {

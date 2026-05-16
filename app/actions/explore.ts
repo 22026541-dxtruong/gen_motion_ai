@@ -2,6 +2,8 @@
 
 import { fetchApi } from '@/lib/api';
 
+const DEFAULT_EXPLORE_LIMIT = 20;
+
 export async function fetchExploreAction(
   mode: string,
   params?: {
@@ -14,7 +16,7 @@ export async function fetchExploreAction(
 ) {
   try {
     const searchParams = new URLSearchParams();
-    searchParams.set('limit', (params?.limit || 10).toString());
+    searchParams.set('limit', (params?.limit || DEFAULT_EXPLORE_LIMIT).toString());
     if (mode && mode !== 'for_you') searchParams.set('mode', mode);
     if (params?.topic) searchParams.set('topic', params.topic);
     if (params?.trending !== undefined) searchParams.set('trending', String(params.trending));
@@ -44,7 +46,7 @@ export async function fetchExploreSearchAction(
   try {
     const searchParams = new URLSearchParams();
     searchParams.set('topic', topic);
-    searchParams.set('limit', (params?.limit || 10).toString());
+    searchParams.set('limit', (params?.limit || DEFAULT_EXPLORE_LIMIT).toString());
     if (params?.sort) searchParams.set('sort', params.sort);
     if (params?.trending !== undefined) searchParams.set('trending', String(params.trending));
     if (params?.cursor) searchParams.set('cursor', params.cursor);
@@ -68,7 +70,7 @@ export async function fetchExploreForYouAction(
 ) {
   try {
     const searchParams = new URLSearchParams();
-    searchParams.set('limit', (params?.limit || 10).toString());
+    searchParams.set('limit', (params?.limit || DEFAULT_EXPLORE_LIMIT).toString());
     if (params?.topic) searchParams.set('topic', params.topic);
     if (params?.cursor) searchParams.set('cursor', params.cursor);
 
