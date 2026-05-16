@@ -38,7 +38,7 @@ export default function AdminPage() {
         </p>
         <h1 className="text-3xl font-bold text-slate-900">Admin Console</h1>
         <p className="mt-2 text-sm text-slate-600">
-          Quản trị thanh toán, credit và moderation tại một nơi riêng biệt.
+          Quản trị thanh toán, credit và moderation cho NeuraGen. Hãy cẩn thận khi thực hiện các thay đổi ở đây, vì chúng có thể ảnh hưởng đến trải nghiệm của người dùng và hoạt động của hệ thống.
         </p>
       </div>
 

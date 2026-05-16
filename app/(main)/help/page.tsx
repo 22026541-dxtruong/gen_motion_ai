@@ -112,8 +112,7 @@ export default function HelpPage() {
             Admin Shortcut
           </p>
           <p className="text-sm text-rose-700">
-            Bạn đang ở role ADMIN. Các thao tác mark-paid, topup, moderation đã
-            được tách sang tab riêng.
+            Bạn đang ở role ADMIN.
           </p>
           <Link
             href="/admin"

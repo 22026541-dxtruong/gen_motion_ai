@@ -244,13 +244,13 @@ export default function ProfileView({
 
   const [isUpdating, setIsUpdating] = useState(false);
   const [updateError, setUpdateError] = useState<string | null>(null);
+  const completedJobs = jobs?.filter((j: any) => j.status === "COMPLETED") || [];
 
   const displayedGallery =
     activeTab === "public"
       ? galleryItems.filter((item) => item.isPublic)
       : (
-        jobs
-          ?.filter((j: any) => j.status === "COMPLETED")
+        completedJobs
           .map((job: any) => ({
             id: job.id,
             title: job.prompt || "Video Generation",
@@ -417,7 +417,7 @@ export default function ProfileView({
           },
           {
             label: "JOBS",
-            value: userProfile?.counts?.jobs || 0,
+            value: completedJobs.length,
             color: "text-purple-600",
           },
         ].map((stat) => (

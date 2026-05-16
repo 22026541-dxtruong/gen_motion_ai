@@ -28,7 +28,7 @@ export default function BillingAdminPanel() {
   const [status, setStatus] = useState<StatusState>(null);
 
   const helperLabel = useMemo(() => {
-    return "Chức năng nội bộ cho ADMIN: xử lý thủ công khi cần đối soát thanh toán.";
+    return "Xử lý thủ công khi cần đối soát thanh toán.";
   }, []);
 
   const showError = (message: string) => {

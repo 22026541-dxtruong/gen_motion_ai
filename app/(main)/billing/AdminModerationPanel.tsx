@@ -133,7 +133,7 @@ export default function AdminModerationPanel() {
         </p>
         <h2 className="text-2xl font-bold text-slate-900">Community Controls</h2>
         <p className="mt-2 text-sm text-slate-600">
-          Công cụ moderation dành riêng cho ADMIN.
+          Công cụ moderation.
         </p>
       </div>
 
