@@ -4,6 +4,7 @@ import android.app.Application
 import coil3.ImageLoader
 import coil3.SingletonImageLoader
 import coil3.video.VideoFrameDecoder
+import ie.app.neuragen.data.sync.BackgroundSyncScheduler
 import ie.app.neuragen.di.AppModule
 import org.koin.android.ext.koin.androidContext
 import org.koin.plugin.module.dsl.startKoin
@@ -23,5 +24,8 @@ class NeuraGenApp : Application() {
         startKoin<AppModule> {
             androidContext(this@NeuraGenApp)
         }
+
+        // Start periodic background data sync (every 30 min)
+        BackgroundSyncScheduler(this).schedulePeriodicSync()
     }
 }

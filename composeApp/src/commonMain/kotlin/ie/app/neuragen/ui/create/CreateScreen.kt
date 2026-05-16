@@ -1,6 +1,8 @@
 package ie.app.neuragen.ui.create
 
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.animation.core.animateFloatAsState
@@ -39,6 +41,7 @@ import neuragen.composeapp.generated.resources.*
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreateScreen(
     viewModel: CreateViewModel = koinViewModel()
@@ -71,11 +74,17 @@ fun CreateScreen(
         Scaffold(
             snackbarHost = { SnackbarHost(snackbarHostState) }
         ) { padding ->
-            LazyColumn(
-                modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).padding(padding),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+            val isRefreshing = uiState.isLoadingJobs && uiState.recentJobs.isNotEmpty()
+            PullToRefreshBox(
+                isRefreshing = isRefreshing,
+                onRefresh = { viewModel.refreshJobs() },
+                modifier = Modifier.fillMaxSize().padding(padding)
             ) {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
                 item {
                     GenerationForm(
                         prompt = uiState.prompt,
@@ -140,6 +149,7 @@ fun CreateScreen(
                     }
                 }
             }
+            } // PullToRefreshBox
 
             if (uiState.isPublishDialogOpen) {
                 PublishDialog(

@@ -57,6 +57,15 @@ class NavigationViewModel(
     val notifications = MutableStateFlow<List<JobNotificationPayload>>(emptyList())
 
     init {
+        // Observe cached profile for instant display
+        viewModelScope.launch {
+            userRepository.observeProfile().collect { cachedProfile ->
+                if (cachedProfile != null && UserSessionState.user.value == null) {
+                    UserSessionState.update(cachedProfile)
+                }
+            }
+        }
+
         viewModelScope.launch {
             sessionStatus.collect { status ->
                 if (status is SessionStatus.Authenticated) {
@@ -81,7 +90,7 @@ class NavigationViewModel(
 
     private fun fetchMyProfile() {
         viewModelScope.launch {
-            val result = userRepository.getMe()
+            val result = userRepository.refreshAndCacheProfile()
             if (result.isSuccess) {
                 UserSessionState.update(result.getOrNull())
             }

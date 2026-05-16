@@ -50,7 +50,21 @@ class CreateViewModel(
 
     init {
         println("CreateViewModel: Initializing...")
+        // 1. Observe Room cache for instant display
+        observeCachedJobs()
+        // 2. Refresh from API in background
         refreshJobs()
+    }
+
+    private fun observeCachedJobs() {
+        viewModelScope.launch {
+            jobRepository.observeJobs().collect { cachedJobs ->
+                if (cachedJobs.isNotEmpty() && _uiState.value.recentJobs.isEmpty()) {
+                    _uiState.update { it.copy(recentJobs = cachedJobs) }
+                    println("CreateViewModel: Loaded ${cachedJobs.size} jobs from cache")
+                }
+            }
+        }
     }
 
     fun onPromptChange(newPrompt: String) {
@@ -140,7 +154,10 @@ class CreateViewModel(
     fun refreshJobs() {
         viewModelScope.launch {
             println("CreateViewModel: Refreshing jobs...")
-            _uiState.update { it.copy(isLoadingJobs = true) }
+            // Only show loading if cache is empty
+            if (_uiState.value.recentJobs.isEmpty()) {
+                _uiState.update { it.copy(isLoadingJobs = true) }
+            }
             val result = jobRepository.getJobs()
             result.onSuccess { jobs ->
                 println("CreateViewModel: Successfully loaded ${jobs.size} jobs")
@@ -157,6 +174,9 @@ class CreateViewModel(
                     }
                     state.copy(recentJobs = updatedJobs, isLoadingJobs = false)
                 }
+
+                // Save to Room cache for offline access
+                try { jobRepository.refreshAndCacheJobs() } catch (_: Exception) {}
 
                 // TỰ ĐỘNG RECONNECT: Nối lại SSE cho các job đang chạy (khi user mở lại app/màn hình)
                 jobs.forEach { job ->

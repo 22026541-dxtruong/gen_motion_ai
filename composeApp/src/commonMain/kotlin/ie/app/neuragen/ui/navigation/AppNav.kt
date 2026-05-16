@@ -209,7 +209,8 @@ fun AppNav(modifier: Modifier = Modifier) {
                 entry<UserProfile> { route ->
                     UserProfileScreen(
                         userId = route.id.toString(),
-                        onBackClick = { backStack.removeLastOrNull() }
+                        onBackClick = { backStack.removeLastOrNull() },
+                        onPostClick = { id -> backStack.add(PostDetail(Uuid.parse(id))) }
                     )
                 }
 

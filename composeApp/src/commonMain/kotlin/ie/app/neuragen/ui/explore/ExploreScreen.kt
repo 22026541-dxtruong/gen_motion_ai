@@ -37,7 +37,10 @@ import neuragen.composeapp.generated.resources.*
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
 import coil3.compose.AsyncImage
+import ie.app.neuragen.ui.common.VideoPlayer
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -78,10 +81,16 @@ fun ExploreScreen(
             }
         }
     ) { paddingValues ->
-        LazyColumn(
-            modifier = Modifier.fillMaxSize().padding(paddingValues),
-            contentPadding = PaddingValues(bottom = 16.dp)
+        val isRefreshing = uiState.isLoading && uiState.recentDiscoveries.isNotEmpty()
+        PullToRefreshBox(
+            isRefreshing = isRefreshing,
+            onRefresh = { viewModel.refresh() },
+            modifier = Modifier.fillMaxSize().padding(paddingValues)
         ) {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(bottom = 16.dp)
+            ) {
             item {
                 ExploreHeader(
                     searchQuery = uiState.searchQuery,
@@ -175,7 +184,7 @@ fun ExploreScreen(
                 }
             }
         }
-
+        } // PullToRefreshBox
         // Job Selection BottomSheet
         if (showSelectJobSheet) {
             ModalBottomSheet(

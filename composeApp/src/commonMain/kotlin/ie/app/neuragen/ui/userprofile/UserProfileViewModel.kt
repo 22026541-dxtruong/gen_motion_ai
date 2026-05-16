@@ -22,7 +22,7 @@ data class UserProfileUiState(
     val followingCount: Int = 0,
     val isLoading: Boolean = false,
     val error: String? = null,
-    val selectedTab: Int = 0, // 0 for Videos, 1 for Collections
+    // selectedTab removed — Collection tab eliminated
     val isFollowing: Boolean = false,
     val isTogglingFollow: Boolean = false
 )
@@ -92,9 +92,7 @@ class UserProfileViewModel(
         }
     }
 
-    fun onTabSelected(index: Int) {
-        _uiState.update { it.copy(selectedTab = index) }
-    }
+    // onTabSelected removed — Collection tab eliminated
 
     fun toggleFollow() {
         val userId = currentUserId ?: return

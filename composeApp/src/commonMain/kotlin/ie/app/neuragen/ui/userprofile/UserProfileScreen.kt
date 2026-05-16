@@ -4,16 +4,13 @@ import androidx.compose.material3.MaterialTheme
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
-import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.runtime.Composable
 
 import androidx.compose.runtime.LaunchedEffect
@@ -34,8 +31,10 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.AnnotatedString
 import coil3.compose.AsyncImage
+import ie.app.neuragen.data.network.model.ExploreItemDto
 import ie.app.neuragen.data.network.model.PostDto
 import ie.app.neuragen.data.network.model.UserPublicDto
+import ie.app.neuragen.ui.explore.SharedFeedState
 import neuragen.composeapp.generated.resources.*
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -44,7 +43,8 @@ import org.koin.compose.viewmodel.koinViewModel
 fun UserProfileScreen(
     userId: String,
     viewModel: UserProfileViewModel = koinViewModel(),
-    onBackClick: () -> Unit = {}
+    onBackClick: () -> Unit = {},
+    onPostClick: (String) -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -53,74 +53,150 @@ fun UserProfileScreen(
     }
 
     Scaffold { padding ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .background(Color.White),
-            contentPadding = PaddingValues(bottom = 16.dp)
-        ) {
-            item {
-                UserProfileHeader(user = uiState.user, onBackClick = onBackClick)
+        if (uiState.isLoading && uiState.user == null) {
+            Box(
+                modifier = Modifier.fillMaxSize().padding(padding),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator()
             }
-
-            item {
-                UserProfileStats(uiState = uiState)
-            }
-
-            item {
-                UserProfileActions(
-                    userId = userId,
-                    isFollowing = uiState.isFollowing,
-                    isTogglingFollow = uiState.isTogglingFollow,
-                    onToggleFollow = viewModel::toggleFollow
-                )
-            }
-
-            item {
-                UserProfileTabs(
-                    selectedIndex = uiState.selectedTab,
-                    onTabSelected = viewModel::onTabSelected
-                )
-            }
-
-            // Grid of videos
-            // Chunking posts into rows of 3
-            val rows = uiState.posts.chunked(3)
-            items(rows) { rowPosts ->
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 8.dp, vertical = 4.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    rowPosts.forEach { post ->
-                        VideoThumbnail(
-                            modifier = Modifier.weight(1f),
-                            post = post
-                        )
-                    }
-                    // Filling empty spots if any
-                    repeat(3 - rowPosts.size) {
-                        Spacer(modifier = Modifier.weight(1f))
-                    }
-                }
-            }
-            
-            if (uiState.posts.isEmpty() && !uiState.isLoading) {
+        } else {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+                    .background(Color.White),
+                contentPadding = PaddingValues(bottom = 16.dp)
+            ) {
                 item {
-                    Box(
+                    UserProfileHeader(user = uiState.user, onBackClick = onBackClick)
+                }
+
+                item {
+                    UserProfileStats(uiState = uiState)
+                }
+
+                item {
+                    UserProfileActions(
+                        userId = userId,
+                        isFollowing = uiState.isFollowing,
+                        isTogglingFollow = uiState.isTogglingFollow,
+                        onToggleFollow = viewModel::toggleFollow
+                    )
+                }
+
+                // Section title instead of tabs (Collection removed)
+                item {
+                    Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(32.dp),
-                        contentAlignment = Alignment.Center
+                            .padding(horizontal = 16.dp, vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text("No videos shared yet.", color = Color.Gray)
+                        Box(
+                            modifier = Modifier
+                                .width(3.dp)
+                                .height(20.dp)
+                                .background(
+                                    MaterialTheme.colorScheme.primary,
+                                    RoundedCornerShape(2.dp)
+                                )
+                        )
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Text(
+                            "Videos",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onBackground
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            "(${uiState.posts.size})",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = Color.Gray
+                        )
+                    }
+                    HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant)
+                }
+
+                // Grid of videos (chunked into rows of 3)
+                val rows = uiState.posts.chunked(3)
+                items(rows) { rowPosts ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 8.dp, vertical = 4.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        rowPosts.forEach { post ->
+                            VideoThumbnail(
+                                modifier = Modifier.weight(1f),
+                                post = post,
+                                onClick = {
+                                    // Set SharedFeedState to user's posts only for vertical swiping
+                                    setUserFeedState(uiState.posts, post.id)
+                                    onPostClick(post.id)
+                                }
+                            )
+                        }
+                        // Filling empty spots if any
+                        repeat(3 - rowPosts.size) {
+                            Spacer(modifier = Modifier.weight(1f))
+                        }
+                    }
+                }
+
+                if (uiState.posts.isEmpty() && !uiState.isLoading) {
+                    item {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(48.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Icon(
+                                    painterResource(Res.drawable.ic_play),
+                                    contentDescription = null,
+                                    tint = Color.LightGray,
+                                    modifier = Modifier.size(48.dp)
+                                )
+                                Spacer(modifier = Modifier.height(12.dp))
+                                Text(
+                                    "No videos shared yet.",
+                                    color = Color.Gray,
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                            }
+                        }
                     }
                 }
             }
         }
     }
+}
+
+/**
+ * Sets up SharedFeedState with user's posts so the PostScreen's VerticalPager
+ * only shows this user's videos when swiping up/down.
+ */
+private fun setUserFeedState(posts: List<PostDto>, tappedPostId: String) {
+    val exploreItems = posts.map { post ->
+        ExploreItemDto(
+            id = post.id,
+            assetVersionId = post.assetVersionId,
+            title = post.caption ?: "Untitled",
+            topic = null,
+            isTrending = false,
+            score = 0.0f,
+            createdAt = post.createdAt,
+            postId = post.id,
+            assetVersion = post.assetVersion,
+            post = post
+        )
+    }
+    SharedFeedState.updateState(exploreItems, null, null)
+    SharedFeedState.onLoadMore = null // No pagination for user profiles
 }
 
 @Composable
@@ -346,44 +422,13 @@ fun UserProfileActions(
 }
 
 @Composable
-fun UserProfileTabs(selectedIndex: Int, onTabSelected: (Int) -> Unit) {
-    TabRow(
-        selectedTabIndex = selectedIndex,
-        containerColor = Color.Transparent,
-        contentColor = MaterialTheme.colorScheme.primary,
-        indicator = { tabPositions ->
-            if (selectedIndex < tabPositions.size) {
-                TabRowDefaults.SecondaryIndicator(
-                    Modifier.tabIndicatorOffset(tabPositions[selectedIndex]),
-                    color = MaterialTheme.colorScheme.primary,
-                    height = 2.dp
-                )
-            }
-        },
-        divider = {
-            HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant)
-        }
-    ) {
-        Tab(
-            selected = selectedIndex == 0,
-            onClick = { onTabSelected(0) },
-            text = { Text("Videos", style = MaterialTheme.typography.labelLarge) }
-        )
-        Tab(
-            selected = selectedIndex == 1,
-            onClick = { onTabSelected(1) },
-            text = { Text("Collections", style = MaterialTheme.typography.labelLarge) }
-        )
-    }
-}
-
-@Composable
-fun VideoThumbnail(modifier: Modifier = Modifier, post: PostDto) {
+fun VideoThumbnail(modifier: Modifier = Modifier, post: PostDto, onClick: () -> Unit = {}) {
     Box(
         modifier = modifier
             .aspectRatio(0.7f)
             .clip(RoundedCornerShape(12.dp))
             .background(Color.Black)
+            .clickable(onClick = onClick)
     ) {
         // Load actual thumbnail image
         val thumbnailUrl = post.thumbnailUrl ?: post.videoUrl ?: post.assetVersion?.fileUrl
@@ -435,12 +480,20 @@ fun VideoThumbnail(modifier: Modifier = Modifier, post: PostDto) {
                 )
                 Spacer(modifier = Modifier.width(4.dp))
                 Text(
-                    text = "${(post.viewCount / 1000f)}k", // Simple formatting
+                    text = formatViewCount(post.viewCount),
                     color = Color.White,
                     fontSize = 10.sp,
                     fontWeight = FontWeight.Bold
                 )
             }
         }
+    }
+}
+
+private fun formatViewCount(count: Int): String {
+    return when {
+        count >= 1_000_000 -> "${"%.1f".format(count / 1_000_000f)}M"
+        count >= 1_000 -> "${"%.1f".format(count / 1_000f)}k"
+        else -> count.toString()
     }
 }

@@ -72,9 +72,22 @@ class ExploreViewModel(
     private var impressionFlushJob: Job? = null
 
     init {
+        // 1. Observe Room cache for instant display (Facebook-style)
+        observeCachedExplore()
+        // 2. Trigger API refresh in background
         refresh()
         checkAuthAndLoadJobs()
         startImpressionFlushLoop()
+    }
+
+    private fun observeCachedExplore() {
+        viewModelScope.launch {
+            exploreRepository.observeExplore(_uiState.value.activeMode).collect { cachedItems ->
+                if (cachedItems.isNotEmpty() && _uiState.value.recentDiscoveries.isEmpty()) {
+                    _uiState.update { it.copy(recentDiscoveries = cachedItems) }
+                }
+            }
+        }
     }
 
     // ──────────────────────────────────────────────────────────────
@@ -245,7 +258,12 @@ class ExploreViewModel(
 
     fun refresh(query: String = _uiState.value.searchQuery) {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, error = null, nextCursor = null) }
+            // Only show loading if no cached data (instant display otherwise)
+            if (_uiState.value.recentDiscoveries.isEmpty()) {
+                _uiState.update { it.copy(isLoading = true, error = null, nextCursor = null) }
+            } else {
+                _uiState.update { it.copy(error = null, nextCursor = null) }
+            }
 
             val state = _uiState.value
             val mode = state.activeMode
@@ -314,6 +332,18 @@ class ExploreViewModel(
                 }
                 SharedFeedState.updateState(fetchedData, fetchedNextCursor, topicParam)
                 SharedFeedState.onLoadMore = { loadMore() }
+
+                // Save to Room cache for offline access (skip search results)
+                if (topicParam == null && fetchedData.isNotEmpty()) {
+                    try {
+                        exploreRepository.refreshAndCacheExplore(
+                            mode = mode,
+                            sort = sort,
+                            trending = trendingParam,
+                            limit = 20
+                        )
+                    } catch (_: Exception) { /* cache save is best-effort */ }
+                }
             } else {
                 _uiState.update { 
                     it.copy(

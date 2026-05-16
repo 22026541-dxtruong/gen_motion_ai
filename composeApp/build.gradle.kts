@@ -8,6 +8,8 @@ plugins {
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.koin.compiler)
     alias(libs.plugins.jetbrains.kotlin.serialization)
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.androidx.room)
 }
 
 kotlin {
@@ -40,6 +42,8 @@ kotlin {
             implementation(libs.androidx.media3.ui.compose)
             // Coil video
             implementation(libs.coil.video)
+            // WorkManager
+            implementation(libs.androidx.work.runtime)
             // Google Sign-In (Credential Manager)
             implementation(libs.androidx.credentials)
             implementation(libs.androidx.credentials.play.services)
@@ -78,6 +82,9 @@ kotlin {
             // Coil
             implementation(libs.coil.compose)
             implementation(libs.coil.network.ktor3)
+            // Room
+            implementation(libs.androidx.room.runtime)
+            implementation(libs.androidx.sqlite.bundled)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
@@ -119,5 +126,13 @@ android {
 
 dependencies {
     debugImplementation(libs.compose.uiTooling)
+    // Room
+    add("kspAndroid", libs.androidx.room.compiler)
+    add("kspIosSimulatorArm64", libs.androidx.room.compiler)
+    add("kspIosArm64", libs.androidx.room.compiler)
+}
+
+room {
+    schemaDirectory("$projectDir/schemas")
 }
 
