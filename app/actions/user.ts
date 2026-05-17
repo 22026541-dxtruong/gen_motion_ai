@@ -35,7 +35,10 @@ export async function getUserByIdAction(userId: string) {
     const data = await fetchApi(`/users/${userId}`);
     return { success: true, data };
   } catch (error: any) {
-    return { success: false, error: error.message || 'Failed to fetch user' };
+    const msg = error.message || 'Failed to fetch user';
+    // Detect "not found" vs other errors (e.g. 401 Unauthorized)
+    const isNotFound = /not found|404/i.test(msg);
+    return { success: false, error: msg, isNotFound };
   }
 }
 

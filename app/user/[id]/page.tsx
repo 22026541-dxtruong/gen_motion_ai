@@ -26,7 +26,28 @@ export default async function UserProfile({ params }: { params: Promise<{ id: st
   
   const userRes = await getUserByIdAction(userId);
   if (!userRes.success || !userRes.data) {
-    notFound();
+    // Only show 404 if the user genuinely does not exist
+    if (userRes.isNotFound) {
+      notFound();
+    }
+    // For other errors (401 Unauthorized, network, etc.) show a fallback UI
+    return (
+      <div className="min-h-screen bg-[#FDFDFD] flex items-center justify-center p-4">
+        <div className="bg-white rounded-3xl p-8 md:p-12 border border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] max-w-md text-center">
+          <div className="w-16 h-16 bg-indigo-50 rounded-full flex items-center justify-center mx-auto mb-6">
+            <ArrowLeft className="w-7 h-7 text-indigo-600" />
+          </div>
+          <h2 className="text-xl font-semibold text-slate-900 mb-2">Login Required</h2>
+          <p className="text-slate-500 mb-6">You need to log in to view this profile.</p>
+          <Link
+            href="/login"
+            className="inline-block bg-indigo-600 text-white px-6 py-3 rounded-xl font-medium hover:bg-indigo-700 transition-colors"
+          >
+            Log In
+          </Link>
+        </div>
+      </div>
+    );
   }
   const user = userRes.data;
 
