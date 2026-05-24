@@ -82,15 +82,15 @@ export async function addCommentAction(postId: string, content: string) {
   try {
     const data = await fetchApi(`/posts/${postId}/comments`, {
       method: 'POST',
-      body: JSON.stringify({ content, postId }),
+      body: JSON.stringify({ content }),
     });
     
     // Fetch user separately to avoid async context loss with cookies()
     let userRes = null;
     try {
       userRes = await fetchApi('/users/me');
-    } catch {
-      // Ignore user fetch errors
+    } catch (e) {
+      console.error('Failed to fetch user in addCommentAction:', e);
     }
 
     // Attach user info so optimistic UI shows the correct username

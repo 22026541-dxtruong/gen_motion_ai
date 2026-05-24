@@ -206,7 +206,7 @@ function ExploreCard({
   return (
     <div
       ref={cardRef}
-      className="bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-md transition group flex flex-col relative"
+      className="bg-white dark:bg-slate-900 rounded-3xl overflow-hidden shadow-sm hover:shadow-md dark:shadow-none dark:border dark:border-slate-800 transition group flex flex-col relative"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
@@ -261,10 +261,10 @@ function ExploreCard({
       {/* Card body */}
       <div className="p-5 flex flex-col flex-1 pointer-events-none">
         <div className="flex justify-between items-start mb-3">
-          <h3 className="font-semibold text-gray-900 truncate pr-4 text-lg flex-1">
+          <h3 className="font-semibold text-gray-900 dark:text-slate-100 truncate pr-4 text-lg flex-1">
             {title}
           </h3>
-          <button className="text-gray-400 hover:text-gray-700 mt-1 pointer-events-auto relative z-20">
+          <button className="text-gray-400 dark:text-slate-500 hover:text-gray-700 dark:hover:text-slate-300 mt-1 pointer-events-auto relative z-20">
             <MoreVertical size={18} />
           </button>
         </div>
@@ -274,12 +274,12 @@ function ExploreCard({
           className="flex items-center gap-2 mb-4 pointer-events-auto relative z-20 w-fit hover:opacity-80 transition-opacity"
         >
           <img src={avatarUrl} alt={authorName} className="h-6 w-6 rounded-full object-cover" />
-          <span className="text-sm font-medium text-gray-600">@{authorName}</span>
+          <span className="text-sm font-medium text-gray-600 dark:text-slate-300">@{authorName}</span>
         </Link>
 
         {/* Actions */}
         <div className="flex items-center justify-between mt-auto pt-2 pointer-events-auto relative z-20">
-          <div className="flex items-center gap-4 text-sm font-medium text-gray-500">
+          <div className="flex items-center gap-4 text-sm font-medium text-gray-500 dark:text-slate-400">
             <span className="flex items-center gap-1.5">
               <Eye size={16} /> {item.viewCount ?? item.post?.viewCount ?? 0}
             </span>
@@ -294,14 +294,14 @@ function ExploreCard({
 
             <button
               onClick={handleCommentToggle}
-              className="flex items-center gap-1.5 hover:text-indigo-600 transition-colors"
+              className="flex items-center gap-1.5 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
             >
               <MessageSquare className="h-4 w-4" />
               <span>{commentCount}</span>
             </button>
           </div>
 
-          <button onClick={handleShare} className="text-gray-400 hover:text-indigo-600 transition-colors">
+          <button onClick={handleShare} className="text-gray-400 dark:text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
             <Share2 className="h-4 w-4" />
           </button>
         </div>
@@ -312,24 +312,24 @@ function ExploreCard({
             className="mt-4 pointer-events-auto relative z-20"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center gap-2 border border-slate-200 rounded-xl bg-slate-50 px-3 py-1.5">
+            <div className="flex items-center gap-2 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 px-3 py-1.5">
               <input
                 type="text"
                 value={commentText}
                 onChange={(e) => setCommentText(e.target.value)}
                 onKeyDown={(e) => { if (e.key === "Enter") handleSubmitComment(e); }}
                 placeholder="Write a comment..."
-                className="flex-1 bg-transparent outline-none text-sm text-slate-800 placeholder:text-slate-400"
+                className="flex-1 bg-transparent outline-none text-sm text-slate-800 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500"
                 autoFocus
               />
               <button
                 onClick={handleSubmitComment}
                 disabled={!commentText.trim() || isCommenting}
-                className="text-indigo-600 disabled:opacity-40 hover:text-indigo-700"
+                className="text-indigo-600 dark:text-indigo-400 disabled:opacity-40 hover:text-indigo-700 dark:hover:text-indigo-300"
               >
                 <Send className="h-4 w-4" />
               </button>
-              <button onClick={handleCommentToggle} className="text-slate-400 hover:text-slate-600">
+              <button onClick={handleCommentToggle} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
                 <X className="h-4 w-4" />
               </button>
             </div>
@@ -463,8 +463,8 @@ export default function ExploreFeed({
   if (items.length === 0) {
     return (
       <div className="py-20 text-center">
-        <h4 className="text-xl font-bold text-slate-400 mb-2">No Content Yet</h4>
-        <p className="text-slate-500">Check back later for new cinematic discoveries.</p>
+        <h4 className="text-xl font-bold text-slate-400 dark:text-slate-500 mb-2">No Content Yet</h4>
+        <p className="text-slate-500 dark:text-slate-400">Check back later for new cinematic discoveries.</p>
       </div>
     );
   }
@@ -472,17 +472,17 @@ export default function ExploreFeed({
   return (
     <>
       {signals && (
-        <div className="mb-6 p-4 bg-indigo-50 border border-indigo-100 rounded-2xl flex items-center justify-between">
+        <div className="mb-6 p-4 bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20 rounded-2xl flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-indigo-100 text-indigo-600 rounded-xl">
+            <div className="p-2 bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 rounded-xl">
               <Sparkles size={20} />
             </div>
             <div>
-              <p className="text-sm font-medium text-slate-800">
+              <p className="text-sm font-medium text-slate-800 dark:text-slate-200">
                 Personalized for you based on your interests.
               </p>
               {signals.topTopics && signals.topTopics.length > 0 && (
-                <p className="text-xs text-slate-500 mt-0.5">
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                   Top Topics: {signals.topTopics.map((t: any) => t.topic).join(', ')}
                 </p>
               )}
@@ -501,7 +501,7 @@ export default function ExploreFeed({
           <button
             onClick={loadMore}
             disabled={isLoading}
-            className="bg-indigo-50 text-indigo-600 px-8 py-3 rounded-xl font-medium hover:bg-indigo-100 transition-colors disabled:opacity-50"
+            className="bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 px-8 py-3 rounded-xl font-medium hover:bg-indigo-100 dark:hover:bg-indigo-500/20 transition-colors disabled:opacity-50"
           >
             {isLoading ? "Loading..." : "Load More Content"}
           </button>

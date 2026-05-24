@@ -22,14 +22,14 @@ export default function Sidebar() {
   const activePage = getActivePage();
 
   return (
-    <aside className="w-60 bg-[#f8f9fa] border-r border-slate-100 flex flex-col justify-between overflow-y-auto">
+    <aside className="w-60 bg-[#f8f9fa] dark:bg-[#0a0f1c] border-r border-slate-100 dark:border-slate-800 flex flex-col justify-between overflow-y-auto transition-colors">
       <nav className="p-4 space-y-2 mt-2">
         <Link
           href="/explore"
           className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${
             activePage === 'explore'
-              ? 'text-indigo-700 bg-white shadow-sm'
-              : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
+              ? 'text-indigo-700 dark:text-indigo-400 bg-white dark:bg-slate-800 shadow-sm'
+              : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800/50'
           }`}
         >
           <Compass className="h-5 w-5" />
@@ -39,8 +39,8 @@ export default function Sidebar() {
           href="/create"
           className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${
             activePage === 'create'
-              ? 'text-indigo-700 bg-white shadow-sm'
-              : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
+              ? 'text-indigo-700 dark:text-indigo-400 bg-white dark:bg-slate-800 shadow-sm'
+              : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800/50'
           }`}
         >
           <Clapperboard className="h-5 w-5" />
@@ -50,8 +50,8 @@ export default function Sidebar() {
           href="/profile"
           className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${
             activePage === 'profile'
-              ? 'text-indigo-700 bg-white shadow-sm'
-              : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
+              ? 'text-indigo-700 dark:text-indigo-400 bg-white dark:bg-slate-800 shadow-sm'
+              : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800/50'
           }`}
         >
           <User className="h-5 w-5" />
@@ -61,8 +61,8 @@ export default function Sidebar() {
           href="/billing"
           className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${
             activePage === 'billing'
-              ? 'text-indigo-700 bg-white shadow-sm'
-              : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
+              ? 'text-indigo-700 dark:text-indigo-400 bg-white dark:bg-slate-800 shadow-sm'
+              : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800/50'
           }`}
         >
           <Wallet className="h-5 w-5" />
@@ -73,8 +73,8 @@ export default function Sidebar() {
             href="/admin"
             className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${
               activePage === 'admin'
-                ? 'text-indigo-700 bg-white shadow-sm'
-                : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
+                ? 'text-indigo-700 dark:text-indigo-400 bg-white dark:bg-slate-800 shadow-sm'
+                : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800/50'
             }`}
           >
             <ShieldCheck className="h-5 w-5" />
@@ -88,8 +88,8 @@ export default function Sidebar() {
           href="/help"
           className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${
             activePage === 'help'
-              ? 'text-indigo-700 bg-white shadow-sm'
-              : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
+              ? 'text-indigo-700 dark:text-indigo-400 bg-white dark:bg-slate-800 shadow-sm'
+              : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800/50'
           }`}
         >
           <HelpCircle className="h-5 w-5" />

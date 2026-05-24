@@ -20,8 +20,8 @@ function isTokenValid(token: string | undefined) {
     );
 
     const payload = JSON.parse(jsonPayload);
-    // Add 5 seconds buffer
-    return payload.exp * 1000 > Date.now() + 5000;
+    // Add 60 seconds buffer for clock skew between client and server
+    return payload.exp * 1000 > Date.now() + 60000;
   } catch (e) {
     return false;
   }
@@ -34,7 +34,7 @@ export async function middleware(request: NextRequest) {
   const refreshToken = request.cookies.get('refreshToken')?.value;
   
   const hasValidAccess = isTokenValid(accessToken);
-  const hasValidRefresh = isTokenValid(refreshToken);
+  const hasValidRefresh = Boolean(refreshToken);
   
   let newAccessToken = accessToken;
   let newRefreshToken = refreshToken;
@@ -70,7 +70,7 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  const isAuthenticated = isTokenValid(newAccessToken) || isTokenValid(newRefreshToken);
+  const isAuthenticated = isTokenValid(newAccessToken) || Boolean(newRefreshToken);
 
   const authRoutes = ['/login', '/register'];
   const privateRoutes = ['/create']; // /explore is public

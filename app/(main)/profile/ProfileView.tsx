@@ -115,7 +115,7 @@ function GalleryCard({
 
   return (
     <div
-      className="bg-white rounded-3xl shadow-sm hover:shadow-md transition group block relative"
+      className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm hover:shadow-md dark:shadow-none dark:border dark:border-slate-800 transition group block relative"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
@@ -156,29 +156,29 @@ function GalleryCard({
       </div>
       <div className="p-5">
         <div className="flex justify-between items-start relative">
-          <h3 className="font-semibold text-gray-900 truncate pr-4 text-lg">
+          <h3 className="font-semibold text-gray-900 dark:text-slate-100 truncate pr-4 text-lg">
             {item.title || item.caption || "Untitled Video"}
           </h3>
           {!item.isJob && (
             <div ref={menuRef} className="relative z-30">
               <button
                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); setIsMenuOpen(!isMenuOpen); }}
-                className="text-gray-400 hover:text-gray-700 mt-1 p-1 rounded-md hover:bg-gray-100 transition-colors"
+                className="text-gray-400 dark:text-slate-500 hover:text-gray-700 dark:hover:text-slate-300 mt-1 p-1 rounded-md hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
               >
                 <MoreVertical size={18} />
               </button>
               {isMenuOpen && (
-                <div className="absolute right-0 mt-1 w-40 bg-white rounded-xl shadow-lg border border-gray-100 py-1 overflow-hidden z-50">
+                <div className="absolute right-0 mt-1 w-40 bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-gray-100 dark:border-slate-700 py-1 overflow-hidden z-50">
                   <button
                     onClick={handleEdit}
-                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                    className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors"
                   >
                     Edit
                   </button>
                   <button
                     onClick={handleDelete}
                     disabled={isDeleting}
-                    className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50"
+                    className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors disabled:opacity-50"
                   >
                     {isDeleting ? 'Deleting...' : 'Delete'}
                   </button>
@@ -188,7 +188,7 @@ function GalleryCard({
           )}
         </div>
         <div className="flex items-center justify-between mt-4">
-          <div className="flex items-center gap-4 text-sm font-medium text-gray-500">
+          <div className="flex items-center gap-4 text-sm font-medium text-gray-500 dark:text-slate-400">
             {item.isPublic && !item.isJob ? (
               <>
                 <span className="flex items-center gap-1.5">
@@ -199,7 +199,7 @@ function GalleryCard({
                 </span>
               </>
             ) : (
-              <span className="text-xs px-2 py-1 bg-gray-100 text-gray-500 rounded-md font-semibold">
+              <span className="text-xs px-2 py-1 bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-slate-400 rounded-md font-semibold">
                 Private
               </span>
             )}
@@ -211,7 +211,7 @@ function GalleryCard({
                 e.stopPropagation();
                 onPublish(item);
               }}
-              className="relative z-20 flex items-center gap-1.5 text-xs font-semibold bg-indigo-50 text-indigo-600 px-3 py-1.5 rounded-lg hover:bg-indigo-100 transition-colors ml-auto"
+              className="relative z-20 flex items-center gap-1.5 text-xs font-semibold bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 px-3 py-1.5 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-500/20 transition-colors ml-auto"
             >
               <Send size={14} /> Publish
             </button>
@@ -383,15 +383,22 @@ export default function ProfileView({
                   `https://ui-avatars.com/api/?name=${encodeURIComponent(userProfile?.username || "User")}&background=e0e7ff&color=4f46e5`
                 }
                 alt={userProfile?.username || "User"}
-                className="w-32 h-32 rounded-2xl border-4 border-white shadow-sm object-cover bg-gray-100"
+                className="w-32 h-32 rounded-2xl border-4 border-white dark:border-slate-900 shadow-sm object-cover bg-gray-100 dark:bg-slate-800"
               />
             </div>
             <div className="pt-4">
-              <h1 className="text-3xl font-bold text-gray-900">
-                {userProfile?.username || "Unknown User"}
-              </h1>
-              <p className="text-gray-600 mt-1">
-                @{userProfile?.username || "unknown"} • Creator
+              <div className="flex items-center gap-3">
+                <h1 className="text-3xl font-bold text-gray-900 dark:text-slate-100">
+                  {userProfile?.username || "Unknown User"}
+                </h1>
+                {userProfile?.role === "PRO" && (
+                  <span className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white text-xs font-bold px-2 py-1 rounded uppercase tracking-wider shadow-sm">
+                    PRO
+                  </span>
+                )}
+              </div>
+              <p className="text-gray-600 dark:text-slate-400 mt-1">
+                @{userProfile?.username || "unknown"} • {userProfile?.role === "PRO" ? "Pro Creator" : "Creator"}
               </p>
             </div>
           </div>
@@ -436,13 +443,13 @@ export default function ProfileView({
           <div
             key={stat.label}
             onClick={stat.onClick}
-            className={`bg-white p-6 rounded-2xl shadow-sm flex flex-col justify-center ${stat.onClick ? "cursor-pointer hover:shadow-md transition" : ""
+            className={`bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm dark:shadow-none dark:border dark:border-slate-800 flex flex-col justify-center ${stat.onClick ? "cursor-pointer hover:shadow-md transition" : ""
               }`}
           >
-            <span className="text-xs font-semibold text-gray-500 tracking-wider">
+            <span className="text-xs font-semibold text-gray-500 dark:text-slate-400 tracking-wider">
               {stat.label}
             </span>
-            <span className={`text-3xl font-bold mt-1 ${stat.color}`}>
+            <span className={`text-3xl font-bold mt-1 ${stat.color === 'text-gray-900' ? 'text-gray-900 dark:text-slate-100' : stat.color === 'text-indigo-600' ? 'text-indigo-600 dark:text-indigo-400' : 'text-purple-600 dark:text-purple-400'}`}>
               {stat.value}
             </span>
           </div>
@@ -450,25 +457,25 @@ export default function ProfileView({
       </div>
 
       {/* Bio */}
-      <p className="text-gray-700 leading-relaxed text-lg pt-2">
+      <p className="text-gray-700 dark:text-slate-300 leading-relaxed text-lg pt-2">
         {userProfile?.bio || "No bio yet. Update your profile to add one! ✨"}
       </p>
 
       {/* Credits Section */}
-      <div className="bg-white rounded-3xl p-6 flex items-center justify-between shadow-sm">
+      <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 flex items-center justify-between shadow-sm dark:shadow-none dark:border dark:border-slate-800">
         <div className="flex items-center gap-5">
-          <div className="w-14 h-14 bg-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-md shadow-indigo-200">
+          <div className="w-14 h-14 bg-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-md shadow-indigo-200 dark:shadow-none">
             <Zap size={24} className="fill-current" />
           </div>
           <div>
-            <p className="text-xs font-semibold text-gray-500 tracking-wider">
+            <p className="text-xs font-semibold text-gray-500 dark:text-slate-400 tracking-wider">
               CREDIT BALANCE
             </p>
             <div className="flex items-baseline gap-2 mt-1">
-              <span className="text-3xl font-bold text-gray-900">
+              <span className="text-3xl font-bold text-gray-900 dark:text-slate-100">
                 {userProfile?.credits?.balance || 0}
               </span>
-              <span className="text-sm text-gray-500 font-medium">
+              <span className="text-sm text-gray-500 dark:text-slate-400 font-medium">
                 Available Credits
               </span>
             </div>
@@ -476,20 +483,20 @@ export default function ProfileView({
         </div>
         <Link
           href="/billing"
-          className="bg-indigo-50 text-indigo-700 px-6 py-3 rounded-full font-semibold hover:bg-indigo-100 transition inline-block"
+          className="bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 px-6 py-3 rounded-full font-semibold hover:bg-indigo-100 dark:hover:bg-indigo-500/20 transition inline-block"
         >
           Buy Credits
         </Link>
       </div>
 
       {/* Tabs & Filters */}
-      <div className="flex items-center justify-between border-b border-gray-200 pt-4">
+      <div className="flex items-center justify-between border-b border-gray-200 dark:border-slate-800 pt-4">
         <div className="flex gap-8">
           <button
             onClick={() => setActiveTab("public")}
             className={`flex items-center gap-2 pb-4 font-medium px-1 transition ${activeTab === "public"
-              ? "text-indigo-600 border-b-2 border-indigo-600"
-              : "text-gray-500 hover:text-gray-700"
+              ? "text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-600 dark:border-indigo-400"
+              : "text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-300"
               }`}
           >
             <Globe size={18} /> Public Gallery
@@ -497,8 +504,8 @@ export default function ProfileView({
           <button
             onClick={() => setActiveTab("private")}
             className={`flex items-center gap-2 pb-4 font-medium px-1 transition ${activeTab === "private"
-              ? "text-indigo-600 border-b-2 border-indigo-600"
-              : "text-gray-500 hover:text-gray-700"
+              ? "text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-600 dark:border-indigo-400"
+              : "text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-300"
               }`}
           >
             <Lock size={18} /> Private Workspace
@@ -566,7 +573,7 @@ export default function ProfileView({
       >
         <form onSubmit={handleUpdateProfile} className="space-y-5">
           {updateError && (
-            <div className="p-3 bg-red-50 text-red-600 text-sm rounded-lg border border-red-100">
+            <div className="p-3 bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 text-sm rounded-lg border border-red-100 dark:border-red-500/20">
               {updateError}
             </div>
           )}
@@ -583,7 +590,7 @@ export default function ProfileView({
               />
               {isUploadingAvatar && (
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <Loader2 className="animate-spin text-indigo-600" />
+                  <Loader2 className="animate-spin text-indigo-600 dark:text-indigo-400" />
                 </div>
               )}
             </div>
@@ -598,25 +605,25 @@ export default function ProfileView({
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={isUploadingAvatar}
-              className="text-sm text-indigo-600 font-medium hover:text-indigo-700 transition mt-1"
+              className="text-sm text-indigo-600 dark:text-indigo-400 font-medium hover:text-indigo-700 transition mt-1"
             >
               Change Photo
             </button>
           </div>
           <div>
-            <label className="block text-sm font-semibold text-gray-900 mb-1.5">
+            <label className="block text-sm font-semibold text-gray-900 dark:text-slate-100 mb-1.5">
               Username
             </label>
             <input
               type="text"
               name="username"
               defaultValue={userProfile?.username || ""}
-              className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition text-gray-900"
+              className="w-full bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-lg px-4 py-3 focus:outline-none focus:border-indigo-600 dark:focus:border-indigo-500 focus:ring-1 focus:ring-indigo-600 transition text-gray-900 dark:text-slate-100"
             />
           </div>
           <div>
             <div className="flex justify-between items-center mb-1.5">
-              <label className="block text-sm font-semibold text-gray-900">
+              <label className="block text-sm font-semibold text-gray-900 dark:text-slate-100">
                 Bio
               </label>
             </div>
@@ -624,21 +631,21 @@ export default function ProfileView({
               rows={3}
               name="bio"
               defaultValue={userProfile?.bio || ""}
-              className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition resize-none text-gray-900"
+              className="w-full bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-lg px-4 py-3 focus:outline-none focus:border-indigo-600 dark:focus:border-indigo-500 focus:ring-1 focus:ring-indigo-600 transition resize-none text-gray-900 dark:text-slate-100"
             />
           </div>
-          <div className="flex justify-center gap-4 mt-8 pt-4 border-t border-gray-100">
+          <div className="flex justify-center gap-4 mt-8 pt-4 border-t border-gray-100 dark:border-slate-800">
             <button
               type="button"
               onClick={() => setIsEditDialogOpen(false)}
-              className="px-6 py-2 border border-indigo-600 text-indigo-600 hover:bg-indigo-50 rounded-full font-medium transition"
+              className="px-6 py-2 border border-indigo-600 dark:border-indigo-500 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 rounded-full font-medium transition"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isUpdating}
-              className="px-6 py-2 bg-indigo-600 text-white rounded-full font-medium hover:bg-indigo-700 transition shadow-sm disabled:opacity-70"
+              className="px-6 py-2 bg-indigo-600 dark:bg-indigo-500 text-white rounded-full font-medium hover:bg-indigo-700 dark:hover:bg-indigo-600 transition shadow-sm disabled:opacity-70"
             >
               {isUpdating ? "Saving..." : "Save Changes"}
             </button>
@@ -689,31 +696,31 @@ export default function ProfileView({
         >
           <div className="p-1">
             {editPostError && (
-              <div className="p-3 mb-3 bg-red-50 text-red-600 text-sm rounded-lg border border-red-100">
+              <div className="p-3 mb-3 bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 text-sm rounded-lg border border-red-100 dark:border-red-500/20">
                 {editPostError}
               </div>
             )}
-            <label className="block text-sm font-semibold text-gray-900 mb-2">
+            <label className="block text-sm font-semibold text-gray-900 dark:text-slate-100 mb-2">
               Caption
             </label>
             <textarea
               rows={4}
               value={editCaption}
               onChange={(e) => setEditCaption(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition resize-none text-gray-900"
+              className="w-full bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-lg px-4 py-3 focus:outline-none focus:border-indigo-600 dark:focus:border-indigo-500 focus:ring-1 focus:ring-indigo-600 transition resize-none text-gray-900 dark:text-slate-100"
               placeholder="Write a caption for your post..."
             />
-            <label className="block text-sm font-semibold text-gray-900 mb-2 mt-4">
+            <label className="block text-sm font-semibold text-gray-900 dark:text-slate-100 mb-2 mt-4">
               Topic (Optional)
             </label>
             <input
               value={editTopic}
               onChange={(e) => setEditTopic(e.target.value)}
               maxLength={40}
-              className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition text-gray-900"
+              className="w-full bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-lg px-4 py-3 focus:outline-none focus:border-indigo-600 dark:focus:border-indigo-500 focus:ring-1 focus:ring-indigo-600 transition text-gray-900 dark:text-slate-100"
               placeholder="e.g. cinematic, anime, travel_vlog"
             />
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-gray-500 dark:text-slate-400 mt-1">
               Để giữ topic hiện tại, để trống ô này.
             </p>
             <div className="flex justify-end gap-3 mt-6">
@@ -724,7 +731,7 @@ export default function ProfileView({
                   setEditPostError(null);
                   setEditTopic("");
                 }}
-                className="px-5 py-2 border border-gray-200 text-gray-700 hover:bg-gray-50 rounded-full font-medium transition"
+                className="px-5 py-2 border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800 rounded-full font-medium transition"
               >
                 Cancel
               </button>

@@ -8,6 +8,7 @@ import SwitchAccountDialog from './SwitchAccountDialog';
 import NotificationBell from './NotificationBell';
 import { useUser } from '@/lib/swr';
 import GoogleLinkDialog from './GoogleLinkDialog';
+import { ThemeToggle } from './ThemeToggle';
 
 export default function Topbar() {
   const { user, mutateUser } = useUser();
@@ -69,15 +70,16 @@ export default function Topbar() {
 
   return (
     <>
-      <header className="h-16 bg-white border-b border-slate-100 flex items-center justify-between px-6 shrink-0 z-50">
+      <header className="h-16 bg-white dark:bg-[#0f172a] border-b border-slate-100 dark:border-slate-800 flex items-center justify-between px-6 shrink-0 z-50 transition-colors">
         <div className="flex items-center gap-12 w-64">
-          <h1 className="text-xl font-bold text-indigo-600">Neura Gen</h1>
+          <h1 className="text-xl font-bold text-indigo-600 dark:text-indigo-400">Neura Gen</h1>
         </div>
 
         <div className="flex-1 flex justify-center">
         </div>
 
-        <div className="flex items-center gap-6 justify-end w-64">
+        <div className="flex items-center gap-6 justify-end w-[320px]">
+          <ThemeToggle />
           {user?.id && <NotificationBell key={user.id} userId={user.id} />}
           <div className="flex items-center gap-2 text-indigo-600 font-medium text-sm cursor-pointer">
             <CreditCard className="h-5 w-5" />
@@ -88,7 +90,7 @@ export default function Topbar() {
             <div className="relative" ref={dropdownRef}>
               <button 
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                className="h-8 w-8 rounded-full overflow-hidden border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-100 transition-all bg-indigo-50 flex items-center justify-center text-indigo-700 font-bold"
+                className="h-8 w-8 rounded-full overflow-hidden border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900 transition-all bg-indigo-50 dark:bg-slate-800 flex items-center justify-center text-indigo-700 dark:text-indigo-400 font-bold"
               >
                 {user.avatarUrl ? (
                   <img
@@ -102,13 +104,18 @@ export default function Topbar() {
               </button>
               
               {isDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-60 bg-white rounded-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.15)] border border-slate-100 py-2 z-50">
+                <div className="absolute right-0 mt-2 w-60 bg-white dark:bg-slate-900 rounded-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.15)] dark:shadow-[0_10px_40px_-10px_rgba(0,0,0,0.5)] border border-slate-100 dark:border-slate-800 py-2 z-50">
                   <div className="px-4 py-3">
-                    <p className="text-[15px] font-medium text-slate-800">{user.username}</p>
-                    <p className="text-xs text-slate-500 mt-0.5 truncate">{user.email}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-[15px] font-medium text-slate-800 dark:text-slate-200">{user.username}</p>
+                      {user.role === 'PRO' && (
+                        <span className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider shadow-sm">PRO</span>
+                      )}
+                    </div>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate">{user.email}</p>
                   </div>
                   
-                  <div className="h-px bg-slate-100 my-1"></div>
+                  <div className="h-px bg-slate-100 dark:bg-slate-800 my-1"></div>
                   
                   <div className="py-1">
                     <button 
@@ -116,7 +123,7 @@ export default function Topbar() {
                         setIsDropdownOpen(false);
                         setIsChangePasswordOpen(true);
                       }}
-                      className="w-full flex items-center gap-3 px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 transition-colors text-left"
+                      className="w-full flex items-center gap-3 px-4 py-2 text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-left"
                     >
                       <Key className="h-[18px] w-[18px]" />
                       <span>Change Password</span>
@@ -127,7 +134,7 @@ export default function Topbar() {
                         setIsDropdownOpen(false);
                         setIsSwitchAccountOpen(true);
                       }}
-                      className="w-full flex items-center gap-3 px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 transition-colors text-left mt-1"
+                      className="w-full flex items-center gap-3 px-4 py-2 text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-left mt-1"
                     >
                       <Users className="h-[18px] w-[18px]" />
                       <span>Switch Account</span>
@@ -138,19 +145,19 @@ export default function Topbar() {
                         setIsDropdownOpen(false);
                         setIsGoogleLinkOpen(true);
                       }}
-                      className="w-full flex items-center gap-3 px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 transition-colors text-left mt-1"
+                      className="w-full flex items-center gap-3 px-4 py-2 text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-left mt-1"
                     >
                       <Link2 className="h-[18px] w-[18px]" />
                       <span>{user?.isGoogleLinked ? 'Google Linked' : 'Link Google'}</span>
                     </button>
                   </div>
                   
-                  <div className="h-px bg-slate-100 my-1"></div>
+                  <div className="h-px bg-slate-100 dark:bg-slate-800 my-1"></div>
                   
                   <div className="py-1">
                     <button 
                       onClick={handleLogout}
-                      className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors text-left font-medium"
+                      className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors text-left font-medium"
                     >
                       <LogOut className="h-[18px] w-[18px]" />
                       <span>Logout</span>

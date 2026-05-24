@@ -20,6 +20,11 @@ export default function JobItem({ job }: { job: any }) {
   const [isAddingToGallery, setIsAddingToGallery] = useState(false);
   const eventSourceRef = useRef<EventSource | null>(null);
 
+  // Sync prop to state
+  useEffect(() => {
+    setCurrentJob(job);
+  }, [job]);
+
   const isProcessing = PROCESSING_STATUSES.includes(currentJob.status);
 
   // SSE real-time updates for processing jobs — auto-reconnect on disconnect
@@ -55,11 +60,13 @@ export default function JobItem({ job }: { job: any }) {
           // If snapshot shows terminal status, close and refresh seamlessly
           if (TERMINAL_STATUSES.includes(data.status)) {
             es.close();
-            getJobByIdAction(currentJob.id).then((res) => {
-              if (res.success && res.data) {
-                setCurrentJob(res.data);
-              }
-            });
+            setTimeout(() => {
+              getJobByIdAction(currentJob.id).then((res) => {
+                if (res.success && res.data) {
+                  setCurrentJob(res.data);
+                }
+              });
+            }, 1500);
           }
         } catch { /* ignore parse errors */ }
       });
@@ -81,11 +88,13 @@ export default function JobItem({ job }: { job: any }) {
           // When terminal, close the stream and refresh the page data seamlessly
           if (TERMINAL_STATUSES.includes(data.status)) {
             es.close();
-            getJobByIdAction(currentJob.id).then((res) => {
-              if (res.success && res.data) {
-                setCurrentJob(res.data);
-              }
-            });
+            setTimeout(() => {
+              getJobByIdAction(currentJob.id).then((res) => {
+                if (res.success && res.data) {
+                  setCurrentJob(res.data);
+                }
+              });
+            }, 1500);
           }
         } catch { /* ignore parse errors */ }
       });
@@ -132,41 +141,41 @@ export default function JobItem({ job }: { job: any }) {
       "Generating...";
 
     return (
-      <div className="bg-white rounded-2xl p-6 shadow-sm border border-indigo-100 relative overflow-hidden">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-sm border border-indigo-100 dark:border-indigo-500/20 relative overflow-hidden transition-colors">
         <div className="absolute top-0 left-0 w-1 h-full bg-indigo-500"></div>
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-2">
             <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></div>
-            <span className="text-xs font-bold text-slate-700 tracking-wide">LIVE STATUS</span>
+            <span className="text-xs font-bold text-slate-700 dark:text-slate-300 tracking-wide">LIVE STATUS</span>
           </div>
-          <span className="bg-indigo-50 text-indigo-600 text-xs font-bold px-2.5 py-1 rounded-md">
+          <span className="bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 text-xs font-bold px-2.5 py-1 rounded-md">
             {currentJob.status}
           </span>
         </div>
 
         <div className="flex gap-4 mb-5">
-          <div className="h-[88px] w-[88px] rounded-lg overflow-hidden shrink-0 relative bg-slate-100 flex items-center justify-center">
+          <div className="h-[88px] w-[88px] rounded-lg overflow-hidden shrink-0 relative bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
             {currentJob.thumbnail?.downloadUrl ? (
               <img src={currentJob.thumbnail.downloadUrl} alt="thumb" className="w-full h-full object-cover opacity-50" />
             ) : (
-              <Loader2 className="h-5 w-5 text-indigo-400 animate-spin" />
+              <Loader2 className="h-5 w-5 text-indigo-400 dark:text-indigo-500 animate-spin" />
             )}
           </div>
           <div className="flex-1 flex flex-col justify-center">
-            <h4 className="font-semibold text-slate-900 line-clamp-1 mb-1">
+            <h4 className="font-semibold text-slate-900 dark:text-slate-100 line-clamp-1 mb-1">
               {currentJob.prompt || "Video Generation"}
             </h4>
-            <p className="text-xs text-slate-500 mb-2">ID: {currentJob.id.substring(0, 8)}</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">ID: {currentJob.id.substring(0, 8)}</p>
 
             {latestLog && (
-              <p className="text-xs text-slate-500 mb-2 truncate italic">{latestLog}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mb-2 truncate italic">{latestLog}</p>
             )}
 
-            <div className="flex items-center justify-between text-xs text-indigo-600 font-medium mb-1.5">
+            <div className="flex items-center justify-between text-xs text-indigo-600 dark:text-indigo-400 font-medium mb-1.5">
               <span>{statusLabel}</span>
               <span>{currentJob.progress || 0}%</span>
             </div>
-            <div className="w-full bg-slate-100 rounded-full h-1.5">
+            <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-1.5">
               <div
                 className="bg-indigo-500 h-1.5 rounded-full transition-all duration-500"
                 style={{ width: `${currentJob.progress || 0}%` }}
@@ -180,20 +189,20 @@ export default function JobItem({ job }: { job: any }) {
 
   // ─── Terminal State UI (COMPLETED / FAILED / CANCELLED) ──────
   return (
-    <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex flex-col gap-4">
+    <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col gap-4 transition-colors">
       <div className="flex items-center justify-between">
         <div className="flex gap-4 items-center">
-          <div className="h-12 w-12 rounded-lg bg-slate-100 shrink-0 flex items-center justify-center overflow-hidden">
+          <div className="h-12 w-12 rounded-lg bg-slate-100 dark:bg-slate-800 shrink-0 flex items-center justify-center overflow-hidden">
             {currentJob.thumbnail?.downloadUrl ? (
               <img src={currentJob.thumbnail.downloadUrl} alt="thumb" className="w-full h-full object-cover" />
             ) : currentJob.output?.downloadUrl ? (
               <video src={currentJob.output.downloadUrl} className="w-full h-full object-cover" />
             ) : (
-              <ImageIcon className="h-5 w-5 text-slate-400" />
+              <ImageIcon className="h-5 w-5 text-slate-400 dark:text-slate-500" />
             )}
           </div>
           <div>
-            <h4 className="font-semibold text-slate-900 mb-0.5 max-w-[200px] truncate">
+            <h4 className="font-semibold text-slate-900 dark:text-slate-100 mb-0.5 max-w-[200px] truncate">
               {currentJob.prompt || "Completed Video"}
             </h4>
             <div
@@ -215,7 +224,7 @@ export default function JobItem({ job }: { job: any }) {
       </div>
 
       {currentJob.status === "FAILED" && currentJob.errorMessage && (
-        <p className="text-xs text-red-500 bg-red-50 p-3 rounded-lg border border-red-100">
+        <p className="text-xs text-red-500 dark:text-red-400 bg-red-50 dark:bg-red-500/10 p-3 rounded-lg border border-red-100 dark:border-red-500/20">
           {currentJob.errorMessage}
         </p>
       )}
@@ -228,14 +237,14 @@ export default function JobItem({ job }: { job: any }) {
               target="_blank"
               rel="noopener noreferrer"
               download
-              className="flex-1 border border-slate-200 hover:bg-slate-50 text-slate-700 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-1.5"
+              className="flex-1 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-1.5"
             >
               <Download className="h-4 w-4" /> Download
             </a>
           ) : (
             <button
               disabled
-              className="flex-1 border border-slate-200 bg-slate-50 text-slate-400 py-2.5 rounded-lg text-sm font-medium flex items-center justify-center gap-1.5 cursor-not-allowed"
+              className="flex-1 border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 text-slate-400 dark:text-slate-500 py-2.5 rounded-lg text-sm font-medium flex items-center justify-center gap-1.5 cursor-not-allowed"
             >
               <Download className="h-4 w-4" /> Download
             </button>
@@ -244,7 +253,7 @@ export default function JobItem({ job }: { job: any }) {
           <button
             onClick={() => setIsPreviewOpen(true)}
             disabled={!currentJob.output?.downloadUrl}
-            className="flex-1 border border-slate-200 hover:bg-slate-50 text-slate-700 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Play className="h-4 w-4" /> Watch
           </button>
@@ -252,7 +261,7 @@ export default function JobItem({ job }: { job: any }) {
           <button
             onClick={() => setIsPublishOpen(true)}
             disabled={!currentJob.output?.downloadUrl}
-            className="flex-1 bg-indigo-50 border border-indigo-100 hover:bg-indigo-100 text-indigo-700 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 text-indigo-700 dark:text-indigo-400 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Send className="h-4 w-4" /> Publish
           </button>

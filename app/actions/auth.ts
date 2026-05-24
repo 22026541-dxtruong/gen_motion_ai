@@ -132,17 +132,28 @@ export async function registerAction(formData: FormData) {
 export async function logoutAction() {
   const cookieStore = await cookies();
   const refreshToken = cookieStore.get('refreshToken')?.value;
+  const accessToken = cookieStore.get('accessToken')?.value;
 
   if (refreshToken) {
-    const token = cookieStore.get('accessToken')?.value;
     await fetch(buildApiUrl('/auth/logout'), {
       method: 'POST',
       headers: { 
         'Content-Type': 'application/json',
-        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        ...(accessToken ? { 'Authorization': `Bearer ${accessToken}` } : {})
       },
       body: JSON.stringify({ refreshToken }),
     }).catch(() => {}); // ignore errors on logout
+  }
+
+  // Also remove saved account tokens so next switch requires login
+  if (accessToken) {
+    try {
+      const payload = JSON.parse(Buffer.from(accessToken.split('.')[1], 'base64').toString());
+      if (payload.email) {
+        cookieStore.delete(`access_${payload.email}`);
+        cookieStore.delete(`refresh_${payload.email}`);
+      }
+    } catch (e) {}
   }
 
   cookieStore.delete('accessToken');
@@ -168,20 +179,61 @@ export async function changePasswordAction(formData: FormData) {
 
 export async function switchAccountAction(email: string) {
   const cookieStore = await cookies();
-  const accountAccess = cookieStore.get(`access_${email}`)?.value;
-  const accountRefresh = cookieStore.get(`refresh_${email}`)?.value;
+  let accountAccess = cookieStore.get(`access_${email}`)?.value;
+  let accountRefresh = cookieStore.get(`refresh_${email}`)?.value;
 
-  if (accountAccess) {
-    // Validate the token against the API to ensure it hasn't expired or been revoked
-    const res = await fetch(buildApiUrl('/users/me'), {
-      headers: {
-        'Authorization': `Bearer ${accountAccess}`,
-        'Content-Type': 'application/json'
+  if (accountAccess || accountRefresh) {
+    let isValid = false;
+
+    // Validate the access token against the API
+    if (accountAccess) {
+      const res = await fetch(buildApiUrl('/users/me'), {
+        headers: {
+          'Authorization': `Bearer ${accountAccess}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      isValid = res.ok;
+    }
+
+    // If access is invalid/missing but we have a refresh token, try to refresh
+    if (!isValid && accountRefresh) {
+      try {
+        const refreshRes = await fetch(buildApiUrl('/auth/refresh'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ refreshToken: accountRefresh }),
+        });
+        
+        if (refreshRes.ok) {
+          const data = await refreshRes.json();
+          accountAccess = data.accessToken;
+          accountRefresh = data.refreshToken || accountRefresh;
+          isValid = true;
+          
+          // Update the saved account's tokens in cookies
+          cookieStore.set(`access_${email}`, accountAccess!, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            path: '/',
+            maxAge: 60 * 60 * 24 * 7,
+          });
+          cookieStore.set(`refresh_${email}`, accountRefresh!, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            path: '/',
+            maxAge: 60 * 60 * 24 * 30,
+          });
+        }
+      } catch (e) {
+        // Refresh failed, isValid remains false
       }
-    });
+    }
 
-    if (res.ok) {
-      // Token is valid, perform the switch
+    if (isValid && accountAccess) {
+      // Token is valid (or successfully refreshed), perform the switch
       cookieStore.set('accessToken', accountAccess, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
@@ -201,13 +253,13 @@ export async function switchAccountAction(email: string) {
       }
       return { success: true };
     } else {
-      // Token is invalid/expired, delete the dead cookies
+      // Token is invalid/expired and refresh failed, delete the dead cookies
       cookieStore.delete(`access_${email}`);
       cookieStore.delete(`refresh_${email}`);
     }
   }
   
-  // No token found (or it was invalid), require login
+  // No valid token found, require login
   return { requireLogin: true, email };
 }
 
@@ -222,6 +274,18 @@ export async function logoutAllAction() {
   try {
     await fetchApi('/auth/logout-all', { method: 'POST' });
     const cookieStore = await cookies();
+    const accessToken = cookieStore.get('accessToken')?.value;
+
+    if (accessToken) {
+      try {
+        const payload = JSON.parse(Buffer.from(accessToken.split('.')[1], 'base64').toString());
+        if (payload.email) {
+          cookieStore.delete(`access_${payload.email}`);
+          cookieStore.delete(`refresh_${payload.email}`);
+        }
+      } catch (e) {}
+    }
+
     cookieStore.delete('accessToken');
     cookieStore.delete('refreshToken');
     return { success: true };

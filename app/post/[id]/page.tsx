@@ -27,6 +27,7 @@ import {
 } from "@/app/actions/post";
 import { trackExploreEventAction, fetchExploreAction, fetchExploreSearchAction } from "@/app/actions/explore";
 import PostLikesModal from "./PostLikesModal";
+import { useUser } from "@/lib/swr";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 // Matches the actual GET /posts/:id response
@@ -94,6 +95,8 @@ export default function PostDetailPage() {
   const router = useRouter();
   const params = useParams();
   const postId = params?.id as string;
+  
+  const { user: currentUser } = useUser();
 
   const [post, setPost] = useState<PostData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -239,8 +242,18 @@ export default function PostDetailPage() {
     setIsCommenting(true);
     const res = await addCommentAction(postId, commentText.trim());
     if (res.success && res.data) {
+      const newComment = res.data as Comment;
+      if (!newComment.user && currentUser) {
+        newComment.user = {
+          id: currentUser.id,
+          username: currentUser.username,
+        };
+      } else if (newComment.user && !newComment.user.username && currentUser) {
+        newComment.user.username = currentUser.username;
+      }
+      
       // Prepend the new comment optimistically
-      setComments((prev) => [res.data as Comment, ...prev]);
+      setComments((prev) => [newComment, ...prev]);
       setPost((p) => p ? { ...p, commentCount: (p.commentCount ?? 0) + 1 } : p);
       setCommentText("");
       trackExploreEventAction(postId, "COMMENT", { surface: "post_detail" });
@@ -377,11 +390,11 @@ export default function PostDetailPage() {
   )}&background=e0e7ff&color=4f46e5`;
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 sm:p-8">
+    <div className="min-h-screen bg-slate-50 dark:bg-[#0B0F19] transition-colors flex items-center justify-center p-4 sm:p-8">
       {/* Back Button */}
       <button
         onClick={() => router.back()}
-        className="fixed top-6 left-6 w-10 h-10 bg-white text-indigo-900 flex items-center justify-center rounded-full hover:bg-indigo-50 transition shadow-sm border border-slate-200 z-50"
+        className="fixed top-6 left-6 w-10 h-10 bg-white dark:bg-slate-900 text-indigo-900 dark:text-slate-100 flex items-center justify-center rounded-full hover:bg-indigo-50 dark:hover:bg-slate-800 transition shadow-sm border border-slate-200 dark:border-slate-800 z-50"
       >
         <X size={20} />
       </button>
@@ -390,13 +403,13 @@ export default function PostDetailPage() {
       <div className="fixed right-4 sm:right-6 xl:right-12 top-1/2 -translate-y-1/2 flex flex-col gap-4 z-50">
         <button
           onClick={() => handleNavigation("down")}
-          className="w-10 h-10 sm:w-12 sm:h-12 bg-white text-indigo-900 flex items-center justify-center rounded-full hover:bg-indigo-50 transition shadow-lg border border-slate-200"
+          className="w-10 h-10 sm:w-12 sm:h-12 bg-white dark:bg-slate-900 text-indigo-900 dark:text-slate-100 flex items-center justify-center rounded-full hover:bg-indigo-50 dark:hover:bg-slate-800 transition shadow-lg border border-slate-200 dark:border-slate-800"
         >
           <ChevronUp size={24} />
         </button>
         <button
           onClick={() => handleNavigation("up")}
-          className="w-10 h-10 sm:w-12 sm:h-12 bg-white text-indigo-900 flex items-center justify-center rounded-full hover:bg-indigo-50 transition shadow-lg border border-slate-200"
+          className="w-10 h-10 sm:w-12 sm:h-12 bg-white dark:bg-slate-900 text-indigo-900 dark:text-slate-100 flex items-center justify-center rounded-full hover:bg-indigo-50 dark:hover:bg-slate-800 transition shadow-lg border border-slate-200 dark:border-slate-800"
         >
           <ChevronDown size={24} />
         </button>
@@ -404,7 +417,7 @@ export default function PostDetailPage() {
 
       {/* Main Card */}
       <div
-        className={`w-full max-w-[1200px] h-[85vh] min-h-[650px] bg-white rounded-[2rem] shadow-2xl flex flex-col lg:flex-row overflow-hidden border border-slate-100 relative z-10 transition-all duration-300 ease-out ${animClass}`}
+        className={`w-full max-w-[1200px] h-[85vh] min-h-[650px] bg-white dark:bg-slate-900 rounded-[2rem] shadow-2xl flex flex-col lg:flex-row overflow-hidden border border-slate-100 dark:border-slate-800 relative z-10 transition-all duration-300 ease-out ${animClass}`}
       >
         {/* LEFT — Video / Image */}
         <div
@@ -524,15 +537,15 @@ export default function PostDetailPage() {
         </div>
 
         {/* RIGHT — Info & Comments */}
-        <div className="w-full lg:w-[45%] flex flex-col h-full bg-white">
+        <div className="w-full lg:w-[45%] flex flex-col h-full bg-white dark:bg-slate-900 border-l border-slate-100 dark:border-slate-800">
           {/* Author header */}
-          <div className="p-6 border-b border-slate-100 flex items-center justify-between shrink-0">
+          <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0">
             {isLoading ? (
               <div className="flex items-center gap-3">
-                <div className="w-11 h-11 rounded-full bg-slate-100 animate-pulse" />
+                <div className="w-11 h-11 rounded-full bg-slate-100 dark:bg-slate-800 animate-pulse" />
                 <div className="space-y-2">
-                  <div className="h-3 w-24 bg-slate-100 rounded animate-pulse" />
-                  <div className="h-2 w-16 bg-slate-100 rounded animate-pulse" />
+                  <div className="h-3 w-24 bg-slate-100 dark:bg-slate-800 rounded animate-pulse" />
+                  <div className="h-2 w-16 bg-slate-100 dark:bg-slate-800 rounded animate-pulse" />
                 </div>
               </div>
             ) : (
@@ -549,11 +562,11 @@ export default function PostDetailPage() {
                     href={`/user/${post?.user?.id || post?.user?.username || "unknown"}`}
                     className="hover:underline"
                   >
-                    <h3 className="font-semibold text-slate-900 text-sm">
+                    <h3 className="font-semibold text-slate-900 dark:text-slate-100 text-sm">
                       @{post?.user?.username || "unknown"}
                     </h3>
                   </Link>
-                  <p className="text-slate-500 text-xs">{timeAgo(post?.createdAt)}</p>
+                  <p className="text-slate-500 dark:text-slate-400 text-xs">{timeAgo(post?.createdAt)}</p>
                 </div>
               </div>
             )}
@@ -564,37 +577,37 @@ export default function PostDetailPage() {
             {/* Caption */}
             {isLoading ? (
               <div className="space-y-2">
-                <div className="h-4 w-3/4 bg-slate-100 rounded animate-pulse" />
-                <div className="h-3 w-full bg-slate-100 rounded animate-pulse" />
-                <div className="h-3 w-2/3 bg-slate-100 rounded animate-pulse" />
+                <div className="h-4 w-3/4 bg-slate-100 dark:bg-slate-800 rounded animate-pulse" />
+                <div className="h-3 w-full bg-slate-100 dark:bg-slate-800 rounded animate-pulse" />
+                <div className="h-3 w-2/3 bg-slate-100 dark:bg-slate-800 rounded animate-pulse" />
               </div>
             ) : error ? (
               <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm border border-red-100">
                 {error}
               </div>
             ) : (
-              <p className="text-slate-700 text-sm leading-relaxed">
-                {post?.caption || <span className="text-slate-400 italic">No caption</span>}
+              <p className="text-slate-700 dark:text-slate-300 text-sm leading-relaxed">
+                {post?.caption || <span className="text-slate-400 dark:text-slate-500 italic">No caption</span>}
               </p>
             )}
 
             {/* Stats */}
             {!isLoading && !error && (
-              <div className="flex items-center gap-4 text-sm border-b border-slate-100 pb-4">
+              <div className="flex items-center gap-4 text-sm border-b border-slate-100 dark:border-slate-800 pb-4">
                 <button 
                   onClick={() => setIsLikesModalOpen(true)}
-                  className="text-slate-900 font-semibold hover:underline"
+                  className="text-slate-900 dark:text-slate-100 font-semibold hover:underline"
                 >
                   {formatCount(likeCount)}{" "}
-                  <span className="text-slate-500 font-normal">Likes</span>
+                  <span className="text-slate-500 dark:text-slate-400 font-normal">Likes</span>
                 </button>
-                <span className="text-slate-900 font-semibold">
+                <span className="text-slate-900 dark:text-slate-100 font-semibold">
                   {formatCount(post?.commentCount)}{" "}
-                  <span className="text-slate-500 font-normal">Comments</span>
+                  <span className="text-slate-500 dark:text-slate-400 font-normal">Comments</span>
                 </span>
-                <span className="text-slate-900 font-semibold">
+                <span className="text-slate-900 dark:text-slate-100 font-semibold">
                   {formatCount(post?.viewCount)}{" "}
-                  <span className="text-slate-500 font-normal">Views</span>
+                  <span className="text-slate-500 dark:text-slate-400 font-normal">Views</span>
                 </span>
               </div>
             )}
@@ -604,16 +617,16 @@ export default function PostDetailPage() {
               {isLoadingComments && comments.length === 0
                 ? [1, 2, 3].map((i) => (
                     <div key={i} className="flex gap-3 animate-pulse">
-                      <div className="w-8 h-8 rounded-full bg-slate-100 flex-shrink-0" />
+                      <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex-shrink-0" />
                       <div className="flex-1 space-y-2">
-                        <div className="h-3 w-20 bg-slate-100 rounded" />
-                        <div className="h-3 w-full bg-slate-100 rounded" />
+                        <div className="h-3 w-20 bg-slate-100 dark:bg-slate-800 rounded" />
+                        <div className="h-3 w-full bg-slate-100 dark:bg-slate-800 rounded" />
                       </div>
                     </div>
                   ))
                 : comments.length === 0 && !isLoadingComments
                 ? (
-                  <p className="text-slate-400 text-sm text-center py-4">
+                  <p className="text-slate-400 dark:text-slate-500 text-sm text-center py-4">
                     No comments yet. Be the first!
                   </p>
                 )
@@ -628,14 +641,14 @@ export default function PostDetailPage() {
                       />
                       <div className="flex-1">
                         <div className="flex items-baseline gap-2 mb-1">
-                          <span className="font-semibold text-slate-900 text-sm">
+                          <span className="font-semibold text-slate-900 dark:text-slate-100 text-sm">
                             @{comment.user?.username || "unknown"}
                           </span>
-                          <span className="text-slate-400 text-xs">
+                          <span className="text-slate-400 dark:text-slate-500 text-xs">
                             {timeAgo(comment.createdAt)}
                           </span>
                         </div>
-                        <p className="text-slate-600 text-sm">{comment.content}</p>
+                        <p className="text-slate-600 dark:text-slate-300 text-sm">{comment.content}</p>
                       </div>
                     </div>
                   ))}
@@ -654,10 +667,10 @@ export default function PostDetailPage() {
           </div>
 
           {/* Comment input */}
-          <div className="p-4 sm:p-6 border-t border-slate-100 bg-white shrink-0">
+          <div className="p-4 sm:p-6 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 shrink-0">
             <form
               onSubmit={handleComment}
-              className="flex items-center gap-3 bg-slate-100/80 border border-slate-200 rounded-full p-1.5 pr-2"
+              className="flex items-center gap-3 bg-slate-100/80 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full p-1.5 pr-2"
             >
               <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center ml-1 flex-shrink-0">
                 <span className="text-indigo-600 text-xs font-bold">Me</span>
@@ -667,7 +680,7 @@ export default function PostDetailPage() {
                 placeholder="Add a comment..."
                 value={commentText}
                 onChange={(e) => setCommentText(e.target.value)}
-                className="flex-1 bg-transparent border-none focus:ring-0 text-sm px-2 text-slate-900 placeholder:text-slate-500 outline-none"
+                className="flex-1 bg-transparent border-none focus:ring-0 text-sm px-2 text-slate-900 dark:text-slate-100 placeholder:text-slate-500 dark:placeholder:text-slate-400 outline-none"
               />
               <button
                 type="submit"

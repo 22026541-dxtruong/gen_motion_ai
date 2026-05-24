@@ -35,7 +35,7 @@ export default function CreatePage() {
       
       {/* Cột trái */}
       <div className="lg:col-span-7"> 
-        <div className="lg:sticky lg:top-0 bg-white rounded-2xl p-8 shadow-sm border border-slate-100 max-h-[calc(100vh-8rem)] overflow-y-auto scrollbar-hide">
+        <div className="lg:sticky lg:top-0 bg-white dark:bg-slate-900 rounded-2xl p-8 shadow-sm border border-slate-100 dark:border-slate-800 max-h-[calc(100vh-8rem)] overflow-y-auto scrollbar-hide transition-colors">
           <CreateForm credits={credits} />
         </div>
       </div>
@@ -43,12 +43,12 @@ export default function CreatePage() {
       {/* Cột phải: Danh sách Jobs */}
       <div className="lg:col-span-5 flex flex-col">
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-xl font-bold text-slate-900">My Recent Jobs</h3>
+          <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">My Recent Jobs</h3>
         </div>
 
         <div className="space-y-4">
           {jobs.length === 0 ? (
-            <div className="text-center py-10 text-slate-500 text-sm">No recent jobs found.</div>
+            <div className="text-center py-10 text-slate-500 dark:text-slate-400 text-sm">No recent jobs found.</div>
           ) : (
             jobs.map((job: any) => (
               <JobItem key={job.id} job={job} />
