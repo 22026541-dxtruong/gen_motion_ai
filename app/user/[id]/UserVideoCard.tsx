@@ -6,6 +6,21 @@ import { Play } from "lucide-react";
 
 export default function UserVideoCard({ post }: { post: any }) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const [dynamicDuration, setDynamicDuration] = React.useState<number | null>(null);
+
+  const formatDuration = (ms: number) => {
+    if (!ms) return "";
+    const s = Math.floor(ms / 1000);
+    const m = Math.floor(s / 60);
+    return `${m}:${(s % 60).toString().padStart(2, "0")}`;
+  };
+
+  const handleLoadedMetadata = (e: React.SyntheticEvent<HTMLVideoElement>) => {
+    const duration = e.currentTarget.duration;
+    if (duration && !isNaN(duration) && duration !== Infinity) {
+      setDynamicDuration(duration);
+    }
+  };
 
   const mediaUrl = post.videoUrl || post.assetVersion?.fileUrl || "";
   const thumbnailUrl = post.thumbnailUrl || "";
@@ -42,6 +57,7 @@ export default function UserVideoCard({ post }: { post: any }) {
           muted
           playsInline
           preload="metadata"
+          onLoadedMetadata={handleLoadedMetadata}
         />
       ) : (
         <img
@@ -52,6 +68,12 @@ export default function UserVideoCard({ post }: { post: any }) {
       )}
       
       <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent pointer-events-none"></div>
+      
+      {dynamicDuration && (
+        <span className="absolute top-3 right-3 bg-black/60 backdrop-blur-md text-white text-xs font-semibold px-2.5 py-1 rounded-lg z-20 pointer-events-none">
+          {formatDuration(Math.round(dynamicDuration * 1000))}
+        </span>
+      )}
       
       <Play className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 text-white/90 group-hover:scale-110 transition-transform fill-white/20 pointer-events-none" />
       

@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
-import { getUserByIdAction, checkFollowStatusAction } from '@/app/actions/user';
+import { getUserByIdAction, checkFollowStatusAction, getUserFollowersAction, getUserFollowingsAction } from '@/app/actions/user';
 import { fetchApi } from '@/lib/api';
 import UserVideoCard from './UserVideoCard';
 import FollowButton from './FollowButton';
@@ -85,6 +85,24 @@ export default async function UserProfile({ params }: { params: Promise<{ id: st
     console.error("Failed to fetch posts:", error);
   }
 
+  // Fetch followers and following dynamically since GET /users/:id doesn't return counts
+  let followersCount = 0;
+  let followingsCount = 0;
+  try {
+    const [followersRes, followingsRes] = await Promise.all([
+      getUserFollowersAction(user.id),
+      getUserFollowingsAction(user.id),
+    ]);
+    if (followersRes.success && followersRes.data?.data) {
+      followersCount = followersRes.data.data.length;
+    }
+    if (followingsRes.success && followingsRes.data?.data) {
+      followingsCount = followingsRes.data.data.length;
+    }
+  } catch (err) {
+    console.error("Failed to fetch follows:", err);
+  }
+
   return (
     <div className="min-h-screen bg-[#FDFDFD] p-4 md:p-8 font-sans text-slate-900">
       {/* Header */}
@@ -151,17 +169,17 @@ export default async function UserProfile({ params }: { params: Promise<{ id: st
             {/* Stats Row */}
             <div className="flex items-center justify-between text-center mb-8">
               <div className="flex-1">
-                <div className="text-lg font-medium text-slate-900">{user.counts?.posts || 0}</div>
+                <div className="text-lg font-medium text-slate-900">{userPosts.length}</div>
                 <div className="text-xs mt-1.5 text-slate-500 uppercase tracking-wider">Posts</div>
               </div>
               <div className="w-px h-10 bg-slate-200"></div>
               <div className="flex-1">
-                <div className="text-lg font-medium text-slate-900">{user.counts?.followers || 0}</div>
+                <div className="text-lg font-medium text-slate-900">{followersCount}</div>
                 <div className="text-xs mt-1.5 text-slate-500 uppercase tracking-wider">Followers</div>
               </div>
               <div className="w-px h-10 bg-slate-200"></div>
               <div className="flex-1">
-                <div className="text-lg font-medium text-slate-900">{user.counts?.following || 0}</div>
+                <div className="text-lg font-medium text-slate-900">{followingsCount}</div>
                 <div className="text-xs mt-1.5 text-slate-500 uppercase tracking-wider">Following</div>
               </div>
             </div>

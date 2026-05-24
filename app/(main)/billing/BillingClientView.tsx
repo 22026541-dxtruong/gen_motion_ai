@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { createOrderAction } from "@/app/actions/billing";
 import { Loader2, Zap, CreditCard, ArrowUpRight } from "lucide-react";
 import { useMyOrders } from "@/lib/swr";
+import Dialog from "@/component/Dialog";
 
 type PackageInfo = {
   code: string;
@@ -33,12 +34,19 @@ type Order = {
 export default function BillingClientView({ catalog }: { catalog: Catalog }) {
   const [activeTab, setActiveTab] = useState<"plans" | "orders">("plans");
   const [loadingOrderId, setLoadingOrderId] = useState<string | null>(null);
+  const [selectedPackage, setSelectedPackage] = useState<{ type: "CREDIT_TOPUP" | "PRO_SUBSCRIPTION", packageCode?: string } | null>(null);
   const { orders, isLoading: loadingOrders } = useMyOrders();
 
-  const handlePurchase = async (type: "CREDIT_TOPUP" | "PRO_SUBSCRIPTION", packageCode?: string) => {
+  const handleOpenSelector = (type: "CREDIT_TOPUP" | "PRO_SUBSCRIPTION", packageCode?: string) => {
+    setSelectedPackage({ type, packageCode });
+  };
+
+  const handlePurchase = async (provider: "PAYOS" | "MOMO") => {
+    if (!selectedPackage) return;
+    const { type, packageCode } = selectedPackage;
     setLoadingOrderId(packageCode || type);
     try {
-      const res = await createOrderAction(type, "PAYOS", packageCode);
+      const res = await createOrderAction(type, provider, packageCode);
       if (res.success && res.data) {
         // Save pending order info for payos-return page to track
         try {
@@ -51,13 +59,14 @@ export default function BillingClientView({ catalog }: { catalog: Catalog }) {
           window.location.href = url;
         } else {
           alert("Failed to get payment URL. Please try again.");
+          setLoadingOrderId(null);
         }
       } else {
         alert(res.error || "Failed to initiate payment. Please try again.");
+        setLoadingOrderId(null);
       }
     } catch (err) {
       alert("Error initiating payment.");
-    } finally {
       setLoadingOrderId(null);
     }
   };
@@ -173,7 +182,7 @@ export default function BillingClientView({ catalog }: { catalog: Catalog }) {
             </div>
 
             <button 
-              onClick={() => handlePurchase("PRO_SUBSCRIPTION")}
+              onClick={() => handleOpenSelector("PRO_SUBSCRIPTION")}
               disabled={loadingOrderId === "PRO_SUBSCRIPTION"}
               className="w-full flex items-center justify-center bg-[#8B5CF6] hover:bg-[#7C3AED] transition-colors text-white py-4 rounded-2xl font-semibold text-lg disabled:opacity-70 disabled:cursor-not-allowed"
             >
@@ -205,7 +214,7 @@ export default function BillingClientView({ catalog }: { catalog: Catalog }) {
                   <h3 className="text-xl font-semibold mb-2 text-slate-900">{pack.name}</h3>
                   <p className="text-gray-500 text-sm mb-8 h-10">{pack.credits} Credits for your creative projects</p>
                   <button 
-                    onClick={() => handlePurchase("CREDIT_TOPUP", pack.code)}
+                    onClick={() => handleOpenSelector("CREDIT_TOPUP", pack.code)}
                     disabled={loadingOrderId === pack.code}
                     className={`w-full flex items-center justify-center py-3.5 rounded-xl font-semibold transition-colors disabled:opacity-70 disabled:cursor-not-allowed ${idx === 1 ? 'bg-[#4F46E5] text-white hover:bg-[#4338CA]' : 'border border-gray-200 text-slate-700 hover:bg-gray-50'}`}
                   >
@@ -296,6 +305,53 @@ export default function BillingClientView({ catalog }: { catalog: Catalog }) {
             )}
           </div>
         </div>
+      )}
+
+      {/* Payment Method Modal */}
+      {selectedPackage && (
+        <Dialog
+          isOpen={true}
+          onClose={() => {
+            if (!loadingOrderId) setSelectedPackage(null);
+          }}
+          title="Select Payment Method"
+        >
+          <div className="flex flex-col gap-4 mt-2">
+            <button
+              onClick={() => handlePurchase("PAYOS")}
+              disabled={!!loadingOrderId}
+              className="w-full flex items-center justify-between p-4 border border-gray-200 rounded-xl hover:bg-indigo-50 hover:border-indigo-200 transition-colors disabled:opacity-50 text-left"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-[#635BFF]/10 text-[#635BFF] rounded-lg flex items-center justify-center">
+                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+                </div>
+                <div>
+                  <div className="font-semibold text-gray-900">PayOS</div>
+                  <div className="text-xs text-gray-500">Bank Transfer / QR Code</div>
+                </div>
+              </div>
+              {loadingOrderId ? <Loader2 className="w-5 h-5 animate-spin text-gray-400" /> : <ArrowUpRight className="w-5 h-5 text-gray-400" />}
+            </button>
+
+            <button
+              onClick={() => handlePurchase("MOMO")}
+              disabled={!!loadingOrderId}
+              className="w-full flex items-center justify-between p-4 border border-gray-200 rounded-xl hover:bg-pink-50 hover:border-pink-200 transition-colors disabled:opacity-50 text-left"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-[#E94285] text-white font-bold text-xs rounded-lg flex items-center justify-center">
+                  MoMo
+                </div>
+                <div>
+                  <div className="font-semibold text-gray-900">MoMo Wallet</div>
+                  <div className="text-xs text-gray-500">Momo App / QR Code</div>
+                </div>
+              </div>
+              {loadingOrderId ? <Loader2 className="w-5 h-5 animate-spin text-gray-400" /> : <ArrowUpRight className="w-5 h-5 text-gray-400" />}
+            </button>
+          </div>
+        </Dialog>
       )}
     </div>
   );

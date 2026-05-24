@@ -82,6 +82,9 @@ function ExploreCard({
     userData?.avatarUrl ||
     `https://ui-avatars.com/api/?name=${encodeURIComponent(authorName)}&background=e0e7ff&color=4f46e5`;
   const durationMs = item.assetVersion?.durationMs || 0;
+  const [dynamicDuration, setDynamicDuration] = useState<number | null>(null);
+  const displayDurationMs = dynamicDuration ? Math.round(dynamicDuration * 1000) : durationMs;
+
   const fallback =
     "https://images.unsplash.com/photo-1605806616949-1e87b487cb2a?auto=format&fit=crop&q=80&w=800";
 
@@ -90,6 +93,13 @@ function ExploreCard({
     const s = Math.floor(ms / 1000);
     const m = Math.floor(s / 60);
     return `${m}:${(s % 60).toString().padStart(2, "0")}`;
+  };
+
+  const handleLoadedMetadata = (e: React.SyntheticEvent<HTMLVideoElement>) => {
+    const duration = e.currentTarget.duration;
+    if (duration && !isNaN(duration) && duration !== Infinity) {
+      setDynamicDuration(duration);
+    }
   };
 
   const [likeCount, setLikeCount] = useState(item.post?.likeCount ?? item.likeCount ?? 0);
@@ -230,6 +240,7 @@ function ExploreCard({
             muted
             playsInline
             preload="metadata"
+            onLoadedMetadata={handleLoadedMetadata}
           />
         ) : (
           <img
@@ -240,9 +251,9 @@ function ExploreCard({
         )}
 
         {/* Duration */}
-        {durationMs > 0 && (
+        {displayDurationMs > 0 && (
           <span className="absolute bottom-3 right-3 bg-black/60 backdrop-blur-md text-white text-xs font-semibold px-2.5 py-1 rounded-lg z-20 pointer-events-none">
-            {formatDuration(durationMs)}
+            {formatDuration(displayDurationMs)}
           </span>
         )}
       </div>

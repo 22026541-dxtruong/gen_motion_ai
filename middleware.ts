@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { buildApiUrl } from '@/lib/runtime-config';
 
+let refreshPromise: Promise<any> | null = null;
+
+
 function isTokenValid(token: string | undefined) {
   if (!token) return false;
   try {
@@ -24,7 +27,7 @@ function isTokenValid(token: string | undefined) {
   }
 }
 
-export async function proxy(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   const accessToken = request.cookies.get('accessToken')?.value;
@@ -40,24 +43,27 @@ export async function proxy(request: NextRequest) {
   // Proactively refresh token if access is expired but refresh is valid
   if (!hasValidAccess && hasValidRefresh && refreshToken) {
     try {
-      const refreshRes = await fetch(buildApiUrl('/auth/refresh'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ refreshToken }),
-      });
-      
-      if (refreshRes.ok) {
-        const data = await refreshRes.json();
-        newAccessToken = data.accessToken;
-        if (data.refreshToken) {
-          newRefreshToken = data.refreshToken;
-        }
-        didRefresh = true;
-      } else {
-        // Refresh failed (e.g. revoked)
-        newAccessToken = undefined;
-        newRefreshToken = undefined;
+      if (!refreshPromise) {
+        refreshPromise = fetch(buildApiUrl('/auth/refresh'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ refreshToken }),
+        }).then(async (res) => {
+          if (res.ok) {
+            return res.json();
+          }
+          throw new Error('Refresh failed');
+        }).finally(() => {
+          refreshPromise = null;
+        });
       }
+
+      const data = await refreshPromise;
+      newAccessToken = data.accessToken;
+      if (data.refreshToken) {
+        newRefreshToken = data.refreshToken;
+      }
+      didRefresh = true;
     } catch (e) {
       newAccessToken = undefined;
       newRefreshToken = undefined;
@@ -128,5 +134,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/login', '/register', '/explore', '/create', '/'],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\.(?:png|jpg|jpeg|gif|svg|webp|ico)$).*)'],
 };

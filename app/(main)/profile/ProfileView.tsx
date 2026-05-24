@@ -54,6 +54,15 @@ function GalleryCard({
 
   const assetVersion = item.assetVersion || {};
   const durationMs = assetVersion.durationMs || assetVersion.metadata?.durationMs || (item.estimatedDurationSeconds ? item.estimatedDurationSeconds * 1000 : 0);
+  const [dynamicDuration, setDynamicDuration] = useState<number | null>(null);
+  const displayDurationMs = dynamicDuration ? Math.round(dynamicDuration * 1000) : durationMs;
+
+  const handleLoadedMetadata = (e: React.SyntheticEvent<HTMLVideoElement>) => {
+    const duration = e.currentTarget.duration;
+    if (duration && !isNaN(duration) && duration !== Infinity) {
+      setDynamicDuration(duration);
+    }
+  };
 
   React.useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -130,6 +139,7 @@ function GalleryCard({
             muted
             playsInline
             preload="metadata"
+            onLoadedMetadata={handleLoadedMetadata}
           />
         ) : (
           <img
@@ -138,9 +148,11 @@ function GalleryCard({
             className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
           />
         )}
-        <span className="absolute bottom-3 right-3 bg-black/60 backdrop-blur-md text-white text-xs font-semibold px-2.5 py-1 rounded-lg z-20">
-          {formatDuration(durationMs)}
-        </span>
+        {displayDurationMs > 0 && (
+          <span className="absolute bottom-3 right-3 bg-black/60 backdrop-blur-md text-white text-xs font-semibold px-2.5 py-1 rounded-lg z-20">
+            {formatDuration(displayDurationMs)}
+          </span>
+        )}
       </div>
       <div className="p-5">
         <div className="flex justify-between items-start relative">

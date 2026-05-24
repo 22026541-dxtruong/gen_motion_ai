@@ -9,6 +9,9 @@ import { buildApiUrl } from '@/lib/runtime-config';
  * This API route reads the accessToken from the HTTP-only cookie and proxies
  * the SSE stream from the backend to the client.
  */
+
+export const runtime = 'edge';
+export const dynamic = 'force-dynamic';
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }

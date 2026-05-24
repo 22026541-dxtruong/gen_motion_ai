@@ -1,6 +1,9 @@
 import { cookies } from 'next/headers';
 import { buildApiUrl } from '@/lib/runtime-config';
 
+export const runtime = 'edge';
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   const cookieStore = await cookies();
   const token = cookieStore.get('accessToken')?.value;

@@ -84,6 +84,24 @@ export async function addCommentAction(postId: string, content: string) {
       method: 'POST',
       body: JSON.stringify({ content, postId }),
     });
+    
+    // Fetch user separately to avoid async context loss with cookies()
+    let userRes = null;
+    try {
+      userRes = await fetchApi('/users/me');
+    } catch {
+      // Ignore user fetch errors
+    }
+
+    // Attach user info so optimistic UI shows the correct username
+    if (data && userRes) {
+      data.user = {
+        id: userRes.id,
+        username: userRes.username,
+        avatarUrl: userRes.avatarUrl,
+      };
+    }
+
     revalidatePath(`/post/${postId}`);
     return { success: true, data };
   } catch (error: any) {

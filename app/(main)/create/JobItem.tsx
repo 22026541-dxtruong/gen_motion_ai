@@ -6,6 +6,7 @@ import Dialog from "@/component/Dialog";
 import PublishDialog from "@/component/PublishDialog";
 import { useRouter } from "next/navigation";
 import { createGalleryItemAction } from "@/app/actions/gallery";
+import { getJobByIdAction } from "@/app/actions/job";
 
 const TERMINAL_STATUSES = ["COMPLETED", "FAILED", "CANCELLED"];
 const PROCESSING_STATUSES = ["PENDING", "QUEUED", "PROCESSING"];
@@ -51,10 +52,14 @@ export default function JobItem({ job }: { job: any }) {
           if (data.logs?.length) {
             setLatestLog(data.logs[data.logs.length - 1].message);
           }
-          // If snapshot shows terminal status, close and refresh
+          // If snapshot shows terminal status, close and refresh seamlessly
           if (TERMINAL_STATUSES.includes(data.status)) {
             es.close();
-            setTimeout(() => router.refresh(), 1500);
+            getJobByIdAction(currentJob.id).then((res) => {
+              if (res.success && res.data) {
+                setCurrentJob(res.data);
+              }
+            });
           }
         } catch { /* ignore parse errors */ }
       });
@@ -73,10 +78,14 @@ export default function JobItem({ job }: { job: any }) {
             failedAt: data.failedAt ?? prev.failedAt,
           }));
 
-          // When terminal, close the stream and refresh the page data
+          // When terminal, close the stream and refresh the page data seamlessly
           if (TERMINAL_STATUSES.includes(data.status)) {
             es.close();
-            setTimeout(() => router.refresh(), 1500);
+            getJobByIdAction(currentJob.id).then((res) => {
+              if (res.success && res.data) {
+                setCurrentJob(res.data);
+              }
+            });
           }
         } catch { /* ignore parse errors */ }
       });
