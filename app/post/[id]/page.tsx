@@ -16,6 +16,8 @@ import {
   ChevronUp,
   ChevronDown,
   Loader2,
+  Volume2,
+  VolumeX,
 } from "lucide-react";
 import {
   getPostAction,
@@ -136,6 +138,7 @@ export default function PostDetailPage() {
 
   // Video
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isMuted, setIsMuted] = useState(false);
   const [videoFailed, setVideoFailed] = useState(false);
   const videoRef = React.useRef<HTMLVideoElement>(null);
 
@@ -436,7 +439,7 @@ export default function PostDetailPage() {
               poster={thumbnailUrl || undefined}
               className="absolute inset-0 w-full h-full object-contain"
               autoPlay
-              muted
+              muted={isMuted}
               loop
               playsInline
               preload="auto"
@@ -534,6 +537,19 @@ export default function PostDetailPage() {
               <span className="text-white text-xs font-semibold drop-shadow-md">Mail</span>
             </div>
           </div>
+
+          {/* Mute/Unmute overlay */}
+          {shouldRenderAsVideo && !isLoading && !videoFailed && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsMuted(!isMuted);
+              }}
+              className="absolute bottom-4 right-4 z-20 bg-black/40 hover:bg-black/60 text-white p-2.5 rounded-full transition-colors backdrop-blur-sm"
+            >
+              {isMuted ? <VolumeX size={20} /> : <Volume2 size={20} />}
+            </button>
+          )}
         </div>
 
         {/* RIGHT — Info & Comments */}
