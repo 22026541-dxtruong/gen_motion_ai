@@ -1,13 +1,15 @@
 import SwiftUI
 import ComposeApp
+import GoogleSignIn
 
 class AppDelegate: NSObject, UIApplicationDelegate {
     func application(
         _ application: UIApplication,
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
     ) -> Bool {
-        // Phase 1: Register BGTask handler — MUST happen before app finishes launching.
-        // This only registers the handler identifier, no Koin dependencies needed yet.
+        // Gắn Interface GoogleSignIn
+        GoogleSignInHelper_iosKt.iosGoogleSignInProvider = IOSGoogleSignInProvider()
+        
         KoinHelper.shared.registerBGTaskHandler()
         return true
     }
@@ -21,6 +23,9 @@ struct iOSApp: App {
         WindowGroup {
             ContentView()
                 .onOpenURL { url in
+                    if GIDSignIn.sharedInstance.handle(url) {
+                        return
+                    }
                     handleDeepLink(url)
                 }
                 .onAppear {

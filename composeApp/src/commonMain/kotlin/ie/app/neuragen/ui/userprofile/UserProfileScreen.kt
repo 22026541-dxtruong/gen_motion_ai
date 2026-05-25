@@ -27,7 +27,15 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.unit.sp
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.Spring
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.runtime.remember
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.AnnotatedString
 import coil3.compose.AsyncImage
@@ -65,7 +73,7 @@ fun UserProfileScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding)
-                    .background(Color.White),
+                    .background(MaterialTheme.colorScheme.background),
                 contentPadding = PaddingValues(bottom = 16.dp)
             ) {
                 item {
@@ -113,7 +121,7 @@ fun UserProfileScreen(
                         Text(
                             "(${uiState.posts.size})",
                             style = MaterialTheme.typography.titleMedium,
-                            color = Color.Gray
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                     HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant)
@@ -158,13 +166,13 @@ fun UserProfileScreen(
                                 Icon(
                                     painterResource(Res.drawable.ic_play),
                                     contentDescription = null,
-                                    tint = Color.LightGray,
+                                    tint = MaterialTheme.colorScheme.outlineVariant,
                                     modifier = Modifier.size(48.dp)
                                 )
                                 Spacer(modifier = Modifier.height(12.dp))
                                 Text(
                                     "No videos shared yet.",
-                                    color = Color.Gray,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     style = MaterialTheme.typography.bodyMedium
                                 )
                             }
@@ -242,7 +250,7 @@ fun UserProfileHeader(user: UserPublicDto?, onBackClick: () -> Unit) {
                     .align(Alignment.BottomCenter)
                     .size(110.dp)
                     .clip(CircleShape)
-                    .background(Color.White)
+                    .background(MaterialTheme.colorScheme.surface)
                     .padding(4.dp)
             ) {
                 val usernameStr = user?.username ?: "U"
@@ -252,7 +260,7 @@ fun UserProfileHeader(user: UserPublicDto?, onBackClick: () -> Unit) {
                     modifier = Modifier
                         .fillMaxSize()
                         .clip(CircleShape)
-                        .background(Color.LightGray),
+                        .background(MaterialTheme.colorScheme.surfaceVariant),
                     contentAlignment = Alignment.Center
                 ) {
                     AsyncImage(
@@ -303,7 +311,7 @@ fun UserProfileHeader(user: UserPublicDto?, onBackClick: () -> Unit) {
         Text(
             text = user?.bio ?: "AI Artist exploring the future of cinematography. 🎬",
             style = MaterialTheme.typography.bodyMedium,
-            color = Color.DarkGray,
+            color = MaterialTheme.colorScheme.onSurface,
             textAlign = TextAlign.Center,
             modifier = Modifier.padding(horizontal = 32.dp)
         )
@@ -331,7 +339,7 @@ fun UserProfileStats(uiState: ie.app.neuragen.ui.userprofile.UserProfileUiState)
 fun UserStatItem(label: String, value: String) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(value, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
-        Text(label, style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+        Text(label, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
@@ -342,8 +350,23 @@ fun UserProfileActions(
     isTogglingFollow: Boolean = false,
     onToggleFollow: () -> Unit = {}
 ) {
-    val clipboardManager = LocalClipboardManager.current
-    val uriHandler = LocalUriHandler.current
+    val clipboardManager = androidx.compose.ui.platform.LocalClipboardManager.current
+    val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
+
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    
+    val buttonScale by animateFloatAsState(
+        targetValue = if (isPressed) 0.95f else 1f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessLow
+        ),
+        label = "followButtonScale"
+    )
+
+    val targetColor = if (isFollowing) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.primary
+    val buttonColor by animateColorAsState(targetValue = targetColor, label = "followButtonColor")
 
     Row(
         modifier = Modifier
@@ -354,31 +377,30 @@ fun UserProfileActions(
     ) {
         Button(
             onClick = onToggleFollow,
+            interactionSource = interactionSource,
             modifier = Modifier
                 .weight(1f)
                 .height(48.dp)
+                .graphicsLayer {
+                    scaleX = buttonScale
+                    scaleY = buttonScale
+                }
                 .clip(RoundedCornerShape(12.dp))
-                .then(
-                    if (!isFollowing) Modifier.background(
-                        Brush.horizontalGradient(
-                            colors = listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.secondary)
-                        )
-                    ) else Modifier.background(MaterialTheme.colorScheme.surfaceVariant)
-                ),
+                .background(buttonColor),
             colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
             enabled = !isTogglingFollow
         ) {
             if (isTogglingFollow) {
                 CircularProgressIndicator(
                     modifier = Modifier.size(18.dp),
-                    color = if (isFollowing) MaterialTheme.colorScheme.primary else Color.White,
+                    color = if (isFollowing) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onPrimary,
                     strokeWidth = 2.dp
                 )
             } else {
                 Text(
                     if (isFollowing) "Following" else "Follow",
                     fontWeight = FontWeight.Bold,
-                    color = if (isFollowing) MaterialTheme.colorScheme.primary else Color.White
+                    color = if (isFollowing) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onPrimary
                 )
             }
         }
@@ -394,7 +416,7 @@ fun UserProfileActions(
             Icon(
                 painterResource(Res.drawable.ic_share),
                 contentDescription = "Share",
-                tint = Color.Gray,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.size(20.dp)
             )
         }
@@ -414,7 +436,7 @@ fun UserProfileActions(
             Icon(
                 painterResource(Res.drawable.ic_mail),
                 contentDescription = "Mail",
-                tint = Color.Gray,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.size(20.dp)
             )
         }

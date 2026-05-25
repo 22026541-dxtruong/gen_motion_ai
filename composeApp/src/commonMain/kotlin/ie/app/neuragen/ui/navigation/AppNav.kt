@@ -35,11 +35,13 @@ import ie.app.neuragen.ui.create.CreateScreen
 import ie.app.neuragen.ui.explore.ExploreScreen
 import ie.app.neuragen.ui.post.PostScreen
 import ie.app.neuragen.ui.profile.ProfileScreen
+import ie.app.neuragen.ui.help.HelpScreen
 
 import ie.app.neuragen.ui.userprofile.UserProfileScreen
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.modules.SerializersModule
+import androidx.compose.material.icons.rounded.SupportAgent
 import kotlinx.serialization.modules.polymorphic
 import neuragen.composeapp.generated.resources.*
 import org.jetbrains.compose.resources.DrawableResource
@@ -77,6 +79,9 @@ data object Profile : AppRoute
 data object Billing : AppRoute
 
 @Serializable
+data object Help : AppRoute
+
+@Serializable
 data class PostDetail @OptIn(ExperimentalUuidApi::class) constructor(val id: Uuid) : AppRoute
 
 @Serializable
@@ -111,6 +116,9 @@ fun AppNav(modifier: Modifier = Modifier) {
                     onLogout = {
                         backStack.clear()
                         backStack.add(Login)
+                    },
+                    onNavigateToHelp = {
+                        backStack.add(Help)
                     }
                 )
             }
@@ -196,6 +204,10 @@ fun AppNav(modifier: Modifier = Modifier) {
                     BillingScreen()
                 }
 
+                entry<Help> {
+                    HelpScreen(onBackClick = { backStack.removeLastOrNull() })
+                }
+
                 entry<PostDetail> { route ->
                     PostScreen(
                         postId = route.id.toString(),
@@ -223,7 +235,8 @@ fun AppNav(modifier: Modifier = Modifier) {
 @Composable
 fun NeuraGenTopBar(
     viewModel: NavigationViewModel = koinViewModel(),
-    onLogout: () -> Unit
+    onLogout: () -> Unit,
+    onNavigateToHelp: () -> Unit = {}
 ) {
     val sessionStatus by viewModel.sessionStatus.collectAsState()
     val session = (sessionStatus as? SessionStatus.Authenticated)?.response
@@ -315,7 +328,7 @@ fun NeuraGenTopBar(
                     onDismissRequest = { expanded = false },
                     offset = DpOffset(0.dp, 8.dp),
                     shape = RoundedCornerShape(16.dp),
-                    containerColor = Color.White
+                    containerColor = MaterialTheme.colorScheme.surface
                 ) {
                     // Header: User Info
                     Column(
@@ -327,7 +340,7 @@ fun NeuraGenTopBar(
                             session?.username ?: "Guest",
                             fontWeight = FontWeight.ExtraBold,
                             fontSize = 16.sp,
-                            color = Color(0xFF1F2937)
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
                             session?.email ?: "",
@@ -354,6 +367,23 @@ fun NeuraGenTopBar(
                         onClick = {
                             expanded = false
                             viewModel.showChangePassword = true
+                        },
+                        modifier = Modifier.height(48.dp)
+                    )
+                    // Help
+                    DropdownMenuItem(
+                        text = { Text("Help & Support", fontSize = 14.sp) },
+                        leadingIcon = {
+                            Icon(
+                                androidx.compose.material.icons.Icons.Rounded.SupportAgent,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp),
+                                tint = Color(0xFF4B5563)
+                            )
+                        },
+                        onClick = {
+                            expanded = false
+                            onNavigateToHelp()
                         },
                         modifier = Modifier.height(48.dp)
                     )
@@ -406,7 +436,7 @@ fun NeuraGenTopBar(
             }
         },
         colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = Color.White
+            containerColor = MaterialTheme.colorScheme.surface
         )
     )
 }
@@ -418,7 +448,7 @@ fun NeuraGenBottomBar(
 ) {
 
     NavigationBar(
-        containerColor = Color.White,
+        containerColor = MaterialTheme.colorScheme.surface,
         tonalElevation = 8.dp
     ) {
         val items = listOf(
@@ -438,7 +468,7 @@ fun NeuraGenBottomBar(
                         modifier = Modifier
                             .size(if (isSelected) 48.dp else 24.dp)
                             .clip(RoundedCornerShape(16.dp))
-                            .background(if (isSelected) Color(0xFFF3F2FF) else Color.Transparent),
+                            .background(if (isSelected) MaterialTheme.colorScheme.surfaceVariant else Color.Transparent),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
@@ -466,22 +496,6 @@ fun NeuraGenBottomBar(
     }
 }
 
-@Composable
-fun ExploreFAB() {
-    FloatingActionButton(
-        onClick = {},
-        containerColor = MaterialTheme.colorScheme.primary,
-        contentColor = Color.White,
-        shape = CircleShape,
-        modifier = Modifier.padding(bottom = 16.dp)
-    ) {
-        Icon(
-            painterResource(Res.drawable.iic_film),
-            contentDescription = "Create",
-            modifier = Modifier.size(24.dp)
-        )
-    }
-}
 
 @Composable
 fun LogoutConfirmationDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
@@ -502,7 +516,7 @@ fun LogoutConfirmationDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
                 Text("Cancel", color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         },
-        containerColor = Color.White,
+        containerColor = MaterialTheme.colorScheme.surface,
         shape = RoundedCornerShape(16.dp)
     )
 }
@@ -522,7 +536,7 @@ fun ChangePasswordDialog(
         title = { Text("Change Password", fontWeight = FontWeight.Bold) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text("Enter your current password and a new one to update your security.", fontSize = 14.sp, color = Color.Gray)
+                Text("Enter your current password and a new one to update your security.", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 OutlinedTextField(
                     value = oldPassword,
                     onValueChange = { oldPassword = it },
@@ -540,7 +554,7 @@ fun ChangePasswordDialog(
                     shape = RoundedCornerShape(8.dp)
                 )
                 if (error != null) {
-                    Text(error, color = Color.Red, fontSize = 12.sp)
+                    Text(error, color = MaterialTheme.colorScheme.error, fontSize = 12.sp)
                 }
             }
         },
@@ -551,7 +565,7 @@ fun ChangePasswordDialog(
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
             ) {
                 if (isLoading) {
-                    CircularProgressIndicator(modifier = Modifier.size(18.dp), color = Color.White, strokeWidth = 2.dp)
+                    CircularProgressIndicator(modifier = Modifier.size(18.dp), color = MaterialTheme.colorScheme.onPrimary, strokeWidth = 2.dp)
                 } else {
                     Text("Update Password")
                 }
@@ -562,7 +576,7 @@ fun ChangePasswordDialog(
                 Text("Cancel")
             }
         },
-        containerColor = Color.White,
+        containerColor = MaterialTheme.colorScheme.surface,
         shape = RoundedCornerShape(16.dp)
     )
 }
@@ -582,7 +596,7 @@ fun SwitchAccountDialog(
         title = { Text("Switch Account", fontWeight = FontWeight.Bold) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text("Log in with a different account. Successful login will replace your current session.", fontSize = 14.sp, color = Color.Gray)
+                Text("Log in with a different account. Successful login will replace your current session.", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 OutlinedTextField(
                     value = email,
                     onValueChange = { email = it },
@@ -599,7 +613,7 @@ fun SwitchAccountDialog(
                     shape = RoundedCornerShape(8.dp)
                 )
                 if (error != null) {
-                    Text(error, color = Color.Red, fontSize = 12.sp)
+                    Text(error, color = MaterialTheme.colorScheme.error, fontSize = 12.sp)
                 }
             }
         },
@@ -610,7 +624,7 @@ fun SwitchAccountDialog(
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
             ) {
                 if (isLoading) {
-                    CircularProgressIndicator(modifier = Modifier.size(18.dp), color = Color.White, strokeWidth = 2.dp)
+                    CircularProgressIndicator(modifier = Modifier.size(18.dp), color = MaterialTheme.colorScheme.onPrimary, strokeWidth = 2.dp)
                 } else {
                     Text("Sign In")
                 }
@@ -621,7 +635,7 @@ fun SwitchAccountDialog(
                 Text("Cancel")
             }
         },
-        containerColor = Color.White,
+        containerColor = MaterialTheme.colorScheme.surface,
         shape = RoundedCornerShape(16.dp)
     )
 }

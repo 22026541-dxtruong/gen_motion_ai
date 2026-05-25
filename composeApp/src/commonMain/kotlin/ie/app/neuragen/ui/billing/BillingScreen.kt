@@ -21,6 +21,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalUriHandler
@@ -36,16 +37,19 @@ import neuragen.composeapp.generated.resources.*
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
 
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.Composable
+
 // --- Colors ---
-private val Indigo600 = Color(0xFF4F46E5)
-private val Indigo500 = Color(0xFF635BFF)
-private val Violet500 = Color(0xFF8B5CF6)
-private val IndigoBg = Color(0xFFF0F0FF)
-private val IndigoBgDark = Color(0xFFE0E7FF)
-private val CardBg = Color.White
-private val SlateText = Color(0xFF0F172A)
-private val GrayText = Color(0xFF64748B)
-private val LightGray = Color(0xFFF1F5F9)
+private val Indigo600 @Composable get() = MaterialTheme.colorScheme.primary
+private val Indigo500 @Composable get() = MaterialTheme.colorScheme.primary
+private val Violet500 @Composable get() = MaterialTheme.colorScheme.secondary
+private val IndigoBg @Composable get() = MaterialTheme.colorScheme.surfaceVariant
+private val IndigoBgDark @Composable get() = MaterialTheme.colorScheme.surfaceVariant
+private val CardBg @Composable get() = MaterialTheme.colorScheme.surface
+private val SlateText @Composable get() = MaterialTheme.colorScheme.onBackground
+private val GrayText @Composable get() = MaterialTheme.colorScheme.onSurfaceVariant
+private val LightGray @Composable get() = MaterialTheme.colorScheme.outline
 private val GreenBg = Color(0xFFDCFCE7)
 private val GreenText = Color(0xFF15803D)
 private val AmberBg = Color(0xFFFEF3C7)
@@ -82,7 +86,7 @@ fun BillingScreen(
     Box(modifier = Modifier.fillMaxSize()) {
 
     LazyColumn(
-        modifier = Modifier.fillMaxSize().background(Color(0xFFF8F9FE)),
+        modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -93,7 +97,7 @@ fun BillingScreen(
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFFF0F9FF))
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
                 ) {
                     Row(
                         modifier = Modifier.padding(16.dp),
@@ -247,7 +251,7 @@ fun BillingTabSelector(activeTab: BillingTab, onTabChange: (BillingTab) -> Unit)
                 shape = CircleShape,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = if (isActive) Indigo500 else CardBg,
-                    contentColor = if (isActive) Color.White else GrayText
+                    contentColor = if (isActive) MaterialTheme.colorScheme.onPrimary else GrayText
                 ),
                 elevation = ButtonDefaults.buttonElevation(
                     defaultElevation = if (isActive) 2.dp else 0.dp
@@ -264,11 +268,17 @@ fun ProPlanCard(proPlan: ProPlanDto?, isLoading: Boolean, onUpgradeClick: () -> 
     val price = proPlan?.amountUsd ?: "14.99"
     val credits = proPlan?.credits ?: 1000
 
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = CardBg),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .shadow(16.dp, RoundedCornerShape(24.dp), spotColor = Indigo600.copy(alpha = 0.5f))
+            .background(
+                brush = Brush.linearGradient(
+                    colors = listOf(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.surfaceVariant)
+                ),
+                shape = RoundedCornerShape(24.dp)
+            )
+            .border(2.dp, MaterialTheme.colorScheme.surface, RoundedCornerShape(24.dp))
     ) {
         Box {
             Column(modifier = Modifier.padding(24.dp)) {
@@ -323,7 +333,7 @@ fun ProPlanCard(proPlan: ProPlanDto?, isLoading: Boolean, onUpgradeClick: () -> 
                     if (isLoading) {
                         CircularProgressIndicator(
                             modifier = Modifier.size(22.dp),
-                            color = Color.White,
+                            color = MaterialTheme.colorScheme.onPrimary,
                             strokeWidth = 2.dp
                         )
                     } else {
@@ -346,7 +356,7 @@ fun ProPlanCard(proPlan: ProPlanDto?, isLoading: Boolean, onUpgradeClick: () -> 
                     "MOST POPULAR",
                     modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
                     style = MaterialTheme.typography.labelSmall,
-                    color = Color.White,
+                    color = MaterialTheme.colorScheme.onPrimary,
                     fontWeight = FontWeight.Bold,
                     letterSpacing = 0.5.sp
                 )
@@ -399,19 +409,18 @@ fun TopupPackageCard(
     isLoading: Boolean,
     onBuyClick: () -> Unit
 ) {
-    Card(
+    Box(
         modifier = Modifier
             .fillMaxWidth()
             .then(
-                if (isBestValue) Modifier.border(
-                    2.dp, Indigo600, RoundedCornerShape(24.dp)
-                ) else Modifier
-            ),
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = CardBg),
-        elevation = CardDefaults.cardElevation(
-            defaultElevation = if (isBestValue) 6.dp else 2.dp
-        )
+                if (isBestValue) Modifier.shadow(16.dp, RoundedCornerShape(24.dp), spotColor = Indigo600.copy(alpha = 0.4f))
+                else Modifier.shadow(2.dp, RoundedCornerShape(24.dp), spotColor = Color.Black.copy(alpha = 0.05f))
+            )
+            .background(CardBg, RoundedCornerShape(24.dp))
+            .then(
+                if (isBestValue) Modifier.border(2.dp, Indigo600, RoundedCornerShape(24.dp))
+                else Modifier.border(1.dp, LightGray, RoundedCornerShape(24.dp))
+            )
     ) {
         Box {
             Column(modifier = Modifier.padding(20.dp)) {
@@ -469,7 +478,7 @@ fun TopupPackageCard(
                         if (isLoading) {
                             CircularProgressIndicator(
                                 modifier = Modifier.size(20.dp),
-                                color = Color.White,
+                                color = MaterialTheme.colorScheme.onPrimary,
                                 strokeWidth = 2.dp
                             )
                         } else {
@@ -511,7 +520,7 @@ fun TopupPackageCard(
                         "BEST VALUE",
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
                         style = MaterialTheme.typography.labelSmall,
-                        color = Color.White,
+                        color = MaterialTheme.colorScheme.onPrimary,
                         fontWeight = FontWeight.Bold,
                         fontSize = 10.sp,
                         letterSpacing = 1.sp
@@ -680,7 +689,7 @@ fun PaymentMethodsFooter() {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFF8FAFC))
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
         Column(
             modifier = Modifier.padding(24.dp),
@@ -740,9 +749,9 @@ fun PaymentMethodsFooter() {
 @Composable
 fun PaymentMethodItem(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String) {
     Row(verticalAlignment = Alignment.CenterVertically) {
-        Icon(icon, contentDescription = null, modifier = Modifier.size(18.dp), tint = Color.DarkGray)
+        Icon(icon, contentDescription = null, modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onSurface)
         Spacer(modifier = Modifier.width(8.dp))
-        Text(label, style = MaterialTheme.typography.bodySmall, color = Color.DarkGray, fontWeight = FontWeight.Medium)
+        Text(label, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Medium)
     }
 }
 

@@ -1,35 +1,59 @@
-This is a Kotlin Multiplatform project targeting Android, iOS.
+# 🚀 NeuraGen (Mobile Application)
 
-* [/composeApp](./composeApp/src) is for code that will be shared across your Compose Multiplatform applications.
-  It contains several subfolders:
-  - [commonMain](./composeApp/src/commonMain/kotlin) is for code that’s common for all targets.
-  - Other folders are for Kotlin code that will be compiled for only the platform indicated in the folder name.
-    For example, if you want to use Apple’s CoreCrypto for the iOS part of your Kotlin app,
-    the [iosMain](./composeApp/src/iosMain/kotlin) folder would be the right place for such calls.
-    Similarly, if you want to edit the Desktop (JVM) specific part, the [jvmMain](./composeApp/src/jvmMain/kotlin)
-    folder is the appropriate location.
+NeuraGen là ứng dụng di động đa nền tảng (Cross-platform Mobile App) được xây dựng trên kiến trúc **Kotlin Multiplatform (KMP)** và giao diện người dùng **Compose Multiplatform**. Ứng dụng tập trung vào trải nghiệm cuộn video ngắn cao cấp, chia sẻ nội dung AI, và cung cấp hiệu năng mượt mà nhất trên cả Android lẫn iOS.
 
-* [/iosApp](./iosApp/iosApp) contains iOS applications. Even if you’re sharing your UI with Compose Multiplatform,
-  you need this entry point for your iOS app. This is also where you should add SwiftUI code for your project.
+## 🌟 Tính năng nổi bật
 
-### Build and Run Android Application
+- **Giao diện đẳng cấp (Premium UI)**: Lấy cảm hứng từ các thiết kế hiện đại, mượt mà với Micro-animations, Blur effects và Glassmorphism. Hỗ trợ đầy đủ **Dark Mode** & **Light Mode** tự động theo hệ thống.
+- **Cuộn Video Short (Feed)**: Trình phát video natively được tối ưu hóa cho tốc độ tải và cuộn vô tận. (Sử dụng ExoPlayer trên Android và AVPlayer trên iOS).
+- **Khám phá (Explore/Search)**: Tìm kiếm nội dung, trending và AI generated videos nhanh chóng.
+- **Hồ sơ Cá nhân (Profile)**: Quản lý video của bạn, lượt theo dõi, thông tin cá nhân và cài đặt thanh toán/Credits.
+- **Đăng nhập liền mạch**: Hỗ trợ Google Sign-In, Apple Sign-In (trên iOS) và Email/Mật khẩu truyền thống.
+- **Offline First**: Đồng bộ hoá nền và lưu trữ bộ nhớ đệm với Room Database (SQLite) & DataStore.
 
-To build and run the development version of the Android app, use the run configuration from the run widget
-in your IDE’s toolbar or build it directly from the terminal:
-- on macOS/Linux
-  ```shell
+## 🛠 Công nghệ cốt lõi
+
+Dự án này tuân thủ chặt chẽ kiến trúc chia sẻ tối đa mã nguồn (Shared Code) qua `commonMain`:
+
+- **UI Framework**: [Compose Multiplatform](https://www.jetbrains.com/lp/compose-multiplatform/) (Share 100% UI cho Android và iOS).
+- **Mạng (Networking)**: [Ktor Client](https://ktor.io/) để kết nối API.
+- **Dependency Injection**: [Koin](https://insert-koin.io/) hỗ trợ KMP và Compose.
+- **Lưu trữ nội bộ (Local Storage)**: [Room Database](https://developer.android.com/training/data-storage/room) & [DataStore](https://developer.android.com/topic/libraries/architecture/datastore) (Phiên bản hỗ trợ KMP).
+- **Xử lý Ảnh/Video**: [Coil3](https://coil-kt.github.io/coil/) cho Image Caching, API Native (`AVFoundation` và `Media3`) cho Video.
+- **Điều hướng (Navigation)**: Jetbrains Navigation3 & Lifecycle ViewModels.
+
+## 📦 Hướng dẫn cài đặt và chạy ứng dụng
+
+### Yêu cầu hệ thống
+- **Android Studio** (Koala hoặc mới nhất) / **IntelliJ IDEA**.
+- **Xcode** 15+ (Để build và chạy phiên bản iOS).
+- JDK 17+.
+
+### Chạy trên Android
+Sử dụng công cụ Run Configuration của Android Studio hoặc chạy lệnh qua Terminal:
+
+- **macOS/Linux**:
+  ```bash
   ./gradlew :composeApp:assembleDebug
   ```
-- on Windows
-  ```shell
+- **Windows**:
+  ```bash
   .\gradlew.bat :composeApp:assembleDebug
   ```
 
-### Build and Run iOS Application
+### Chạy trên iOS
+1. Mở thư mục `iosApp` bằng **Xcode** (`iosApp/iosApp.xcodeproj`).
+2. Nếu bạn thiết lập Google Sign-In, hãy đảm bảo đã kết nối Swift Package Manager (SPM) với `https://github.com/google/GoogleSignIn-iOS`.
+3. Chọn thiết bị giả lập (Simulator) hoặc iPhone thực tế và nhấn nút **Run** (Play) trên Xcode.
 
-To build and run the development version of the iOS app, use the run configuration from the run widget
-in your IDE’s toolbar or open the [/iosApp](./iosApp) directory in Xcode and run it from there.
+## 📂 Cấu trúc thư mục dự án
 
----
-
-Learn more about [Kotlin Multiplatform](https://www.jetbrains.com/help/kotlin-multiplatform-dev/get-started.html)…
+```text
+NeuraGen/
+├── composeApp/              # Chứa toàn bộ logic và UI của ứng dụng
+│   ├── src/commonMain/      # Code dùng chung (UI Compose, ViewModel, Ktor, Room)
+│   ├── src/androidMain/     # Code đặc thù Android (ExoPlayer, GoogleSignIn CredentialManager)
+│   └── src/iosMain/         # Code đặc thù iOS (AVPlayer, GoogleSignIn Interface)
+├── iosApp/                  # Project Xcode gốc để build ra ứng dụng iOS (.ipa)
+└── gradle/                  # Cấu hình Gradle chung
+```

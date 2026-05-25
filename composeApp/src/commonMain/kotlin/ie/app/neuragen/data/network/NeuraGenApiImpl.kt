@@ -87,87 +87,87 @@ class NeuraGenApiImpl(
         client.get("/users/me") {
             parameter("cursor", cursor)
             parameter("take", take)
-        }.body()
+        }.bodyOrThrow()
 
     override suspend fun topupCredits(request: CreditTopupRequest): CreditTopupResponse =
-        client.post("/users/me/credits/topup") { setBody(request) }.body()
+        client.post("/users/me/credits/topup") { setBody(request) }.bodyOrThrow()
 
     override suspend fun getUser(id: String): UserPublicDto =
-        client.get("/users/$id").body()
+        client.get("/users/$id").bodyOrThrow()
 
     override suspend fun deleteMe(): UserDto =
-        client.delete("/users/me").body()
+        client.delete("/users/me").bodyOrThrow()
 
     // Posts
     override suspend fun createPost(request: CreatePostRequest): PostDto =
-        client.post("/posts") { setBody(request) }.body()
+        client.post("/posts") { setBody(request) }.bodyOrThrow()
 
     override suspend fun getPosts(): List<PostDto> =
-        client.get("/posts").body()
+        client.get("/posts").bodyOrThrow()
 
     override suspend fun getPost(id: String): PostDto =
-        client.get("/posts/$id").body()
+        client.get("/posts/$id").bodyOrThrow()
 
     override suspend fun updatePost(id: String, request: UpdatePostRequest): PostDto =
-        client.patch("/posts/$id") { setBody(request) }.body()
+        client.patch("/posts/$id") { setBody(request) }.bodyOrThrow()
 
     override suspend fun deletePost(id: String): PostDto =
-        client.delete("/posts/$id").body()
+        client.delete("/posts/$id").bodyOrThrow()
 
     // Comments
     override suspend fun createComment(request: CreateCommentRequest): CommentDto =
-        client.post("/posts/${request.postId}/comments") { setBody(request) }.body()
+        client.post("/posts/${request.postId}/comments") { setBody(request) }.bodyOrThrow()
 
     override suspend fun getComments(postId: String, cursor: String?, take: Int?): CommentsPaginationDto =
         client.get("/posts/$postId/comments") {
             parameter("cursor", cursor)
             parameter("take", take)
-        }.body()
+        }.bodyOrThrow()
 
     override suspend fun updateComment(id: String, request: CreateCommentRequest): CommentDto =
-        client.patch("/comments/$id") { setBody(request) }.body()
+        client.patch("/comments/$id") { setBody(request) }.bodyOrThrow()
 
     override suspend fun deleteComment(id: String): CommentDto =
-        client.delete("/comments/$id").body()
+        client.delete("/comments/$id").bodyOrThrow()
 
     // Post Likes
     override suspend fun likePost(request: CreatePostLikeRequest): PostLikeDto =
-        client.post("/posts/${request.postId}/post-likes") { setBody(request) }.body()
+        client.post("/posts/${request.postId}/post-likes") { setBody(request) }.bodyOrThrow()
 
     override suspend fun getPostLikes(postId: String, cursor: String?, take: Int?): PostLikesPaginationDto =
         client.get("/posts/$postId/post-likes") {
             parameter("cursor", cursor)
             parameter("take", take)
-        }.body()
+        }.bodyOrThrow()
 
     override suspend fun unlikePost(postId: String): PostLikeDto =
-        client.delete("/posts/$postId/post-likes").body()
+        client.delete("/posts/$postId/post-likes").bodyOrThrow()
 
     // Follows
     override suspend fun followUser(request: CreateFollowRequest): FollowDto =
-        client.post("/follows") { setBody(request) }.body()
+        client.post("/follows") { setBody(request) }.bodyOrThrow()
 
     override suspend fun getFollowers(userId: String, cursor: String?, take: Int?): FollowsPaginationDto =
         client.get("/users/$userId/followers") {
             parameter("cursor", cursor)
             parameter("take", take)
-        }.body()
+        }.bodyOrThrow()
 
     override suspend fun getFollowings(userId: String, cursor: String?, take: Int?): FollowsPaginationDto =
         client.get("/users/$userId/followings") {
             parameter("cursor", cursor)
             parameter("take", take)
-        }.body()
+        }.bodyOrThrow()
 
     override suspend fun unfollowUser(userId: String): FollowDto =
-        client.delete("/follows/$userId").body()
+        client.delete("/follows/$userId").bodyOrThrow()
 
     // Assets
     override suspend fun getAsset(id: String): AssetDto =
-        client.get("/assets/$id").body()
+        client.get("/assets/$id").bodyOrThrow()
 
     override suspend fun getDownloadUrl(id: String): DownloadResponse =
-        client.get("/assets/download/$id").body()
+        client.get("/assets/download/$id").bodyOrThrow()
 
     override suspend fun uploadAsset(
         fileBytes: ByteArray,
@@ -192,20 +192,20 @@ class NeuraGenApiImpl(
                 }
             )
         )
-    }.body()
+    }.bodyOrThrow()
 
     // Gallery
     override suspend fun createGalleryItem(request: CreateGalleryItemRequest): GalleryItemDto =
-        client.post("/gallery") { setBody(request) }.body()
+        client.post("/gallery") { setBody(request) }.bodyOrThrow()
 
     override suspend fun getGallery(): List<GalleryItemDto> =
-        client.get("/gallery").body()
+        client.get("/gallery").bodyOrThrow()
 
     override suspend fun updateGalleryItem(id: String, request: UpdateGalleryItemRequest): GalleryItemDto =
-        client.patch("/gallery/$id") { setBody(request) }.body()
+        client.patch("/gallery/$id") { setBody(request) }.bodyOrThrow()
 
     override suspend fun deleteGalleryItem(id: String): GalleryItemDto =
-        client.delete("/gallery/$id").body()
+        client.delete("/gallery/$id").bodyOrThrow()
 
     // Explore
     override suspend fun getExplore(
@@ -223,7 +223,7 @@ class NeuraGenApiImpl(
         parameter("sort", sort)
         parameter("limit", limit)
         parameter("cursor", cursor)
-    }.body()
+    }.bodyOrThrow()
 
     override suspend fun searchExplore(
         topic: String,
@@ -238,7 +238,7 @@ class NeuraGenApiImpl(
         parameter("sort", sort)
         parameter("limit", limit)
         parameter("cursor", cursor)
-    }.body()
+    }.bodyOrThrow()
 
     override suspend fun getForYou(
         topic: String?,
@@ -255,29 +255,29 @@ class NeuraGenApiImpl(
         parameter("sort", sort)
         parameter("limit", limit)
         parameter("cursor", cursor)
-    }.body()
+    }.bodyOrThrow()
 
     override suspend fun recordExploreEvent(request: ExploreEventRequest): ExploreEventResponse =
-        client.post("/explore/events") { setBody(request) }.body()
+        client.post("/explore/events") { setBody(request) }.bodyOrThrow()
 
     override suspend fun recordExploreEventsBatch(request: BatchExploreEventRequest): BatchExploreEventResponse =
-        client.post("/explore/events/batch") { setBody(request) }.body()
+        client.post("/explore/events/batch") { setBody(request) }.bodyOrThrow()
 
     // Jobs
     override suspend fun createVideoJob(request: VideoJobRequest): JobResponse =
-        client.post("/jobs/video") { setBody(request) }.body()
+        client.post("/jobs/video") { setBody(request) }.bodyOrThrow()
 
     override suspend fun getJobs(): List<JobDto> =
-        client.get("/jobs").body()
+        client.get("/jobs").bodyOrThrow()
 
     override suspend fun getJob(id: String): JobDto =
-        client.get("/jobs/$id").body()
+        client.get("/jobs/$id").bodyOrThrow()
 
     override suspend fun getJobResult(id: String): JobResultResponse =
-        client.get("/jobs/$id/result").body()
+        client.get("/jobs/$id/result").bodyOrThrow()
 
     override suspend fun cancelJob(id: String): CancelJobResponse =
-        client.post("/jobs/$id/cancel").body()
+        client.post("/jobs/$id/cancel").bodyOrThrow()
 
     override fun streamJobEvents(jobId: String): Flow<JobStreamEvent> = flow {
         client.sse(
@@ -324,21 +324,21 @@ class NeuraGenApiImpl(
 
     // Billing
     override suspend fun getBillingCatalog(): BillingCatalogResponse =
-        client.get("/billing/catalog").body()
+        client.get("/billing/catalog").bodyOrThrow()
 
     override suspend fun createOrder(request: CreateOrderRequest): OrderResponse =
-        client.post("/billing/orders") { setBody(request) }.body()
+        client.post("/billing/orders") { setBody(request) }.bodyOrThrow()
 
     override suspend fun getMyOrders(): List<OrderResponse> =
-        client.get("/billing/orders/me").body()
+        client.get("/billing/orders/me").bodyOrThrow()
 
     override suspend fun markOrderPaid(id: String, request: MarkPaidRequest): MarkPaidResponse =
-        client.post("/billing/orders/$id/mark-paid") { setBody(request) }.body()
+        client.post("/billing/orders/$id/mark-paid") { setBody(request) }.bodyOrThrow()
 
     override suspend fun confirmPayosWebhook(request: PayosConfirmRequest): PayosConfirmResponse =
-        client.post("/billing/webhooks/payos/confirm") { setBody(request) }.body()
+        client.post("/billing/webhooks/payos/confirm") { setBody(request) }.bodyOrThrow()
 
     // Modal
     override suspend fun modalGenerateVideo(request: ModalGenerateVideoRequest): JsonObject =
-        client.post("/modal/generate-video") { setBody(request) }.body()
+        client.post("/modal/generate-video") { setBody(request) }.bodyOrThrow()
 }
