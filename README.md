@@ -1,36 +1,64 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🌐 Gen Motion AI (Web Frontend)
 
-## Getting Started
+Gen Motion AI là nền tảng Web cho phép người dùng tạo, quản lý và khám phá những nội dung video/hình ảnh được tạo bởi Trí tuệ nhân tạo (AI). Nền tảng được xây dựng dựa trên những công nghệ web hiện đại nhất nhằm mang lại tốc độ vượt trội và trải nghiệm thị giác tuyệt đẹp.
 
-First, run the development server:
+## 🚀 Tính năng nổi bật
 
+- **Giao diện Web mượt mà (Modern UI)**: Giao diện web được thiết kế sang trọng, hỗ trợ các hiệu ứng hình ảnh (Glassmorphism, Gradients) và tối ưu hóa 100% cho mọi thiết bị (Responsive Design).
+- **Hệ thống tạo Video bằng AI**: Cung cấp giao diện để nhập prompt, tinh chỉnh các tham số, và gửi yêu cầu tạo video lên Cloud/Modal servers.
+- **Trình phát Video tương tác**: Trải nghiệm xem video liền mạch với các tính năng Like, Comment, Follow được cập nhật theo thời gian thực (Real-time).
+- **Trang Cá nhân & Thanh toán**: Quản lý các dự án AI, theo dõi số dư Credits, xem thống kê tương tác, tích hợp nạp tiền nhanh chóng.
+- **Tối ưu SEO**: Render SSR mạnh mẽ thông qua Next.js App Router, giúp nội dung dễ dàng được tìm thấy trên các công cụ tìm kiếm.
+
+## 🛠 Tech Stack (Công nghệ sử dụng)
+
+- **Framework**: [Next.js 16](https://nextjs.org/) (App Router).
+- **UI Library**: [React 19](https://react.dev/).
+- **Styling**: [TailwindCSS 4](https://tailwindcss.com/) cho việc viết CSS nhanh và mạnh mẽ.
+- **Data Fetching**: [SWR](https://swr.vercel.app/) (Stale-While-Revalidate) xử lý fetch và caching API.
+- **Icons**: [Lucide React](https://lucide.dev/).
+- **Ngôn ngữ**: [TypeScript](https://www.typescriptlang.org/) đảm bảo độ ổn định của hệ thống.
+
+## ⚙️ Cài đặt và Khởi chạy
+
+### 1. Yêu cầu môi trường
+- [Node.js](https://nodejs.org/en/) (phiên bản 22.x trở lên).
+- Trình quản lý gói: `npm`, `yarn`, `pnpm`, hoặc `bun`.
+
+### 2. Tải các gói phụ thuộc (Dependencies)
+Mở terminal tại thư mục gốc của dự án và chạy:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+# hoặc
+yarn install
 ```
 
-Open [http://localhost:3001](http://localhost:3001) with your browser to see the result.
+### 3. Khởi chạy máy chủ phát triển (Development Server)
+```bash
+npm run dev
+# hoặc
+yarn dev
+```
+Mở trình duyệt và truy cập: [http://localhost:5173](http://localhost:5173) để xem dự án. 
+Mọi thay đổi trên mã nguồn sẽ được hệ thống cập nhật tự động nhờ tính năng Fast Refresh.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 4. Build phiên bản Product (Production Build)
+Khi đã sẵn sàng đưa web lên máy chủ, chạy lệnh sau để build bản tối ưu hóa:
+```bash
+npm run build
+npm run start
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 🏗 Cấu trúc mã nguồn cơ bản
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```text
+gen_motion_ai/
+├── app/                  # Chứa toàn bộ các trang web (App Router Next.js)
+│   ├── post/[id]/        # Trang chi tiết bài đăng video
+│   ├── page.tsx          # Trang chủ
+│   └── layout.tsx        # Cấu trúc chung (Header, Footer, Provider)
+├── components/           # (Tùy chọn) Chứa các UI components dùng chung (Buttons, Modals, Cards...)
+├── public/               # Chứa các tài nguyên tĩnh (Fonts, Images, Icons)
+├── package.json          # Quản lý thư viện và scripts hệ thống
+└── tailwind.config.ts    # Cấu hình giao diện và màu sắc cho dự án
+```
