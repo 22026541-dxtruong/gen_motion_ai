@@ -29,6 +29,16 @@ class MainActivity : ComponentActivity() {
         handleIntent(intent)
     }
 
+    override fun onResume() {
+        super.onResume()
+        ie.app.neuragen.util.AppLifecycleObserver.onForeground()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        ie.app.neuragen.util.AppLifecycleObserver.onBackground()
+    }
+
     private fun handleIntent(intent: Intent?) {
         intent?.data?.let { uri ->
             if (uri.scheme == "neuragen" && uri.host == "auth" && uri.path == "/callback") {
@@ -36,6 +46,9 @@ class MainActivity : ComponentActivity() {
                     uri.getQueryParameter(name) ?: ""
                 }
                 oauthCallbackHandler.handleCallback(queryParams)
+            } else {
+                // For payment callbacks, trigger foreground refresh
+                ie.app.neuragen.util.AppLifecycleObserver.onForeground()
             }
         }
     }

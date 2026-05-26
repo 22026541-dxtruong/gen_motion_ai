@@ -237,6 +237,17 @@ class CreateViewModel(
                 val id = response.jobId ?: response.id
                 println("CreateViewModel: Job API call finished, received jobId: $id")
 
+                // Optimistically deduct credit immediately for Topbar to update
+                response.creditCost?.let { cost ->
+                    ie.app.neuragen.util.UserSessionState.patch { currentUser ->
+                        currentUser.copy(
+                            credits = currentUser.credits.copy(
+                                balance = currentUser.credits.balance - cost
+                            )
+                        )
+                    }
+                }
+
                 // Xóa UI state
                 _uiState.update { it.copy(isGenerating = false, prompt = "", negativePrompt = "", selectedImageUri = null) }
 

@@ -190,12 +190,10 @@ class PostViewModel(
                     newComment
                 }
                 val updatedComments = _uiState.value.comments + commentWithUser
-                val currentPost = _uiState.value.post
                 _uiState.update {
                     it.copy(
                         isCommenting = false,
-                        comments = updatedComments,
-                        post = currentPost?.copy(commentCount = currentPost.commentCount + 1)
+                        comments = updatedComments
                     )
                 }
             }.onFailure { error ->

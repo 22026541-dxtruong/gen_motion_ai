@@ -172,6 +172,18 @@ class BillingViewModel(
                                 activeTab = BillingTab.ORDERS
                             )
                         }
+                        
+                        // Optimistically update credit immediately for Topbar
+                        if (order.creditAmount > 0) {
+                            ie.app.neuragen.util.UserSessionState.patch { currentUser ->
+                                currentUser.copy(
+                                    credits = currentUser.credits.copy(
+                                        balance = currentUser.credits.balance + order.creditAmount
+                                    )
+                                )
+                            }
+                        }
+
                         // Refresh user profile to update credit balance globally
                         refreshUserProfile()
                         return@launch // Stop polling — confirmed!

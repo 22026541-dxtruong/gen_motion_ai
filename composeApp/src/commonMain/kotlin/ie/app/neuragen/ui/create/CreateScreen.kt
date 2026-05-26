@@ -23,7 +23,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -125,7 +124,7 @@ fun CreateScreen(
                                 Text(
                                     "Loading your jobs...",
                                     style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    color = Color.Gray
                                 )
                             }
                         }
@@ -136,7 +135,7 @@ fun CreateScreen(
                             "No recent jobs found.",
                             modifier = Modifier.fillMaxWidth().padding(32.dp),
                             textAlign = TextAlign.Center,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = Color.Gray
                         )
                     }
                 } else {
@@ -191,12 +190,11 @@ fun GenerationForm(
     isGenerating: Boolean,
     onGenerateClick: () -> Unit
 ) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .shadow(12.dp, RoundedCornerShape(24.dp), spotColor = Color.Black.copy(alpha = 0.08f))
-            .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(24.dp))
-            .border(1.dp, MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(24.dp))
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(
@@ -307,12 +305,12 @@ fun GenerationForm(
                         Icon(
                             painter = painterResource(Res.drawable.ic_add_image),
                             contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            tint = Color.Gray,
                             modifier = Modifier.size(32.dp)
                         )
                         Spacer(modifier = Modifier.height(8.dp))
-                        Text("Click to upload or drag an image", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Text("JPG, PNG up to 10MB", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.outline)
+                        Text("Click to upload or drag an image", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                        Text("JPG, PNG up to 10MB", style = MaterialTheme.typography.labelSmall, color = Color.LightGray)
                     }
                 }
             }
@@ -387,7 +385,7 @@ fun GenerationForm(
                 enabled = !isGenerating && prompt.isNotBlank()
             ) {
                 if (isGenerating) {
-                    CircularProgressIndicator(color = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(24.dp))
+                    CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
                 } else {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(painterResource(Res.drawable.ic_create), contentDescription = null, modifier = Modifier.size(20.dp))
@@ -417,7 +415,7 @@ fun PresetItem(
                 shape = RoundedCornerShape(12.dp)
             )
             .background(
-                color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
+                color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else Color.White,
                 shape = RoundedCornerShape(12.dp)
             )
             .clickable { onClick(id) }
@@ -425,8 +423,8 @@ fun PresetItem(
         contentAlignment = Alignment.Center
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(title, fontWeight = FontWeight.Bold, color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface)
-            Text(subtitle, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(title, fontWeight = FontWeight.Bold, color = if (isSelected) MaterialTheme.colorScheme.primary else Color.DarkGray)
+            Text(subtitle, style = MaterialTheme.typography.labelSmall, color = Color.Gray)
         }
     }
 }
@@ -479,12 +477,13 @@ fun ProcessingJobItem(job: JobDto) {
         )
     )
 
-    Box(
+    Card(
         modifier = Modifier
             .fillMaxWidth()
-            .shadow(12.dp, RoundedCornerShape(24.dp), spotColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f))
-            .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(24.dp))
-            .border(2.dp, gradientBrush, RoundedCornerShape(24.dp))
+            .border(1.dp, gradientBrush, RoundedCornerShape(16.dp)),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             // Top Status Bar
@@ -559,7 +558,7 @@ fun ProcessingJobItem(job: JobDto) {
                             Text(
                                 "Frame: $currentFrame/$estimatedFrames",
                                 style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onPrimary,
+                                color = Color.White,
                                 fontSize = 8.sp
                             )
                             Box(
@@ -739,12 +738,11 @@ fun FailedJobItem(job: JobDto) {
     val status = job.status.uppercase()
     val isCancelled = status == "CANCELLED"
     
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .shadow(8.dp, RoundedCornerShape(24.dp), spotColor = MaterialTheme.colorScheme.error.copy(alpha = 0.2f))
-            .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(24.dp))
-            .border(1.dp, MaterialTheme.colorScheme.errorContainer, RoundedCornerShape(24.dp))
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -812,12 +810,11 @@ fun CompletedJobItem(
     onDownloadClick: () -> Unit,
     onPublishClick: () -> Unit = {}
 ) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .shadow(12.dp, RoundedCornerShape(24.dp), spotColor = Color(0xFF10B981).copy(alpha = 0.3f))
-            .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(24.dp))
-            .border(1.dp, MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(24.dp))
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -839,7 +836,7 @@ fun CompletedJobItem(
                             painter = painterResource(Res.drawable.ic_add_image),
                             contentDescription = null,
                             modifier = Modifier.align(Alignment.Center).size(24.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            tint = Color.Gray
                         )
                     }
                 }
@@ -975,7 +972,7 @@ fun PublishDialog(
             .fillMaxWidth()
             .padding(16.dp)
             .clip(RoundedCornerShape(24.dp))
-            .background(MaterialTheme.colorScheme.surface)
+            .background(Color.White)
     ) {
         Column(modifier = Modifier.padding(24.dp)) {
             // Header
@@ -1015,7 +1012,7 @@ fun PublishDialog(
                     Icon(
                         painter = painterResource(Res.drawable.ic_close),
                         contentDescription = "Close",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        tint = Color.Gray
                     )
                 }
             }
@@ -1024,7 +1021,7 @@ fun PublishDialog(
             Text(
                 "Share your AI-generated video with the Neura Gen community.",
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = Color.Gray
             )
 
             Spacer(modifier = Modifier.height(20.dp))
@@ -1041,7 +1038,7 @@ fun PublishDialog(
                 value = caption,
                 onValueChange = { if (it.length <= 300) onCaptionChange(it) },
                 modifier = Modifier.fillMaxWidth().height(100.dp),
-                placeholder = { Text("Describe your creation...", color = MaterialTheme.colorScheme.outline) },
+                placeholder = { Text("Describe your creation...", color = Color.LightGray) },
                 shape = RoundedCornerShape(12.dp),
                 colors = OutlinedTextFieldDefaults.colors(
                     unfocusedBorderColor = MaterialTheme.colorScheme.outline,
@@ -1056,7 +1053,7 @@ fun PublishDialog(
                 Text(
                     "${caption.length}/300",
                     style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = Color.Gray
                 )
             }
 
@@ -1091,7 +1088,7 @@ fun PublishDialog(
                     border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
                     enabled = !isPublishing
                 ) {
-                    Text("Cancel", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("Cancel", color = Color.Gray)
                 }
                 Button(
                     onClick = onPublish,
@@ -1103,7 +1100,7 @@ fun PublishDialog(
                             if (!isPublishing) Brush.horizontalGradient(
                                 colors = listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.secondary)
                             ) else Brush.horizontalGradient(
-                                colors = listOf(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.surfaceVariant)
+                                colors = listOf(Color.Gray, Color.Gray)
                             )
                         ),
                     colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
@@ -1112,11 +1109,11 @@ fun PublishDialog(
                     if (isPublishing) {
                         CircularProgressIndicator(
                             modifier = Modifier.size(20.dp),
-                            color = MaterialTheme.colorScheme.onPrimary,
+                            color = Color.White,
                             strokeWidth = 2.dp
                         )
                     } else {
-                        Text("Publish", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimary)
+                        Text("Publish", fontWeight = FontWeight.Bold, color = Color.White)
                     }
                 }
             }

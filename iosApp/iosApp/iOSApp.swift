@@ -7,9 +7,11 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         _ application: UIApplication,
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
     ) -> Bool {
-        // Gắn Interface GoogleSignIn
+        // Register Google Sign-In Provider for Kotlin Multiplatform
         GoogleSignInHelper_iosKt.iosGoogleSignInProvider = IOSGoogleSignInProvider()
         
+        // Phase 1: Register BGTask handler — MUST happen before app finishes launching.
+        // This only registers the handler identifier, no Koin dependencies needed yet.
         KoinHelper.shared.registerBGTaskHandler()
         return true
     }
@@ -26,7 +28,22 @@ struct iOSApp: App {
                     if GIDSignIn.sharedInstance.handle(url) {
                         return
                     }
-                    handleDeepLink(url)
+                    
+                    // Dismiss SFSafariViewController if presented
+                    if let windowScene = UIApplication.shared.connectedScenes.first(where: { $0.activationState == .foregroundActive }) as? UIWindowScene,
+                       let window = windowScene.windows.first(where: { $0.isKeyWindow }),
+                       let root = window.rootViewController {
+                        if root.presentedViewController != nil {
+                            root.dismiss(animated: true, completion: nil)
+                        }
+                    }
+
+                    if url.scheme == "neuragen" && url.host == "auth" {
+                        handleDeepLink(url)
+                    } else {
+                        // For payment callbacks or other links, trigger foreground to refresh
+                        AppLifecycleObserver.shared.onForeground()
+                    }
                 }
                 .onAppear {
                     // Phase 2 & 3: After Koin initializes (via MainViewController),

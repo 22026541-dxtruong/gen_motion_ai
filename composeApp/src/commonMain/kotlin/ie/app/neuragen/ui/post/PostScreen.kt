@@ -29,12 +29,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.Spring
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsPressedAsState
-import androidx.compose.ui.graphics.graphicsLayer
 import coil3.compose.AsyncImage
 import ie.app.neuragen.data.network.model.CommentDto
 import ie.app.neuragen.ui.common.VideoPlayer
@@ -220,15 +214,6 @@ fun PostDetailContent(
         ) {
             // Like
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                val heartScale by animateFloatAsState(
-                    targetValue = if (uiState.isLiked) 1.4f else 1f,
-                    animationSpec = spring(
-                        dampingRatio = Spring.DampingRatioMediumBouncy,
-                        stiffness = Spring.StiffnessLow
-                    ),
-                    label = "heartScale"
-                )
-                
                 IconButton(
                     onClick = viewModel::toggleLike,
                     modifier = Modifier
@@ -243,12 +228,7 @@ fun PostDetailContent(
                         if (uiState.isLiked) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,
                         contentDescription = "Like",
                         tint = Color.White,
-                        modifier = Modifier
-                            .size(24.dp)
-                            .graphicsLayer {
-                                scaleX = heartScale
-                                scaleY = heartScale
-                            }
+                        modifier = Modifier.size(24.dp)
                     )
                 }
                 Spacer(modifier = Modifier.height(4.dp))
@@ -262,27 +242,11 @@ fun PostDetailContent(
 
             // Comment
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                val commentInteractionSource = remember { MutableInteractionSource() }
-                val isCommentPressed by commentInteractionSource.collectIsPressedAsState()
-                val commentScale by animateFloatAsState(
-                    targetValue = if (isCommentPressed) 0.8f else 1f,
-                    animationSpec = spring(
-                        dampingRatio = Spring.DampingRatioMediumBouncy,
-                        stiffness = Spring.StiffnessLow
-                    ),
-                    label = "commentScale"
-                )
-
                 IconButton(
                     onClick = { showComments = true },
-                    interactionSource = commentInteractionSource,
                     modifier = Modifier
                         .size(48.dp)
                         .background(Color.Black.copy(alpha = 0.4f), CircleShape)
-                        .graphicsLayer {
-                            scaleX = commentScale
-                            scaleY = commentScale
-                        }
                 ) {
                     Icon(
                         Icons.Rounded.ModeComment,
@@ -389,7 +353,7 @@ fun PostDetailContent(
             ModalBottomSheet(
                 onDismissRequest = { showComments = false },
                 sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-                containerColor = MaterialTheme.colorScheme.surface,
+                containerColor = Color.White,
                 shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
             ) {
                 CommentsContent(
@@ -437,7 +401,7 @@ fun CommentsContent(
             )
         }
 
-        HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant)
+        HorizontalDivider(color = Color(0xFFF1F5F9))
 
         // Comments list
         LazyColumn(
@@ -464,7 +428,7 @@ fun CommentsContent(
         }
 
         // Input bar
-        HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant)
+        HorizontalDivider(color = Color(0xFFF1F5F9))
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -491,10 +455,10 @@ fun CommentsContent(
                 modifier = Modifier.weight(1f).height(44.dp),
                 shape = RoundedCornerShape(22.dp),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = MaterialTheme.colorScheme.outline,
-                    unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
-                    focusedContainerColor = MaterialTheme.colorScheme.surface,
-                    unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                    focusedBorderColor = Color(0xFFE2E8F0),
+                    unfocusedBorderColor = Color(0xFFE2E8F0),
+                    focusedContainerColor = Color(0xFFF8FAFC),
+                    unfocusedContainerColor = Color(0xFFF8FAFC),
                     focusedTextColor = SlateText,
                     unfocusedTextColor = SlateText
                 ),
@@ -514,7 +478,7 @@ fun CommentsContent(
                     .size(36.dp)
                     .background(
                         if (commentText.isNotBlank() && !isAdding) Indigo600
-                        else MaterialTheme.colorScheme.surfaceVariant,
+                        else Color(0xFFE2E8F0),
                         CircleShape
                     )
             ) {
@@ -585,7 +549,7 @@ fun CommentItem(
             Text(
                 text = comment.content,
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = Color(0xFF475569),
                 lineHeight = 18.sp
             )
         }

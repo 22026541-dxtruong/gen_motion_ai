@@ -2,25 +2,33 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>NSPhotoLibraryUsageDescription</key>
-	<string>App cần quyền truy cập ảnh để bạn chọn hình ảnh.</string>
+	<key>BGTaskSchedulerPermittedIdentifiers</key>
+	<array>
+		<string>ie.app.neuragen.data-sync</string>
+	</array>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
+			<key>CFBundleURLName</key>
+			<string>ie.app.neuragen</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>neuragen</string>
 			</array>
-			<key>CFBundleURLName</key>
-			<string>ie.app.neuragen</string>
+		</dict>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.527279917754-u9rg0hkjonp8l6c9jtihkgvm35kr0nls</string>
+			</array>
 		</dict>
 	</array>
-	<key>BGTaskSchedulerPermittedIdentifiers</key>
-	<array>
-		<string>ie.app.neuragen.data-sync</string>
-	</array>
+	<key>GIDClientID</key>
+	<string>527279917754-u9rg0hkjonp8l6c9jtihkgvm35kr0nls.apps.googleusercontent.com</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>fetch</string>

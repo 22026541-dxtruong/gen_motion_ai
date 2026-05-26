@@ -2,7 +2,6 @@ package ie.app.neuragen.ui.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 
@@ -22,28 +21,14 @@ private val NeuraGenLightColorScheme = lightColorScheme(
     outline = LightOutline
 )
 
-private val NeuraGenDarkColorScheme = darkColorScheme(
-    primary = DarkPrimary,
-    onPrimary = DarkOnPrimary,
-    secondary = DarkSecondary,
-    onSecondary = DarkOnSecondary,
-    background = DarkBackground,
-    onBackground = DarkOnBackground,
-    surface = DarkSurface,
-    onSurface = DarkOnSurface,
-    surfaceVariant = DarkSurfaceVariant,
-    onSurfaceVariant = DarkOnSurfaceVariant,
-    error = DarkError,
-    onError = DarkOnError,
-    outline = DarkOutline
-)
-
 @Composable
 fun NeuraGenTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit
 ) {
-    val colorScheme = if (darkTheme) NeuraGenDarkColorScheme else NeuraGenLightColorScheme
+    // For now, we enforce light theme matching the Web's Indigo/Slate palette
+    // A separate DarkColorScheme can be added in the future.
+    val colorScheme = NeuraGenLightColorScheme
 
     MaterialTheme(
         colorScheme = colorScheme,

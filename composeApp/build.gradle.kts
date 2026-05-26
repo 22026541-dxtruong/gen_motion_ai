@@ -48,6 +48,9 @@ kotlin {
             implementation(libs.androidx.credentials)
             implementation(libs.androidx.credentials.play.services)
             implementation(libs.googleid)
+            
+            // Custom Tabs for In-App Browser
+            implementation("androidx.browser:browser:1.8.0")
         }
         commonMain.dependencies {
             implementation(libs.compose.runtime)

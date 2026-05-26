@@ -34,18 +34,3 @@ val LightOnSurface = Slate800
 val LightSurfaceVariant = Slate100
 val LightOnSurfaceVariant = Slate500
 val LightOutline = Slate200
-
-// Dark Theme Colors
-val DarkBackground = Slate900
-val DarkSurface = Slate800
-val DarkPrimary = Indigo500
-val DarkOnPrimary = Color.White
-val DarkSecondary = Purple500
-val DarkOnSecondary = Color.White
-val DarkError = Red500
-val DarkOnError = Color.White
-val DarkOnBackground = Slate50
-val DarkOnSurface = Slate100
-val DarkSurfaceVariant = Slate800
-val DarkOnSurfaceVariant = Slate400
-val DarkOutline = Slate500
