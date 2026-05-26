@@ -58,15 +58,15 @@ export default function ExploreSearch() {
   };
 
   return (
-    <div className="relative">
-      <form onSubmit={handleSearch} className="flex items-center bg-white border border-slate-200 rounded-full px-4 py-2 shadow-sm focus-within:ring-2 focus-within:ring-indigo-100 transition-all">
-        <Search className="h-4 w-4 text-slate-400 mr-2" />
+    <div className="relative w-full sm:w-auto">
+      <form onSubmit={handleSearch} className="flex items-center w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-full px-4 py-2 shadow-sm focus-within:ring-2 focus-within:ring-indigo-100 transition-all">
+        <Search className="h-4 w-4 text-slate-400 mr-2 shrink-0" />
         <input
           type="text"
           placeholder="Search topics..."
           value={topic}
           onChange={(e) => setTopic(e.target.value)}
-          className="bg-transparent border-none focus:ring-0 text-sm text-slate-700 placeholder:text-slate-400 outline-none w-48 sm:w-64"
+          className="bg-transparent border-none focus:ring-0 text-sm text-slate-700 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none w-full sm:w-64"
         />
         <button 
           type="button" 

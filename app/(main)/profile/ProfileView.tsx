@@ -374,8 +374,8 @@ export default function ProfileView({
         </div>
 
         {/* Profile Info */}
-        <div className="px-8 flex justify-between items-start">
-          <div className="flex gap-6">
+        <div className="px-4 md:px-8 flex flex-col md:flex-row justify-between items-center md:items-start text-center md:text-left">
+          <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 items-center sm:items-start w-full">
             <div className="-mt-14 relative z-10">
               <img
                 src={
@@ -383,7 +383,7 @@ export default function ProfileView({
                   `https://ui-avatars.com/api/?name=${encodeURIComponent(userProfile?.username || "User")}&background=e0e7ff&color=4f46e5`
                 }
                 alt={userProfile?.username || "User"}
-                className="w-32 h-32 rounded-2xl border-4 border-white dark:border-slate-900 shadow-sm object-cover bg-gray-100 dark:bg-slate-800"
+                className="w-24 h-24 sm:w-32 sm:h-32 rounded-2xl border-4 border-white dark:border-slate-900 shadow-sm object-cover bg-gray-100 dark:bg-slate-800 mx-auto sm:mx-0"
               />
             </div>
             <div className="pt-4">
@@ -402,7 +402,7 @@ export default function ProfileView({
               </p>
             </div>
           </div>
-          <div className="pt-4 flex gap-3">
+          <div className="pt-4 flex gap-3 w-full md:w-auto justify-center md:justify-end mt-4 md:mt-0">
             <button
               onClick={() => setIsEditDialogOpen(true)}
               className="bg-indigo-600 text-white px-6 py-2.5 rounded-full font-medium hover:bg-indigo-700 transition shadow-sm"
@@ -415,7 +415,7 @@ export default function ProfileView({
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-4 gap-4 pt-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4">
         {[
           {
             label: "FOLLOWERS",
@@ -462,9 +462,9 @@ export default function ProfileView({
       </p>
 
       {/* Credits Section */}
-      <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 flex items-center justify-between shadow-sm dark:shadow-none dark:border dark:border-slate-800">
-        <div className="flex items-center gap-5">
-          <div className="w-14 h-14 bg-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-md shadow-indigo-200 dark:shadow-none">
+      <div className="bg-white dark:bg-slate-900 rounded-3xl p-4 sm:p-6 flex flex-col sm:flex-row items-center justify-between gap-4 sm:gap-0 shadow-sm dark:shadow-none dark:border dark:border-slate-800">
+        <div className="flex items-center gap-3 sm:gap-5">
+          <div className="w-12 h-12 sm:w-14 sm:h-14 bg-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-md shadow-indigo-200 dark:shadow-none">
             <Zap size={24} className="fill-current" />
           </div>
           <div>

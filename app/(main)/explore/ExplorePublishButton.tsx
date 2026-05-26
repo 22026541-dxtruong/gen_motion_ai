@@ -33,7 +33,7 @@ export default function ExplorePublishButton({
     <>
       <button
         onClick={handleClick}
-        className="fixed bottom-10 right-10 bg-indigo-500 hover:bg-indigo-600 text-white p-4 rounded-full shadow-xl shadow-indigo-200 transition-transform hover:scale-105 z-20 flex items-center justify-center group"
+        className="fixed bottom-24 md:bottom-10 right-6 md:right-10 bg-indigo-600 dark:bg-indigo-500 hover:bg-indigo-700 dark:hover:bg-indigo-600 text-white p-4 rounded-full shadow-xl shadow-indigo-200/50 dark:shadow-none transition-transform hover:scale-105 z-40 flex items-center justify-center group"
       >
         <Film className="h-6 w-6" />
         <span className="absolute right-full mr-4 bg-gray-900 text-white text-sm px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">

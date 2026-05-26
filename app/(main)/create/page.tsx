@@ -33,9 +33,8 @@ export default function CreatePage() {
   return (
     <div className="max-w-[1200px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 relative">
       
-      {/* Cột trái */}
       <div className="lg:col-span-7"> 
-        <div className="lg:sticky lg:top-0 bg-white dark:bg-slate-900 rounded-2xl p-8 shadow-sm border border-slate-100 dark:border-slate-800 max-h-[calc(100vh-8rem)] overflow-y-auto scrollbar-hide transition-colors">
+        <div className="lg:sticky lg:top-0 bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-8 shadow-sm border border-slate-100 dark:border-slate-800 max-h-[calc(100vh-8rem)] overflow-y-auto scrollbar-hide transition-colors">
           <CreateForm credits={credits} />
         </div>
       </div>

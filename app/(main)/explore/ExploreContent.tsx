@@ -209,7 +209,7 @@ export default function ExploreContent({
           </p>
         </div>
 
-        <div className="flex flex-col sm:flex-row items-center gap-4">
+        <div className="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
           <ExploreSearch key={`${topic}|${sort}|${trending}`} />
         </div>
       </div>

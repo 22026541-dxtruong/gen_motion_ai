@@ -15,7 +15,7 @@ export default function MainGroupLayout({
         <div className="flex flex-1 overflow-hidden">
           <Sidebar />
 
-          <main className="flex-1 overflow-y-auto p-8 bg-white dark:bg-[#0B0F19] relative">
+          <main className="flex-1 overflow-y-auto p-4 md:p-8 pb-20 md:pb-8 bg-white dark:bg-[#0B0F19] relative">
             {children}
           </main>
         </div>

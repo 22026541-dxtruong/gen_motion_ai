@@ -70,19 +70,19 @@ export default function Topbar() {
 
   return (
     <>
-      <header className="h-16 bg-white dark:bg-[#0f172a] border-b border-slate-100 dark:border-slate-800 flex items-center justify-between px-6 shrink-0 z-50 transition-colors">
-        <div className="flex items-center gap-12 w-64">
-          <h1 className="text-xl font-bold text-indigo-600 dark:text-indigo-400">Neura Gen</h1>
+      <header className="h-16 bg-white dark:bg-[#0f172a] border-b border-slate-100 dark:border-slate-800 flex items-center justify-between px-4 md:px-6 shrink-0 z-50 transition-colors">
+        <div className="flex items-center gap-4 md:gap-12 w-auto md:w-64">
+          <h1 className="text-lg md:text-xl font-bold text-indigo-600 dark:text-indigo-400 truncate">Neura Gen</h1>
         </div>
 
         <div className="flex-1 flex justify-center">
         </div>
 
-        <div className="flex items-center gap-6 justify-end w-[320px]">
+        <div className="flex items-center gap-3 md:gap-6 justify-end w-auto md:w-[320px]">
           <ThemeToggle />
           {user?.id && <NotificationBell key={user.id} userId={user.id} />}
-          <div className="flex items-center gap-2 text-indigo-600 font-medium text-sm cursor-pointer">
-            <CreditCard className="h-5 w-5" />
+          <div className="flex items-center gap-1.5 md:gap-2 text-indigo-600 font-medium text-sm cursor-pointer">
+            <CreditCard className="h-4 w-4 md:h-5 md:w-5" />
             <span>{user?.credits?.balance || 0}</span>
           </div>
           
@@ -171,7 +171,7 @@ export default function Topbar() {
               {savedAccounts.length > 0 && (
                 <button 
                   onClick={() => setIsSwitchAccountOpen(true)}
-                  className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-slate-200 hover:bg-slate-50 transition-colors"
+                  className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full border border-slate-200 hover:bg-slate-50 transition-colors"
                 >
                   <div className="h-6 w-6 rounded-full bg-indigo-100 flex items-center justify-center text-xs font-bold text-indigo-600 overflow-hidden">
                     {savedAccounts[savedAccounts.length - 1].avatarUrl ? (
