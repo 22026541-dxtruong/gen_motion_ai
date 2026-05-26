@@ -43,7 +43,10 @@ Sử dụng công cụ Run Configuration của Android Studio hoặc chạy lệ
 
 ### Chạy trên iOS
 1. Mở thư mục `iosApp` bằng **Xcode** (`iosApp/iosApp.xcodeproj`).
-2. Nếu bạn thiết lập Google Sign-In, hãy đảm bảo đã kết nối Swift Package Manager (SPM) với `https://github.com/google/GoogleSignIn-iOS`.
+2. Dự án yêu cầu gói thư viện Google Sign-In. Hãy thêm nó thủ công vào Xcode theo các bước sau (nếu bị báo lỗi No such module 'GoogleSignIn'):
+   - Chọn menu **File > Add Package Dependencies...**
+   - Dán URL: `https://github.com/google/GoogleSignIn-iOS` vào ô tìm kiếm.
+   - Nhấn **Add Package** và đảm bảo chọn target là `iosApp`.
 3. Chọn thiết bị giả lập (Simulator) hoặc iPhone thực tế và nhấn nút **Run** (Play) trên Xcode.
 
 ## 📂 Cấu trúc thư mục dự án
