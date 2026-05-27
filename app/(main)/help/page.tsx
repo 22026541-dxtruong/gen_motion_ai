@@ -25,7 +25,7 @@ export default function HelpPage() {
         </p>
         <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100">Need a hand?</h1>
         <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-          Hướng dẫn nhanh cho thanh toán, credit và xử lý sự cố thường gặp.
+          Quick guide for billing, credits, and common troubleshooting.
         </p>
       </div>
 
@@ -36,9 +36,9 @@ export default function HelpPage() {
           </div>
           <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Billing Basics</h2>
           <ul className="mt-3 space-y-2 text-sm text-slate-600 dark:text-slate-400">
-            <li>1. Mua gói credit trong tab Billing.</li>
-            <li>2. Nếu đơn pending, vào trang return để tự sync lại đơn.</li>
-            <li>3. Kiểm tra credit ở topbar sau khi thanh toán thành công.</li>
+            <li>1. Purchase credit packages in the Billing tab.</li>
+            <li>2. If an order is pending, go to the return page to manually sync the order.</li>
+            <li>3. Check credits in the top bar after successful payment.</li>
           </ul>
           <Link
             href="/billing"
@@ -55,16 +55,13 @@ export default function HelpPage() {
           <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">FAQ (Common Issues)</h2>
           <ul className="mt-3 space-y-2 text-sm text-slate-600 dark:text-slate-400">
             <li>
-              1. Thanh toán xong nhưng đơn vẫn `PENDING`: quay lại trang return rồi
-              bấm sync, sau đó kiểm tra lại Billing.
+              1. Payment completed but order is still `PENDING`: go back to the return page and click sync, then check Billing again.
             </li>
             <li>
-              2. Đơn báo thành công nhưng chưa cộng credit: chụp `orderId`,
-              provider transaction id và gửi support để đối soát.
+              2. Order is successful but credits are not added: take a screenshot of `orderId`, provider transaction id and contact support for verification.
             </li>
             <li>
-              3. Tạo job lỗi: kiểm tra credit còn đủ, preset có yêu cầu ảnh INPUT
-              hay không, rồi tạo lại job.
+              3. Job creation error: check if credits are sufficient, if preset requires an INPUT image, then try creating the job again.
             </li>
           </ul>
         </div>
@@ -73,8 +70,7 @@ export default function HelpPage() {
       <div className="mt-6 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm">
         <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Contact Support</h2>
         <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-          Khi báo lỗi, vui lòng gửi kèm `userId`, `orderId`/`jobId`, timestamp và
-          ảnh chụp màn hình để team xử lý nhanh hơn.
+          When reporting an error, please include `userId`, `orderId`/`jobId`, timestamp, and a screenshot so the team can resolve it faster.
         </p>
         <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-3">
           <a
@@ -112,7 +108,7 @@ export default function HelpPage() {
             Admin Shortcut
           </p>
           <p className="text-sm text-rose-700 dark:text-rose-400">
-            Bạn đang ở role ADMIN.
+            You are currently in the ADMIN role.
           </p>
           <Link
             href="/admin"
@@ -125,20 +121,16 @@ export default function HelpPage() {
             <h3 className="text-sm font-semibold text-rose-800 dark:text-rose-300">Admin Runbook</h3>
             <ul className="mt-2 space-y-1 text-sm text-rose-700 dark:text-rose-400/80">
               <li>
-                1. Payment pending lâu: vào Admin Console, thử `Confirm Webhook`
-                trước.
+                1. Payment pending for a long time: go to Admin Console, try `Confirm Webhook` first.
               </li>
               <li>
-                2. Nếu tiền đã nhận thực tế: dùng `Mark Order As Paid` với
-                `orderId` (+ `providerOrderId` nếu có).
+                2. If money is actually received: use `Mark Order As Paid` with `orderId` (+ `providerOrderId` if any).
               </li>
               <li>
-                3. Cần moderation: dùng các form xoá post/comment hoặc gỡ
-                like/follow theo user mục tiêu.
+                3. Moderation needed: use forms to delete post/comment or remove like/follow targeting specific users.
               </li>
               <li>
-                4. Chỉ dùng `Manual Credit Top-up` cho trường hợp support đặc biệt
-                đã xác minh.
+                4. Only use `Manual Credit Top-up` for verified special support cases.
               </li>
             </ul>
           </div>

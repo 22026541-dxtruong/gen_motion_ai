@@ -14,7 +14,7 @@ export default function CreateForm({ credits }: { credits: number }) {
   const [presetId, setPresetId] = useState(PRESETS[1].id); // Default to Standard
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  
+
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -53,7 +53,7 @@ export default function CreateForm({ credits }: { credits: number }) {
       setError('Video prompt is required');
       return;
     }
-    
+
     const selectedPreset = PRESETS.find((preset) => preset.id === presetId);
     if (selectedPreset?.workflow === 'I2V' && !imageFile) {
       setError('This preset requires an input image. Please upload an image first.');
@@ -158,17 +158,17 @@ export default function CreateForm({ credits }: { credits: number }) {
       {/* Image Reference */}
       <div className="mb-8">
         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Image Reference (I2V)</label>
-        
-        <input 
-          type="file" 
-          ref={fileInputRef} 
-          onChange={handleImageChange} 
-          accept="image/*" 
-          className="hidden" 
+
+        <input
+          type="file"
+          ref={fileInputRef}
+          onChange={handleImageChange}
+          accept="image/*"
+          className="hidden"
         />
-        
+
         {!imagePreview ? (
-          <div 
+          <div
             onClick={() => fileInputRef.current?.click()}
             className="border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl p-8 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-indigo-300 dark:hover:border-indigo-500 transition-colors"
           >
@@ -179,7 +179,7 @@ export default function CreateForm({ credits }: { credits: number }) {
         ) : (
           <div className="relative w-fit">
             <img src={imagePreview} alt="Reference" className="h-32 rounded-xl object-cover border border-slate-200 dark:border-slate-700" />
-            <button 
+            <button
               onClick={removeImage}
               className="absolute -top-2 -right-2 bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-red-500 dark:hover:text-red-400 rounded-full p-1 shadow-md border border-slate-100 dark:border-slate-700 transition-colors"
             >
@@ -196,14 +196,13 @@ export default function CreateForm({ credits }: { credits: number }) {
           {PRESETS.map((preset) => {
             const isSelected = presetId === preset.id;
             return (
-              <button 
+              <button
                 key={preset.id}
                 onClick={() => setPresetId(preset.id)}
-                className={`rounded-xl p-4 flex flex-col items-center justify-center transition-colors ${
-                  isSelected 
-                    ? 'border-2 border-indigo-500 bg-indigo-50 dark:bg-indigo-500/10 dark:border-indigo-400' 
-                    : 'border border-slate-200 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-500 bg-white dark:bg-slate-900'
-                }`}
+                className={`rounded-xl p-4 flex flex-col items-center justify-center transition-colors ${isSelected
+                  ? 'border-2 border-indigo-500 bg-indigo-50 dark:bg-indigo-500/10 dark:border-indigo-400'
+                  : 'border border-slate-200 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-500 bg-white dark:bg-slate-900'
+                  }`}
               >
                 <span className={`font-medium mb-1 ${isSelected ? 'text-indigo-700 dark:text-indigo-300' : 'text-slate-700 dark:text-slate-300'}`}>
                   {preset.label}
@@ -221,7 +220,7 @@ export default function CreateForm({ credits }: { credits: number }) {
       </div>
 
       {/* Submit Button */}
-      <button 
+      <button
         onClick={handleSubmit}
         disabled={isLoading}
         className="w-full bg-[#8b5cf6] hover:bg-[#7c3aed] text-white font-medium py-4 rounded-xl flex items-center justify-center gap-2 transition-colors shadow-md shadow-violet-200 dark:shadow-none disabled:opacity-70 disabled:cursor-not-allowed"

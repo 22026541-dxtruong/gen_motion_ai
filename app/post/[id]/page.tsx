@@ -97,7 +97,7 @@ export default function PostDetailPage() {
   const router = useRouter();
   const params = useParams();
   const postId = params?.id as string;
-  
+
   const { user: currentUser } = useUser();
 
   const [post, setPost] = useState<PostData | null>(null);
@@ -127,7 +127,7 @@ export default function PostDetailPage() {
       if (stored) {
         setFeedState(JSON.parse(stored));
       }
-    } catch (e) {}
+    } catch (e) { }
   }, []);
 
   // Animation
@@ -254,7 +254,7 @@ export default function PostDetailPage() {
       } else if (newComment.user && !newComment.user.username && currentUser) {
         newComment.user.username = currentUser.username;
       }
-      
+
       // Prepend the new comment optimistically
       setComments((prev) => [newComment, ...prev]);
       setPost((p) => p ? { ...p, commentCount: (p.commentCount ?? 0) + 1 } : p);
@@ -267,12 +267,12 @@ export default function PostDetailPage() {
   // ── Navigation ───────────────────────────────────────────────────────────
   const handleNavigation = async (direction: "up" | "down") => {
     if (isNavigating) return;
-    
+
     let nextPostId = null;
 
     if (feedState && feedState.items) {
       const currentIndex = feedState.items.indexOf(postId);
-      
+
       if (direction === "up") { // Swipe UP -> Next post (down the feed)
         if (currentIndex >= 0 && currentIndex < feedState.items.length - 1) {
           nextPostId = feedState.items[currentIndex + 1];
@@ -332,7 +332,7 @@ export default function PostDetailPage() {
     );
 
     if (nextPostId) {
-      setTimeout(() => router.push(`/post/${nextPostId}`), 280);
+      setTimeout(() => router.replace(`/post/${nextPostId}`), 280);
     } else {
       setTimeout(() => router.back(), 280);
     }
@@ -368,7 +368,7 @@ export default function PostDetailPage() {
   const handleShare = () => {
     const url = window.location.href;
     if (navigator.share) {
-      navigator.share({ title: post?.caption || "Check this out", url }).catch(() => {});
+      navigator.share({ title: post?.caption || "Check this out", url }).catch(() => { });
     } else {
       navigator.clipboard.writeText(url);
       alert("Link copied to clipboard!");
@@ -492,11 +492,10 @@ export default function PostDetailPage() {
               <button
                 onClick={(e) => { e.stopPropagation(); handleLike(); }}
                 disabled={isLiking}
-                className={`w-12 h-12 backdrop-blur-sm rounded-full flex items-center justify-center transition-all ${
-                  isLiked
+                className={`w-12 h-12 backdrop-blur-sm rounded-full flex items-center justify-center transition-all ${isLiked
                     ? "bg-red-500/80 text-white scale-110"
                     : "bg-black/40 text-white hover:bg-black/60"
-                }`}
+                  }`}
               >
                 <Heart className={`h-6 w-6 transition-transform ${isLiked ? "fill-current scale-110" : ""}`} />
               </button>
@@ -610,7 +609,7 @@ export default function PostDetailPage() {
             {/* Stats */}
             {!isLoading && !error && (
               <div className="flex items-center gap-4 text-sm border-b border-slate-100 dark:border-slate-800 pb-4">
-                <button 
+                <button
                   onClick={() => setIsLikesModalOpen(true)}
                   className="text-slate-900 dark:text-slate-100 font-semibold hover:underline"
                 >
@@ -632,21 +631,21 @@ export default function PostDetailPage() {
             <div className="space-y-5">
               {isLoadingComments && comments.length === 0
                 ? [1, 2, 3].map((i) => (
-                    <div key={i} className="flex gap-3 animate-pulse">
-                      <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex-shrink-0" />
-                      <div className="flex-1 space-y-2">
-                        <div className="h-3 w-20 bg-slate-100 dark:bg-slate-800 rounded" />
-                        <div className="h-3 w-full bg-slate-100 dark:bg-slate-800 rounded" />
-                      </div>
+                  <div key={i} className="flex gap-3 animate-pulse">
+                    <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex-shrink-0" />
+                    <div className="flex-1 space-y-2">
+                      <div className="h-3 w-20 bg-slate-100 dark:bg-slate-800 rounded" />
+                      <div className="h-3 w-full bg-slate-100 dark:bg-slate-800 rounded" />
                     </div>
-                  ))
+                  </div>
+                ))
                 : comments.length === 0 && !isLoadingComments
-                ? (
-                  <p className="text-slate-400 dark:text-slate-500 text-sm text-center py-4">
-                    No comments yet. Be the first!
-                  </p>
-                )
-                : comments.map((comment) => (
+                  ? (
+                    <p className="text-slate-400 dark:text-slate-500 text-sm text-center py-4">
+                      No comments yet. Be the first!
+                    </p>
+                  )
+                  : comments.map((comment) => (
                     <div key={comment.id} className="flex gap-3">
                       <img
                         src={`https://ui-avatars.com/api/?name=${encodeURIComponent(
@@ -714,10 +713,10 @@ export default function PostDetailPage() {
         </div>
       </div>
 
-      <PostLikesModal 
-        postId={postId} 
-        isOpen={isLikesModalOpen} 
-        onClose={() => setIsLikesModalOpen(false)} 
+      <PostLikesModal
+        postId={postId}
+        isOpen={isLikesModalOpen}
+        onClose={() => setIsLikesModalOpen(false)}
       />
     </div>
   );
